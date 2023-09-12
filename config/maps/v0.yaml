@@ -1,0 +1,124 @@
+grid_size: [200, 200]
+
+streets:
+  # Main vertical traffic streets
+  - position: [50, 0]
+    length: 200
+    orientation: 'vertical'
+    type: 'Traffic Street'
+    directions: 2
+  
+  - position: [150, 0]
+    length: 200
+    orientation: 'vertical'
+    type: 'Traffic Street'
+    directions: 2
+
+  # Main horizontal traffic streets
+  - position: [0, 50]
+    length: 200
+    orientation: 'horizontal'
+    type: 'Traffic Street'
+    directions: 2
+
+  - position: [0, 150]
+    length: 200
+    orientation: 'horizontal'
+    type: 'Traffic Street'
+    directions: 2
+
+  # Walking streets branching off main streets
+  - position: [0, 30]
+    length: 200
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+  
+  - position: [0, 70]
+    length: 200
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+
+  - position: [0, 130]
+    length: 200
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+
+  - position: [0, 170]
+    length: 200
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+
+  - position: [30, 0]
+    length: 200
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+  
+  - position: [70, 0]
+    length: 200
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+
+  - position: [130, 0]
+    length: 200
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+
+  - position: [170, 0]
+    length: 200
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+
+buildings:
+  # Filling spaces between streets with buildings
+  - position: [0, 0]
+    size: [50, 30]
+    height: 10
+    type: 'House'
+
+  - position: [0, 30]
+    size: [30, 20]
+    height: 25
+    type: 'Office'
+  
+  - position: [0, 70]
+    size: [50, 30]
+    height: 20
+    type: 'Store'
+
+  - position: [0, 130]
+    size: [30, 20]
+    height: 15
+    type: 'Garage'
+
+  - position: [70, 0]
+    size: [30, 50]
+    height: 20
+    type: 'Gas Station'
+  
+  - position: [130, 0]
+    size: [20, 50]
+    height: 25
+    type: 'House'
+
+  - position: [150, 70]
+    size: [50, 30]
+    height: 30
+    type: 'Store'
+  
+  - position: [150, 130]
+    size: [50, 20]
+    height: 15
+    type: 'Garage'
+  
+  - position: [70, 150]
+    size: [30, 50]
+    height: 25
+    type: 'Office'

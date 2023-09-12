@@ -1,0 +1,41 @@
+import yaml
+from core import City, Building, Street
+from tqdm import tqdm
+import logging
+
+logger = logging.getLogger(__name__)
+class CityLoader:
+    @staticmethod
+    def from_yaml(yaml_file):
+        with open(yaml_file, 'r') as file:
+            city_config = yaml.safe_load(file)
+            logger.info("Get map info from {}".format(yaml_file))
+
+        # Create a city instance with the specified grid size
+        city = City(grid_size=tuple(city_config["grid_size"]))
+
+        # Add buildings to the city
+        logger.info("Constructing {} buildings".format(len(city_config["buildings"])))
+        for building_data in tqdm(city_config["buildings"]):
+            building = Building(
+                position=tuple(building_data["position"]),
+                size=tuple(building_data["size"]),
+                height=building_data["height"],
+                type=building_data["type"],
+            )
+            city.add_building(building)
+
+        # Add streets to the city
+        logger.info("Constructing {} streets".format(len(city_config["streets"])))
+        for street_data in tqdm(city_config["streets"]):
+            street = Street(
+                position=tuple(street_data["position"]),
+                length=street_data["length"],
+                orientation=street_data["orientation"],
+                type=street_data["type"],
+                directions=street_data["directions"]
+            )
+            city.add_street(street)
+
+        logger.info("Done!")
+        return city
