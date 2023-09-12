@@ -1,5 +1,5 @@
 class Street:
-    def __init__(self, position=(0, 0), length=1, orientation='horizontal', type='Traffic Street', directions=2):
+    def __init__(self, position=[0, 0], length=1, orientation='horizontal', type='Traffic Street', directions=2, width=0):
         """
         Initialize a new street.
 
@@ -16,10 +16,13 @@ class Street:
         self.directions = directions
 
         # Depending on the street type, we can assign a default width.
-        if type == 'Walking Street':
-            self.width = 1  # or any default width for walking streets
+        if width == 0:
+            if type == 'Walking Street':
+                self.width = 2  # or any default width for walking streets
+            else:
+                self.width = 6  # or any default width for traffic streets
         else:
-            self.width = 3  # or any default width for traffic streets
+            self.width = width
 
     def contains_point(self, x, y):
         """Check if a point (x, y) is within the street's boundaries."""

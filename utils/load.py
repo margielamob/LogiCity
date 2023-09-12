@@ -33,7 +33,8 @@ class CityLoader:
                 length=street_data["length"],
                 orientation=street_data["orientation"],
                 type=street_data["type"],
-                directions=street_data["directions"]
+                directions=street_data["directions"],
+                width=street_data["width"]
             )
             city.add_street(street)
 

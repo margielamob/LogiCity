@@ -23,7 +23,7 @@ def main(args, logger):
     logger.info("Starting city simulation...")
     # Create a city instance with a predefined grid
     city = CityLoader.from_yaml(args.map)
-    city.visualize()
+    city.visualize(1000)
     
     # Create an agent instance with its goals and planners
     # global_planner = GlobalPlanner(city, tuple(args.start_position), tuple(args.goal_position))
