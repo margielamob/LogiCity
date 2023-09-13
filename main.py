@@ -1,7 +1,7 @@
 import argparse
 import yaml
 from core import City, Building
-from utils import CityLoader, setup_logger
+from utils import CityLoader, setup_logger, visualize_city
 # from core.agent import Agent
 # from planners.global_planner import GlobalPlanner
 # from planners.local_planner import LocalPlanner
@@ -23,17 +23,17 @@ def main(args, logger):
     logger.info("Starting city simulation...")
     # Create a city instance with a predefined grid
     city = CityLoader.from_yaml(args.map)
-    city.visualize(1000, 2, "Pedestrian")
+    visualize_city(city, 1000, 2, "Pedestrian")
 
     # Main simulation loop
-    steps = 0
-    cached_observation = {0: city.city_grid}
-    while 1:
-        city.update()
-        # Visualize the current state of the city (optional)
-        city.visualize(1000, 2, "Pedestrian")
-        steps += 1
-        cached_observation[steps] = city.city_grid
+    # steps = 0
+    # cached_observation = {0: city.city_grid}
+    # while 1:
+    #     city.update()
+    #     # Visualize the current state of the city (optional)
+    #     visualize_city(city, 1000, 2, "Pedestrian")
+    #     steps += 1
+    #     cached_observation[steps] = city.city_grid
 
     # if agent.at_goal():
     #     print("Agent reached its goal!")

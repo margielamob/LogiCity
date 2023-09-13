@@ -15,6 +15,7 @@ def find_nearest_building(world_state_matrix, start_point):
 
 def find_building_mask(city_grid, start_point):
     # The value at the starting point, i.e., the building type
+    start_point = start_point.numpy().tolist()
     city_grid = city_grid[0]
     building_type = city_grid[start_point[0], start_point[1]]
     
