@@ -1,7 +1,7 @@
 import torch
 
 class Agent:
-    def __init__(self, type, size, id, world_state_martix):
+    def __init__(self, type, size, id, world_state_matrix):
         self.size = size
         self.type = type
         self.id = id
@@ -10,23 +10,24 @@ class Agent:
         self.start = None
         self.goal = None
         self.pos = None
-        self.init(world_state_martix)
+        self.layer_id = 0
+        self.init(world_state_matrix)
 
-    def init(self, world_state_martix, global_planner=None, local_planner=None):
+    def init(self, world_state_matrix):
         # init global planner, global traj, local planner, start and goal point
         pass
 
-    def get_start(self, world_state_martix):
+    def get_start(self, world_state_matrix):
         pass
 
-    def get_goal(self, world_state_martix):
+    def get_goal(self, world_state_matrix):
         pass
         
     def move(self, action):
         pass
         
-    def get_next_action(self, world_state_martix):
+    def get_next_action(self, world_state_matrix):
         pass
 
-    def get_movable_area(self, world_state_martix):
+    def get_movable_area(self, world_state_matrix):
         pass

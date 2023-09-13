@@ -2,22 +2,28 @@ from .basic import Agent
 import torch
 import torch.nn.functional as F
 from utils.find import find_nearest_building, find_building_mask
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Pedestrian(Agent):
-    def __init__(self, type, size, id, world_state_martix):
-        super().__init__(type, size, id, world_state_martix)
+    def __init__(self, type, size, id, world_state_matrix, global_planner):
         self.start_point_list = None
         self.goal_point_list = None
+        self.global_planner = global_planner
+        super().__init__(type, size, id, world_state_matrix)
 
-    def init(self, world_state_martix, global_planner=None, local_planner=None):
-        self.start = self.get_start(world_state_martix)
+    def init(self, world_state_matrix):
+        WALKING_STREET = 1
+        CROSSING_STREET = -1
+        self.start = self.get_start(world_state_matrix)
         self.pos = self.start
-        self.goal = self.get_goal(world_state_martix, self.start)
+        self.goal = self.get_goal(world_state_matrix, self.start)
         # specify the occupacy map
-        movable_region = self.get_movable_area(world_state_martix)
+        movable_region = (world_state_matrix[1] == WALKING_STREET) | (world_state_matrix[1] == CROSSING_STREET)
         # get global traj on the occupacy map
-        self.global_traj = global_planner(self.start, self.goal, movable_region)
-        return super().init(global_planner, local_planner)
+        self.global_traj = self.global_planner(movable_region, self.start, self.goal)
+        logger.info("{}_{} initialization done!".format(self.type, self.id))
 
     def get_start(self, world_state_matrix):
         # Define the labels for different entities
@@ -34,15 +40,17 @@ class Pedestrian(Agent):
         # Define a kernel that captures cells around a central cell.
         # This kernel will look for a house or office around the central cell.
         kernel = torch.tensor([
-            [1, 1, 1],
-            [1, 0, 1],
-            [1, 1, 1]
+            [1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1],
+            [1, 1, 0, 1, 1],
+            [1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1]
         ], dtype=torch.float32).unsqueeze(0).unsqueeze(0)
 
         # Check for houses and offices around each cell
         building_layer = world_state_matrix[0]
         houses_offices = (building_layer == HOUSE) | (building_layer == OFFICE)
-        conv_res = F.conv2d(houses_offices.float().unsqueeze(0).unsqueeze(0), kernel, padding=1)
+        conv_res = F.conv2d(houses_offices.float().unsqueeze(0).unsqueeze(0), kernel, padding=2)
 
         # Find cells that are walking streets and have a house or office around them
         desired_locations = (walking_streets & (conv_res.squeeze() > 0))

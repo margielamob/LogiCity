@@ -23,30 +23,17 @@ def main(args, logger):
     logger.info("Starting city simulation...")
     # Create a city instance with a predefined grid
     city = CityLoader.from_yaml(args.map)
-    city.visualize(1000)
-    
-    # Create an agent instance with its goals and planners
-    # global_planner = GlobalPlanner(city, tuple(args.start_position), tuple(args.goal_position))
-    # local_planner = LocalPlanner(city)
-    # agent = Agent(tuple(args.start_position), global_planner, local_planner)
-    
-    # Add the agent to the city
-    # city.add_agent(agent)
-    
+    city.visualize(1000, 2, "Pedestrian")
+
     # Main simulation loop
     steps = 0
-    # while not agent.at_goal() and steps < args.max_steps:
-    #     # Get agent's next global plan
-    #     global_plan = agent.global_planner.plan()
-
-    #     # Let the agent decide its next move using local planner
-    #     next_move = agent.local_planner.decide_move(global_plan)
-    #     agent.move(next_move)
-
-    #     # Visualize the current state of the city (optional)
-    #     visualize_city(city)
-
-    #     steps += 1
+    cached_observation = {0: city.city_grid}
+    while 1:
+        city.update()
+        # Visualize the current state of the city (optional)
+        city.visualize(1000, 2, "Pedestrian")
+        steps += 1
+        cached_observation[steps] = city.city_grid
 
     # if agent.at_goal():
     #     print("Agent reached its goal!")

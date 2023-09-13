@@ -13,17 +13,28 @@ def find_nearest_building(world_state_matrix, start_point):
     
     return nearest_building
 
-def find_building_mask(world_state_matrix, nearest_building):
-    buildings_layer = world_state_matrix[0]
+def find_building_mask(city_grid, start_point):
+    # The value at the starting point, i.e., the building type
+    city_grid = city_grid[0]
+    building_type = city_grid[start_point[0], start_point[1]]
     
-    # Create a mask of zeros with the same shape as buildings_layer
-    mask = torch.zeros_like(buildings_layer, dtype=torch.float)
-    
-    # Set the position of the nearest_building in the mask to 1
-    mask[nearest_building[0], nearest_building[1]] = 1
-    
-    # Use dilation to expand the mask and get the entire building
-    kernel_size = 3  # We assume buildings can be isolated by a 3x3 kernel. You might adjust this.
-    building_mask = F.max_pool2d(mask[None, None], kernel_size, stride=1, padding=(kernel_size - 1) // 2) > 0
-    
-    return building_mask[0, 0]
+    # Expand boundaries iteratively to find the extent of the building
+    top, bottom, left, right = start_point[0], start_point[0], start_point[1], start_point[1]
+
+    while top > 0 and city_grid[top - 1, start_point[1]] == building_type:
+        top -= 1
+
+    while bottom < city_grid.shape[0] - 1 and city_grid[bottom + 1, start_point[1]] == building_type:
+        bottom += 1
+
+    while left > 0 and city_grid[start_point[0], left - 1] == building_type:
+        left -= 1
+
+    while right < city_grid.shape[1] - 1 and city_grid[start_point[0], right + 1] == building_type:
+        right += 1
+
+    # Create the mask
+    mask = torch.zeros_like(city_grid, dtype=torch.bool)
+    mask[top:bottom + 1, left:right + 1] = True
+
+    return mask
