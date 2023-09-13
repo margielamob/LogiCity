@@ -32,10 +32,8 @@ class City:
         """Add a building to the city and mark its position on the grid."""
         self.buildings.append(building)
         building_code = self.type2label[building.type]
-        for i in range(building.position[0], building.position[0] + building.size[0]):
-            for j in range(building.position[1], building.position[1] + building.size[1]):
-                if 0 <= i < self.grid_size[0] and 0 <= j < self.grid_size[1]:  # Check boundaries
-                    self.city_grid[0][i][j] = building_code
+        self.city_grid[0][building.position[0]:building.position[0] + building.size[0], \
+            building.position[1]:building.position[1] + building.size[1]] = building_code
 
     def add_street(self, street):
         """Add a street to the city and mark its position on the grid."""
@@ -58,6 +56,15 @@ class City:
                         else:
                             self.city_grid[1][i][j] = -1
 
+    def add_agent(self, agent):
+        """Add a building to the city and mark its position on the grid."""
+        self.buildings.append(agent)
+        building_code = self.type2label[building.type]
+        for i in range(building.position[0], building.position[0] + building.size[0]):
+            for j in range(building.position[1], building.position[1] + building.size[1]):
+                if 0 <= i < self.grid_size[0] and 0 <= j < self.grid_size[1]:  # Check boundaries
+                    self.city_grid[0][i][j] = building_code
+
     def visualize(self, resolution):
         # Define a color for each entity
         color_map = {
@@ -73,13 +80,15 @@ class City:
         }
 
         # Create a visual grid of the city
-        visual_grid = np.zeros((resolution, resolution, 3), dtype=np.uint8)
+        visual_grid = np.ones((resolution, resolution, 3), dtype=np.uint8)*200
+        np_grid = self.city_grid.numpy().astype(np.int)
         scale_factor = resolution/self.grid_size[0]
         for k in range(self.layers):
             for i in range(self.grid_size[0]):
                 for j in range(self.grid_size[1]):
-                    color = color_map[self.grid[i][j]]
-                    visual_grid[int(i*scale_factor):int((i+1)*scale_factor), int(j*scale_factor):int((j+1)*scale_factor)] = color
+                    if np_grid[k][i][j] != 0:
+                        color = color_map[np_grid[k][i][j]]
+                        visual_grid[int(i*scale_factor):int((i+1)*scale_factor), int(j*scale_factor):int((j+1)*scale_factor)] = color
 
         # Add the legend
         padding = int(10*scale_factor)

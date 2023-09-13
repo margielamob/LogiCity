@@ -1,9 +1,11 @@
 import yaml
 from core import City, Building, Street
+from agents import Agent_mapper
 from tqdm import tqdm
 import logging
 
 logger = logging.getLogger(__name__)
+
 class CityLoader:
     @staticmethod
     def from_yaml(yaml_file):
@@ -37,6 +39,17 @@ class CityLoader:
                 width=street_data["width"]
             )
             city.add_street(street)
+        
+        # Add agents to the city
+        logger.info("Adding {} agents".format(len(city_config["agents"])))
+        for agents_data in tqdm(city_config["agents"]):
+            agent = Agent_mapper[agents_data["type"]](
+                type=tuple(agents_data["type"]),
+                size=agents_data["size"],
+                id=agents_data["id"],
+                world_state_martix=city.city_grid
+            )
+            city.add_street(agent)
 
         logger.info("Done!")
         return city

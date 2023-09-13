@@ -361,3 +361,8 @@ buildings:
     size: [40, 40]
     height: 20
     type: 'Store'
+
+agents:
+  - type: "Pedestrian"
+    id: 1
+    size: 1

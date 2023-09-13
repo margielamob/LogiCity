@@ -1,17 +1,32 @@
+import torch
+
 class Agent:
-    def __init__(self, type, size):
+    def __init__(self, type, size, id, world_state_martix):
         self.size = size
         self.type = type
+        self.id = id
         # Actions: ["left", "right", "up", "down", "stop"]
-        self.action_space = 5
+        self.action_space = torch.tensor(range(5))
+        self.start = None
+        self.goal = None
+        self.pos = None
+        self.init(world_state_martix)
 
-    def init(self, global_planner, local_planner=None):
-        # 
+    def init(self, world_state_martix, global_planner=None, local_planner=None):
+        # init global planner, global traj, local planner, start and goal point
+        pass
+
+    def get_start(self, world_state_martix):
+        pass
+
+    def get_goal(self, world_state_martix):
         pass
         
     def move(self, action):
-        # Define how the agent moves based on action
         pass
         
     def get_next_action(self, world_state_martix):
+        pass
+
+    def get_movable_area(self, world_state_martix):
         pass
