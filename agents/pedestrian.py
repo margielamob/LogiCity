@@ -17,7 +17,7 @@ class Pedestrian(Agent):
         WALKING_STREET = 1
         CROSSING_STREET = -1
         self.start = torch.tensor(self.get_start(world_state_matrix))
-        self.pos = self.start
+        self.pos = self.start.clone()
         self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
         # specify the occupacy map
         movable_region = (world_state_matrix[1] == WALKING_STREET) | (world_state_matrix[1] == CROSSING_STREET)
@@ -148,7 +148,7 @@ class Pedestrian(Agent):
     def move(self, action, ped_layer, curr_label):
         curr_pos = torch.nonzero((ped_layer==curr_label).float())[0]
         assert torch.all(self.pos == curr_pos)
-        next_pos = self.pos
+        next_pos = self.pos.clone()
         # becomes walked grid
         ped_layer[self.pos[0], self.pos[1]] -= 0.1
         if action == self.action_space[0]:
@@ -160,8 +160,8 @@ class Pedestrian(Agent):
         elif action == self.action_space[3]:
             next_pos[0] += 1
         else:
-            next_pos = self.pos
-        self.pos = next_pos
+            next_pos = self.pos.clone()
+        self.pos = next_pos.clone()
         # Update Agent Map
         ped_layer[self.start[0], self.start[1]] = curr_label - 0.2
         ped_layer[self.pos[0], self.pos[1]] = curr_label

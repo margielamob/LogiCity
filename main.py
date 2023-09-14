@@ -23,7 +23,7 @@ def main(args, logger):
     logger.info("Starting city simulation...")
     # Create a city instance with a predefined grid
     city = CityLoader.from_yaml(args.map)
-    visualize_city(city, 1000, 2, "Pedestrian", "vis/init.png")
+    visualize_city(city, 1000, 2, "vis/init.png")
 
     # Main simulation loop
     steps = 0
@@ -32,7 +32,7 @@ def main(args, logger):
         city.update()
     #     # Visualize the current state of the city (optional)
         logger.info("Simulating Step_{}...".format(steps))
-        # visualize_city(city, 1000, 2, "Pedestrian", "vis/step_{}.png".format(steps))
+        visualize_city(city, 1000, 2, "vis/step_{}.png".format(steps))
         steps += 1
         cached_observation[steps] = city.city_grid
 

@@ -1,5 +1,6 @@
 from .building import Building
 import numpy as np
+import random
 import cv2
 import torch
 
@@ -28,6 +29,18 @@ class City:
         self.agents = []
         self.label2type = LABEL_MAP
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
+        # vis color map
+        self.color_map = {
+            -1: [100, 100, 100],
+            0: [200, 200, 200],       # Grey for empty
+            1: [152, 216, 170],           # Green for walking street
+            2: [168, 161, 150],        # Red for traffic street
+            3: [255, 204, 112],       # house
+            4: [34, 102, 141],        # gas station
+            5: [255, 250, 221],       # office
+            6: [142, 205, 221],       # garage
+            7: [255, 63, 164]         # store
+        }
 
     def update(self):
         new_matrix = torch.zeros_like(self.city_grid)
@@ -84,3 +97,6 @@ class City:
         agent.layer_id = self.city_grid.shape[0]
         self.city_grid = torch.concat([self.city_grid, agent_layer], dim=0)
         self.layers += 1
+        agent_color = [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)]
+        if "{}_{}".format(agent.type, agent.id) not in self.color_map.keys():
+                self.color_map["{}_{}".format(agent.type, agent.id)] = agent_color
