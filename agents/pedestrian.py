@@ -16,9 +16,9 @@ class Pedestrian(Agent):
     def init(self, world_state_matrix):
         WALKING_STREET = 1
         CROSSING_STREET = -1
-        self.start = self.get_start(world_state_matrix)
+        self.start = torch.tensor(self.get_start(world_state_matrix))
         self.pos = self.start
-        self.goal = self.get_goal(world_state_matrix, self.start)
+        self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
         # specify the occupacy map
         movable_region = (world_state_matrix[1] == WALKING_STREET) | (world_state_matrix[1] == CROSSING_STREET)
         # get global traj on the occupacy map
@@ -112,3 +112,57 @@ class Pedestrian(Agent):
 
         # Return the indices of the desired locations
         return goal_point
+
+    def get_next_action(self, world_state_matrix):
+        # for now, just reckless take the global traj
+        # reached goal
+        if torch.all(self.pos == self.goal):
+            self.reach_goal = True
+            logger.info("{}_{} reached goal!".format(self.type, self.id))
+            return self.action_space[-1]
+        else:
+            # action = local_planner(world_state_matrix, self.layer_id)
+            return self.get_global_action()
+
+    def get_global_action(self):
+        next_pos = self.global_traj[0]
+        self.global_traj.pop(0)
+        del_pos = next_pos - self.pos
+        dis = torch.tensor(del_pos).float().norm().item()
+        assert dis <= 1
+        if del_pos[1] < 0:
+            # left
+            return self.action_space[0]
+        elif del_pos[1] > 0:
+            # right
+            return self.action_space[1]
+        elif del_pos[0] < 0:
+            # up
+            return self.action_space[2]
+        elif del_pos[0] > 0:
+            # up
+            return self.action_space[3]
+        else:
+            return self.action_space[-1]
+
+    def move(self, action, ped_layer, curr_label):
+        curr_pos = torch.nonzero((ped_layer==curr_label).float())[0]
+        assert torch.all(self.pos == curr_pos)
+        next_pos = self.pos
+        # becomes walked grid
+        ped_layer[self.pos[0], self.pos[1]] -= 0.1
+        if action == self.action_space[0]:
+            next_pos[1] -= 1
+        elif action == self.action_space[1]:
+            next_pos[1] += 1
+        elif action == self.action_space[2]:
+            next_pos[0] -= 1
+        elif action == self.action_space[3]:
+            next_pos[0] += 1
+        else:
+            next_pos = self.pos
+        self.pos = next_pos
+        # Update Agent Map
+        ped_layer[self.start[0], self.start[1]] = curr_label - 0.2
+        ped_layer[self.pos[0], self.pos[1]] = curr_label
+        return ped_layer

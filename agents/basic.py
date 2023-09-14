@@ -11,6 +11,7 @@ class Agent:
         self.goal = None
         self.pos = None
         self.layer_id = 0
+        self.reach_goal = False
         self.init(world_state_matrix)
 
     def init(self, world_state_matrix):
@@ -23,7 +24,7 @@ class Agent:
     def get_goal(self, world_state_matrix):
         pass
         
-    def move(self, action):
+    def move(self, action, ped_layer, curr_label):
         pass
         
     def get_next_action(self, world_state_matrix):

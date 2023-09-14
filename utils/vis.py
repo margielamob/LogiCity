@@ -31,18 +31,7 @@ def visualize_city(city, resolution, agent_layer=None, agent_type=None, file_nam
     # draw agent's if provided layer
     if agent_layer != None:
         assert agent_type != None
-        agent_layer = city.city_grid[agent_layer]
-        cur_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]).float()).tolist()
-        planned_traj = torch.nonzero((agent_layer == city.type2label[agent_type]+0.1).float()).tolist()
-        goal_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]+0.3).float()).tolist()
-        cv2.drawMarker(visual_grid, (int(cur_agent_pos[0][1]*scale_factor), int(cur_agent_pos[0][0]*scale_factor)), \
-            (255, 0, 0), markerType=cv2.MARKER_CROSS, markerSize=5, thickness=2, line_type=cv2.LINE_AA)
-        cv2.drawMarker(visual_grid, (int(goal_agent_pos[0][1]*scale_factor), int(goal_agent_pos[0][0]*scale_factor)), \
-            (0, 0, 255), markerType=cv2.MARKER_CROSS, markerSize=5, thickness=2, line_type=cv2.LINE_AA)
-        for way_point in planned_traj:
-            visual_grid[int(way_point[0]*scale_factor):int((way_point[0]+1)*scale_factor), \
-                int(way_point[1]*scale_factor):int((way_point[1]+1)*scale_factor)] = [0, 255, 0]
-    
+        visual_grid = vis_agent(visual_grid, city, agent_layer, agent_type, scale_factor)
     
     # Add the legend
     padding = int(10*scale_factor)
@@ -64,3 +53,33 @@ def visualize_city(city, resolution, agent_layer=None, agent_type=None, file_nam
 
     # Use OpenCV to display the city
     cv2.imwrite(file_name, combined_img)
+
+def vis_agent(vis_grid, city, agent_layer, agent_type, scale_factor, curr=True, s=True, g=True, path=True):
+    agent_layer = city.city_grid[agent_layer]
+    cur_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]).float()).tolist()
+    planned_traj = torch.nonzero((agent_layer == city.type2label[agent_type]+0.1).float()).tolist()
+    walked_traj = torch.nonzero((agent_layer == city.type2label[agent_type]-0.1).float()).tolist()
+    goal_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]+0.3).float()).tolist()
+    start_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]-0.2).float()).tolist()
+    # Path
+    if len(planned_traj) > 0 and path:  
+        for way_point in planned_traj:
+            vis_grid[int(way_point[0]*scale_factor):int((way_point[0]+2)*scale_factor), \
+                int(way_point[1]*scale_factor):int((way_point[1]+2)*scale_factor)] = [0, 192, 255]
+    if len(walked_traj) > 0 and path:  
+        for way_point_ in walked_traj:
+            vis_grid[int(way_point_[0]*scale_factor):int((way_point_[0]+2)*scale_factor), \
+                int(way_point_[1]*scale_factor):int((way_point_[1]+2)*scale_factor)] = [0, 0, 0]
+    # Points
+    if len(start_agent_pos) > 0 and s:
+        cv2.drawMarker(vis_grid, (int(start_agent_pos[0][1]*scale_factor), int(start_agent_pos[0][0]*scale_factor)), \
+            (255, 0, 0), markerType=cv2.MARKER_TILTED_CROSS, markerSize=8, thickness=2, line_type=cv2.LINE_AA)
+    if len(goal_agent_pos) > 0 and g:   
+        cv2.drawMarker(vis_grid, (int(goal_agent_pos[0][1]*scale_factor), int(goal_agent_pos[0][0]*scale_factor)), \
+            (0, 255, 0), markerType=cv2.MARKER_TILTED_CROSS, markerSize=8, thickness=2, line_type=cv2.LINE_AA)
+    assert len(cur_agent_pos) == 1
+    if curr:
+        cv2.drawMarker(vis_grid, (int(cur_agent_pos[0][1]*scale_factor), int(cur_agent_pos[0][0]*scale_factor)), \
+            (255, 0, 0), markerType=cv2.MARKER_DIAMOND, markerSize=10, thickness=3, line_type=cv2.LINE_AA)
+
+    return vis_grid

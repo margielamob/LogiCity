@@ -29,6 +29,17 @@ class City:
         self.label2type = LABEL_MAP
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
 
+    def update(self):
+        new_matrix = torch.zeros_like(self.city_grid)
+        for agent in self.agents:
+            # we use the current map for update, i.e., the agents don't know other's behavior
+            local_action = agent.get_next_action(self.city_grid)
+            curr_layer = self.city_grid[agent.layer_id]
+            next_layer = agent.move(local_action, curr_layer, self.type2label[agent.type])
+            new_matrix[agent.layer_id] = next_layer
+        # Update city grid after all the agents make decisions
+        self.city_grid[2:] = new_matrix[2:]
+
     def add_building(self, building):
         """Add a building to the city and mark its position on the grid."""
         self.buildings.append(building)
@@ -60,7 +71,7 @@ class City:
     def add_agent(self, agent):
         """Add a agents to the city and mark its position on the grid. Label correspons
             to the current position, Label+0.1 denotes planned global path, Label+0.3 denotes goal point,
-            Label+0.2 denoets next position and, Label-0.1 means walked position
+            Label+0.2 denoets next position and, Label-0.1 means walked position, Label-0.2 means start position
         """
         self.agents.append(agent)
         agent_layer = torch.zeros((1, self.grid_size[0], self.grid_size[1]))
