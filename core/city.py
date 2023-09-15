@@ -14,7 +14,8 @@ LABEL_MAP = {
     5: 'Office',
     6: 'Garage',
     7: 'Store',
-    8: 'Pedestrian'
+    8: 'Pedestrian',
+    9: 'Car'
 }
 
 class City:
@@ -46,9 +47,9 @@ class City:
         new_matrix = torch.zeros_like(self.city_grid)
         for agent in self.agents:
             # we use the current map for update, i.e., the agents don't know other's behavior
-            local_action = agent.get_next_action(self.city_grid)
-            curr_layer = self.city_grid[agent.layer_id]
-            next_layer = agent.move(local_action, curr_layer)
+            # re-initialized agents may update city matrix as well
+            local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid)
+            next_layer = agent.move(local_action, new_matrix[agent.layer_id])
             new_matrix[agent.layer_id] = next_layer
         # Update city grid after all the agents make decisions
         self.city_grid[2:] = new_matrix[2:]
@@ -90,10 +91,12 @@ class City:
         agent_layer = torch.zeros((1, self.grid_size[0], self.grid_size[1]))
         agent_code = self.type2label[agent.type]
         # draw agent
-        agent_layer[0][agent.start[0]:agent.start[0]+agent.size, agent.start[1]:agent.start[1]+agent.size] = agent_code
-        agent_layer[0][agent.goal[0]:agent.goal[0]+agent.size, agent.goal[1]:agent.goal[1]+agent.size] = agent_code + 0.3
+        agent_layer[0][agent.start[0], agent.start[1]] = agent_code
+        agent_layer[0][agent.goal[0], agent.goal[1]] = agent_code + 0.3
         for way_points in agent.global_traj[1:-1]:
-            agent_layer[0][way_points[0]:way_points[0]+agent.size, way_points[1]:way_points[1]+agent.size] = agent_code + 0.1
+            if torch.all(way_points==agent.start) or torch.all(way_points==agent.goal):
+                continue
+            agent_layer[0][way_points[0], way_points[1]] = agent_code + 0.1
         agent.layer_id = self.city_grid.shape[0]
         self.city_grid = torch.concat([self.city_grid, agent_layer], dim=0)
         self.layers += 1

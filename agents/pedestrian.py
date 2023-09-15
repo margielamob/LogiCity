@@ -3,22 +3,10 @@ import torch
 import torch.nn.functional as F
 from utils.find import find_nearest_building, find_building_mask
 from utils.sample import sample_start_goal
+from core.city import LABEL_MAP
 import logging
 
 logger = logging.getLogger(__name__)
-
-LABEL_MAP = {
-    -1: 'Overlap',
-    0: 'Under Construction',
-    1: 'Walking Street',
-    2: 'Traffic Street',
-    3: 'House',
-    4: 'Gas Station',
-    5: 'Office',
-    6: 'Garage',
-    7: 'Store',
-    8: 'Pedestrian'
-}
 
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
@@ -97,10 +85,10 @@ class Pedestrian(Agent):
             if torch.all(self.pos == self.goal):
                 self.reach_goal = True
                 logger.info("{}_{} reached goal! Will change goal in the next step!".format(self.type, self.id))
-                return self.action_space[-1]
+                return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
                 # action = local_planner(world_state_matrix, self.layer_id)
-                return self.get_global_action()
+                return self.get_global_action(), world_state_matrix[self.layer_id]
         else:
             logger.info("Generating new goal and gloabl plans for {}_{}...".format(self.type, self.id))
             self.start = self.goal.clone()
@@ -130,10 +118,10 @@ class Pedestrian(Agent):
             world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
             world_state_matrix[self.layer_id][self.goal[0], self.goal[1]] = TYPE_MAP[self.type] + 0.3
             for way_points in self.global_traj[1:-1]:
-                world_state_matrix[self.layer_id][way_points[0]:way_points[0]+self.size, way_points[1]:way_points[1]+self.size] \
+                world_state_matrix[self.layer_id][way_points[0], way_points[1]] \
                     = TYPE_MAP[self.type] + 0.1
 
-            return self.get_global_action()
+            return self.get_global_action(), world_state_matrix[self.layer_id]
 
     def get_global_action(self):
         next_pos = self.global_traj[0]

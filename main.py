@@ -29,9 +29,9 @@ def main(args, logger):
     steps = 0
     cached_observation = {0: city.city_grid}
     while 1:
-        city.update()
-    #     # Visualize the current state of the city (optional)
         logger.info("Simulating Step_{}...".format(steps))
+        city.update()
+        # Visualize the current state of the city (optional)
         visualize_city(city, 1000, -1, "vis/step_{}.png".format(steps))
         steps += 1
         cached_observation[steps] = city.city_grid
