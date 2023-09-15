@@ -372,3 +372,8 @@ agents:
     id: 2
     size: 1
     gplanner: 'A*'
+
+  - type: 'Pedestrian'
+    id: 3
+    size: 1
+    gplanner: 'A*'
