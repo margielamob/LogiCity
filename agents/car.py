@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
-class Pedestrian(Agent):
+class Car(Agent):
     def __init__(self, type, size, id, world_state_matrix, global_planner):
         self.start_point_list = None
         self.goal_point_list = None
@@ -18,24 +18,24 @@ class Pedestrian(Agent):
         super().__init__(type, size, id, world_state_matrix)
 
     def init(self, world_state_matrix):
-        WALKING_STREET = 1
+        Traffic_STREET = 2
         CROSSING_STREET = -1
         self.start = torch.tensor(self.get_start(world_state_matrix))
         self.pos = self.start.clone()
         self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
         # specify the occupacy map
-        self.movable_region = (world_state_matrix[1] == WALKING_STREET) | (world_state_matrix[1] == CROSSING_STREET)
+        self.movable_region = (world_state_matrix[1] == Traffic_STREET) | (world_state_matrix[1] == CROSSING_STREET)
         # get global traj on the occupacy map
         self.global_traj = self.global_planner(self.movable_region, self.start, self.goal)
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
     def get_start(self, world_state_matrix):
         # Define the labels for different entities
-        HOUSE = 3
-        OFFICE = 5
-        building = [HOUSE, OFFICE]
+        GAS = 4
+        GARAGE = 6
+        building = [GAS, GARAGE]
         # Find cells that are walking streets and have a house or office around them
-        desired_locations = sample_start_goal(world_state_matrix, 1, building, kernel_size=5)
+        desired_locations = sample_start_goal(world_state_matrix, 2, building, kernel_size=9)
         self.start_point_list = torch.nonzero(desired_locations).tolist()
         random_index = torch.randint(0, len(self.start_point_list), (1,)).item()
         
@@ -47,13 +47,13 @@ class Pedestrian(Agent):
 
     def get_goal(self, world_state_matrix, start_point):
         # Define the labels for different entities
-        HOUSE = 3
-        OFFICE = 5
+        GAS = 4
+        GARAGE = 6
         STORE = 7
-        building = [HOUSE, OFFICE, STORE]
+        building = [GAS, GARAGE, STORE]
 
         # Find cells that are walking streets and have a house, office, or store around them
-        self.desired_locations = sample_start_goal(world_state_matrix, 1, building, kernel_size=5)
+        self.desired_locations = sample_start_goal(world_state_matrix, 2, building, kernel_size=9)
         desired_locations = self.desired_locations
 
         # Determine the nearest building to the start point
@@ -63,7 +63,7 @@ class Pedestrian(Agent):
         building_mask = find_building_mask(world_state_matrix, nearest_building)
         
         # Create a mask to exclude areas around the building. We'll dilate the building mask.
-        exclusion_radius = 3  # Excludes surrounding 3 grids around the building
+        exclusion_radius = 7  # Excludes surrounding 3 grids around the building
         expanded_mask = F.max_pool2d(building_mask[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2) > 0
         
         desired_locations[expanded_mask[0, 0]] = False
@@ -101,7 +101,7 @@ class Pedestrian(Agent):
             building_mask = find_building_mask(world_state_matrix, nearest_building)
             
             # Create a mask to exclude areas around the building. We'll dilate the building mask.
-            exclusion_radius = 3  # Excludes surrounding 3 grids around the building
+            exclusion_radius = 7  # Excludes surrounding 3 grids around the building
             expanded_mask = F.max_pool2d(building_mask[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2) > 0
             
             desired_locations[expanded_mask[0, 0]] = False

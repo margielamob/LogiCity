@@ -49,7 +49,7 @@ streets:
     # vertical streets
     # 1st
   - position: [0, 42]
-    length: 240
+    length: 242
     orientation: 'vertical'
     type: 'Traffic Street'
     directions: 2
@@ -72,7 +72,7 @@ streets:
     # vertical streets
     # 2nd
   - position: [0, 90]
-    length: 240
+    length: 242
     orientation: 'vertical'
     type: 'Traffic Street'
     directions: 2
@@ -95,7 +95,7 @@ streets:
     # vertical streets
     # 3rd
   - position: [0, 144]
-    length: 240
+    length: 242
     orientation: 'vertical'
     type: 'Traffic Street'
     directions: 2
@@ -118,7 +118,7 @@ streets:
     # vertical streets
     # 4th
   - position: [0, 190]
-    length: 240
+    length: 242
     orientation: 'vertical'
     type: 'Traffic Street'
     directions: 2
@@ -141,7 +141,7 @@ streets:
     # horizontal streets
     # 1st
   - position: [38, 0]
-    length: 240
+    length: 242
     orientation: 'horizontal'
     type: 'Traffic Street'
     directions: 2
@@ -164,7 +164,7 @@ streets:
     # horizontal streets
     # 2nd
   - position: [84, 0]
-    length: 240
+    length: 242
     orientation: 'horizontal'
     type: 'Traffic Street'
     directions: 2
@@ -187,7 +187,7 @@ streets:
     # horizontal streets
     # 3rd
   - position: [136, 0]
-    length: 240
+    length: 242
     orientation: 'horizontal'
     type: 'Traffic Street'
     directions: 2
@@ -208,9 +208,9 @@ streets:
     width: 2
 
     # horizontal streets
-    # 3rd
+    # 4th
   - position: [190, 0]
-    length: 240
+    length: 242
     orientation: 'horizontal'
     type: 'Traffic Street'
     directions: 2
@@ -376,4 +376,14 @@ agents:
   - type: 'Pedestrian'
     id: 3
     size: 1
+    gplanner: 'A*'
+
+  - type: 'Car'
+    id: 1
+    size: 2
+    gplanner: 'A*'
+
+  - type: 'Car'
+    id: 2
+    size: 2
     gplanner: 'A*'
