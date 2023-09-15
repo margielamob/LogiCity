@@ -1,0 +1,389 @@
+grid_size: [500, 500]
+
+streets:
+  # Main horizontal traffic streets
+  - position: [242, 0]
+    length: 500
+    orientation: 'horizontal'
+    type: 'Traffic Street'
+    directions: 2
+    width: 16
+  
+  - position: [240, 0]
+    length: 242
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+  - position: [258, 0]
+    length: 242
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+  # Main vertical traffic streets
+  - position: [0, 242]
+    length: 500
+    orientation: 'vertical'
+    type: 'Traffic Street'
+    directions: 2
+    width: 16
+  
+  - position: [0, 240]
+    length: 242
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+  - position: [0, 258]
+    length: 242
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+    # Area 1
+    # vertical streets
+    # 1st
+  - position: [0, 42]
+    length: 242
+    orientation: 'vertical'
+    type: 'Traffic Street'
+    directions: 2
+    width: 8
+  
+  - position: [0, 40]
+    length: 240
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+  - position: [0, 50]
+    length: 240
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+    # vertical streets
+    # 2nd
+  - position: [0, 90]
+    length: 242
+    orientation: 'vertical'
+    type: 'Traffic Street'
+    directions: 2
+    width: 8
+  
+  - position: [0, 88]
+    length: 240
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+  - position: [0, 98]
+    length: 240
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+  
+    # vertical streets
+    # 3rd
+  - position: [0, 144]
+    length: 242
+    orientation: 'vertical'
+    type: 'Traffic Street'
+    directions: 2
+    width: 8
+  
+  - position: [0, 142]
+    length: 240
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+  - position: [0, 152]
+    length: 240
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+    # vertical streets
+    # 4th
+  - position: [0, 190]
+    length: 242
+    orientation: 'vertical'
+    type: 'Traffic Street'
+    directions: 2
+    width: 8
+  
+  - position: [0, 188]
+    length: 240
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+  - position: [0, 198]
+    length: 240
+    orientation: 'vertical'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+    # horizontal streets
+    # 1st
+  - position: [38, 0]
+    length: 242
+    orientation: 'horizontal'
+    type: 'Traffic Street'
+    directions: 2
+    width: 8
+  
+  - position: [36, 0]
+    length: 240
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+  - position: [46, 0]
+    length: 240
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+    # horizontal streets
+    # 2nd
+  - position: [84, 0]
+    length: 242
+    orientation: 'horizontal'
+    type: 'Traffic Street'
+    directions: 2
+    width: 8
+  
+  - position: [82, 0]
+    length: 240
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+  - position: [92, 0]
+    length: 240
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+    # horizontal streets
+    # 3rd
+  - position: [136, 0]
+    length: 242
+    orientation: 'horizontal'
+    type: 'Traffic Street'
+    directions: 2
+    width: 8
+  
+  - position: [134, 0]
+    length: 240
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+  - position: [144, 0]
+    length: 240
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+    # horizontal streets
+    # 4th
+  - position: [190, 0]
+    length: 242
+    orientation: 'horizontal'
+    type: 'Traffic Street'
+    directions: 2
+    width: 8
+  
+  - position: [188, 0]
+    length: 240
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+  - position: [198, 0]
+    length: 240
+    orientation: 'horizontal'
+    type: 'Walking Street'
+    directions: 2
+    width: 2
+
+buildings:
+  # Filling spaces between streets with buildings
+  # 1st row
+  - position: [0, 0]
+    size: [36, 40]
+    height: 10
+    type: 'House'
+
+  - position: [0, 52]
+    size: [36, 36]
+    height: 25
+    type: 'Store'
+  
+  - position: [0, 100]
+    size: [36, 42]
+    height: 20
+    type: 'Office'
+
+  - position: [0, 154]
+    size: [36, 34]
+    height: 15
+    type: 'Garage'
+
+  - position: [0, 200]
+    size: [36, 40]
+    height: 20
+    type: 'Gas Station'
+
+  # 2nd row
+  - position: [48, 0]
+    size: [34, 40]
+    height: 10
+    type: 'Store'
+
+  - position: [48, 52]
+    size: [34, 36]
+    height: 25
+    type: 'Garage'
+  
+  - position: [48, 100]
+    size: [34, 42]
+    height: 20
+    type: 'Office'
+
+  - position: [48, 154]
+    size: [34, 34]
+    height: 15
+    type: 'House'
+
+  - position: [48, 200]
+    size: [34, 40]
+    height: 20
+    type: 'Store'
+
+  # 3rd row
+  - position: [94, 0]
+    size: [40, 40]
+    height: 10
+    type: 'Gas Station'
+
+  - position: [94, 52]
+    size: [40, 36]
+    height: 25
+    type: 'Garage'
+  
+  - position: [94, 100]
+    size: [40, 42]
+    height: 20
+    type: 'Store'
+
+  - position: [94, 154]
+    size: [40, 34]
+    height: 15
+    type: 'House'
+
+  - position: [94, 200]
+    size: [40, 40]
+    height: 20
+    type: 'House'
+
+  # 4th row
+  - position: [146, 0]
+    size: [42, 40]
+    height: 10
+    type: 'Office'
+
+  - position: [146, 52]
+    size: [42, 36]
+    height: 25
+    type: 'Office'
+  
+  - position: [146, 100]
+    size: [42, 42]
+    height: 20
+    type: 'Store'
+
+  - position: [146, 154]
+    size: [42, 34]
+    height: 15
+    type: 'Store'
+
+  - position: [146, 200]
+    size: [42, 40]
+    height: 20
+    type: 'Gas Station'
+
+  # 5th row
+  - position: [200, 0]
+    size: [40, 40]
+    height: 10
+    type: 'Office'
+
+  - position: [200, 52]
+    size: [40, 36]
+    height: 25
+    type: 'Garage'
+  
+  - position: [200, 100]
+    size: [40, 42]
+    height: 20
+    type: 'House'
+
+  - position: [200, 154]
+    size: [40, 34]
+    height: 15
+    type: 'House'
+
+  - position: [200, 200]
+    size: [40, 40]
+    height: 20
+    type: 'Store'
+
+agents:
+  - type: 'Pedestrian'
+    id: 1
+    size: 1
+    gplanner: 'A*'
+
+  - type: 'Pedestrian'
+    id: 2
+    size: 1
+    gplanner: 'A*'
+
+  - type: 'Pedestrian'
+    id: 3
+    size: 1
+    gplanner: 'A*'
+
+  - type: 'Car'
+    id: 1
+    size: 2
+    gplanner: 'A*'
+
+  - type: 'Car'
+    id: 2
+    size: 2
+    gplanner: 'A*'
