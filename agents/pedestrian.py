@@ -2,9 +2,25 @@ from .basic import Agent
 import torch
 import torch.nn.functional as F
 from utils.find import find_nearest_building, find_building_mask
+from utils.sample import sample_start_goal
 import logging
 
 logger = logging.getLogger(__name__)
+
+LABEL_MAP = {
+    -1: 'Overlap',
+    0: 'Under Construction',
+    1: 'Walking Street',
+    2: 'Traffic Street',
+    3: 'House',
+    4: 'Gas Station',
+    5: 'Office',
+    6: 'Garage',
+    7: 'Store',
+    8: 'Pedestrian'
+}
+
+TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
 class Pedestrian(Agent):
     def __init__(self, type, size, id, world_state_matrix, global_planner):
@@ -20,40 +36,18 @@ class Pedestrian(Agent):
         self.pos = self.start.clone()
         self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
         # specify the occupacy map
-        movable_region = (world_state_matrix[1] == WALKING_STREET) | (world_state_matrix[1] == CROSSING_STREET)
+        self.movable_region = (world_state_matrix[1] == WALKING_STREET) | (world_state_matrix[1] == CROSSING_STREET)
         # get global traj on the occupacy map
-        self.global_traj = self.global_planner(movable_region, self.start, self.goal)
+        self.global_traj = self.global_planner(self.movable_region, self.start, self.goal)
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
     def get_start(self, world_state_matrix):
         # Define the labels for different entities
-        WALKING_STREET = 1
         HOUSE = 3
         OFFICE = 5
-
-        # Slice the building and street layer
-        street_layer = world_state_matrix[1]
-
-        # Find all walking street cells
-        walking_streets = (street_layer == WALKING_STREET)
-
-        # Define a kernel that captures cells around a central cell.
-        # This kernel will look for a house or office around the central cell.
-        kernel = torch.tensor([
-            [1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1],
-            [1, 1, 0, 1, 1],
-            [1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1]
-        ], dtype=torch.float32).unsqueeze(0).unsqueeze(0)
-
-        # Check for houses and offices around each cell
-        building_layer = world_state_matrix[0]
-        houses_offices = (building_layer == HOUSE) | (building_layer == OFFICE)
-        conv_res = F.conv2d(houses_offices.float().unsqueeze(0).unsqueeze(0), kernel, padding=2)
-
+        building = [HOUSE, OFFICE]
         # Find cells that are walking streets and have a house or office around them
-        desired_locations = (walking_streets & (conv_res.squeeze() > 0))
+        desired_locations = sample_start_goal(world_state_matrix, 1, building, kernel_size=5)
         self.start_point_list = torch.nonzero(desired_locations).tolist()
         random_index = torch.randint(0, len(self.start_point_list), (1,)).item()
         
@@ -65,31 +59,14 @@ class Pedestrian(Agent):
 
     def get_goal(self, world_state_matrix, start_point):
         # Define the labels for different entities
-        WALKING_STREET = 1
         HOUSE = 3
         OFFICE = 5
         STORE = 7
-
-        # Slice the building and street layer
-        street_layer = world_state_matrix[1]
-
-        # Find all walking street cells
-        walking_streets = (street_layer == WALKING_STREET)
-
-        # Define a kernel that captures cells around a central cell.
-        kernel = torch.tensor([
-            [1, 1, 1],
-            [1, 0, 1],
-            [1, 1, 1]
-        ], dtype=torch.float32).unsqueeze(0).unsqueeze(0)
-
-        # Check for houses, offices, and stores around each cell
-        building_layer = world_state_matrix[0]
-        desired_cells = (building_layer == HOUSE) | (building_layer == OFFICE) | (building_layer == STORE)
-        conv_res = F.conv2d(desired_cells.float().unsqueeze(0).unsqueeze(0), kernel, padding=1)
+        building = [HOUSE, OFFICE, STORE]
 
         # Find cells that are walking streets and have a house, office, or store around them
-        desired_locations = (walking_streets & (conv_res.squeeze() > 0))
+        self.desired_locations = sample_start_goal(world_state_matrix, 1, building, kernel_size=5)
+        desired_locations = self.desired_locations
 
         # Determine the nearest building to the start point
         nearest_building = find_nearest_building(world_state_matrix, start_point)
@@ -104,11 +81,11 @@ class Pedestrian(Agent):
         desired_locations[expanded_mask[0, 0]] = False
 
         # Return the indices of the desired locations
-        self.goal_point_list = torch.nonzero(desired_locations).tolist()
-        random_index = torch.randint(0, len(self.goal_point_list), (1,)).item()
+        goal_point_list = torch.nonzero(desired_locations).tolist()
+        random_index = torch.randint(0, len(goal_point_list), (1,)).item()
         
         # Fetch the corresponding location
-        goal_point = self.goal_point_list[random_index]
+        goal_point = goal_point_list[random_index]
 
         # Return the indices of the desired locations
         return goal_point
@@ -116,12 +93,46 @@ class Pedestrian(Agent):
     def get_next_action(self, world_state_matrix):
         # for now, just reckless take the global traj
         # reached goal
-        if torch.all(self.pos == self.goal):
-            self.reach_goal = True
-            logger.info("{}_{} reached goal!".format(self.type, self.id))
-            return self.action_space[-1]
+        if not self.reach_goal:
+            if torch.all(self.pos == self.goal):
+                self.reach_goal = True
+                logger.info("{}_{} reached goal! Will change goal in the next step!".format(self.type, self.id))
+                return self.action_space[-1]
+            else:
+                # action = local_planner(world_state_matrix, self.layer_id)
+                return self.get_global_action()
         else:
-            # action = local_planner(world_state_matrix, self.layer_id)
+            logger.info("Generating new goal and gloabl plans for {}_{}...".format(self.type, self.id))
+            self.start = self.goal.clone()
+            desired_locations = self.desired_locations
+
+            # Determine the nearest building to the start point
+            nearest_building = find_nearest_building(world_state_matrix, self.start)
+
+            # Get the mask for the building containing the nearest_building position
+            building_mask = find_building_mask(world_state_matrix, nearest_building)
+            
+            # Create a mask to exclude areas around the building. We'll dilate the building mask.
+            exclusion_radius = 3  # Excludes surrounding 3 grids around the building
+            expanded_mask = F.max_pool2d(building_mask[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2) > 0
+            
+            desired_locations[expanded_mask[0, 0]] = False
+
+            # Return the indices of the desired locations
+            goal_point_list = torch.nonzero(desired_locations).tolist()
+            random_index = torch.randint(0, len(goal_point_list), (1,)).item()
+            
+            # Fetch the corresponding location
+            self.goal = torch.tensor(goal_point_list[random_index])
+            self.global_traj = self.global_planner(self.movable_region, self.start, self.goal)
+            logger.info("Generating new goal and gloabl plans for {}_{} done!".format(self.type, self.id))
+            self.reach_goal = False
+            world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
+            world_state_matrix[self.layer_id][self.goal[0], self.goal[1]] = TYPE_MAP[self.type] + 0.3
+            for way_points in self.global_traj[1:-1]:
+                world_state_matrix[self.layer_id][way_points[0]:way_points[0]+self.size, way_points[1]:way_points[1]+self.size] \
+                    = TYPE_MAP[self.type] + 0.1
+
             return self.get_global_action()
 
     def get_global_action(self):
@@ -145,8 +156,8 @@ class Pedestrian(Agent):
         else:
             return self.action_space[-1]
 
-    def move(self, action, ped_layer, curr_label):
-        curr_pos = torch.nonzero((ped_layer==curr_label).float())[0]
+    def move(self, action, ped_layer):
+        curr_pos = torch.nonzero((ped_layer==TYPE_MAP[self.type]).float())[0]
         assert torch.all(self.pos == curr_pos)
         next_pos = self.pos.clone()
         # becomes walked grid
@@ -163,6 +174,7 @@ class Pedestrian(Agent):
             next_pos = self.pos.clone()
         self.pos = next_pos.clone()
         # Update Agent Map
-        ped_layer[self.start[0], self.start[1]] = curr_label - 0.2
-        ped_layer[self.pos[0], self.pos[1]] = curr_label
+        ped_layer[self.start[0], self.start[1]] = TYPE_MAP[self.type] - 0.2
+        ped_layer[self.goal[0], self.goal[1]] = TYPE_MAP[self.type] + 0.3
+        ped_layer[self.pos[0], self.pos[1]] = TYPE_MAP[self.type]
         return ped_layer

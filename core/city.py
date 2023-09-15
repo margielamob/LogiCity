@@ -48,7 +48,7 @@ class City:
             # we use the current map for update, i.e., the agents don't know other's behavior
             local_action = agent.get_next_action(self.city_grid)
             curr_layer = self.city_grid[agent.layer_id]
-            next_layer = agent.move(local_action, curr_layer, self.type2label[agent.type])
+            next_layer = agent.move(local_action, curr_layer)
             new_matrix[agent.layer_id] = next_layer
         # Update city grid after all the agents make decisions
         self.city_grid[2:] = new_matrix[2:]
