@@ -43,7 +43,7 @@ def visualize_city(city, resolution, agent_layer=None, file_name="city.png"):
     # Combine the visual grid and the legend side by side
     combined_img = np.hstack((visual_grid, legend_img))
     # just visualize the left corner that is constructed
-    combined_img = combined_img[:int(resolution/2), :int(resolution/2), :]
+    # combined_img = combined_img[:int(resolution/2), :int(resolution/2), :]
 
     # Use OpenCV to display the city
     cv2.imwrite(file_name, combined_img)
