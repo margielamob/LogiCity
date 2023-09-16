@@ -2,8 +2,9 @@
 class Building:
     TYPES = ['House', 'Gas Station', 'Office', 'Garage', 'Store']
 
-    def __init__(self, position=(0, 0), size=(1, 1), height=1, type='House'):
+    def __init__(self, block=1, position=(0, 0), size=(1, 1), height=1, type='House'):
         self.position = position
+        self.block = block
         self.size = size
         self.height = height
         if type in Building.TYPES:

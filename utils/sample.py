@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 def sample_start_goal(world_matrix, available_street_id, availabe_building_id, kernel_size):
     # Slice the building and street layer
-    street_layer = world_matrix[1]
+    street_layer = world_matrix[2]
 
     # Find all walking street cells
     walking_streets = (street_layer == available_street_id)
@@ -18,7 +18,7 @@ def sample_start_goal(world_matrix, available_street_id, availabe_building_id, k
     padding = center
 
     # Check for houses and offices around each cell
-    building_layer = world_matrix[0]
+    building_layer = world_matrix[1]
     houses_offices = torch.any(torch.stack([(building_layer == val) for val in availabe_building_id]), dim=0)
     conv_res = F.conv2d(houses_offices.float().unsqueeze(0).unsqueeze(0), kernel, padding=padding)
 

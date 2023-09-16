@@ -24,7 +24,7 @@ class Pedestrian(Agent):
         self.pos = self.start.clone()
         self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
         # specify the occupacy map
-        self.movable_region = (world_state_matrix[1] == WALKING_STREET) | (world_state_matrix[1] == CROSSING_STREET)
+        self.movable_region = (world_state_matrix[2] == WALKING_STREET) | (world_state_matrix[2] == CROSSING_STREET)
         # get global traj on the occupacy map
         self.global_traj = self.global_planner(self.movable_region, self.start, self.goal)
         logger.info("{}_{} initialization done!".format(self.type, self.id))
@@ -35,7 +35,7 @@ class Pedestrian(Agent):
         OFFICE = 5
         building = [HOUSE, OFFICE]
         # Find cells that are walking streets and have a house or office around them
-        desired_locations = sample_start_goal(world_state_matrix, 1, building, kernel_size=5)
+        desired_locations = sample_start_goal(world_state_matrix, 1, building, kernel_size=7)
         self.start_point_list = torch.nonzero(desired_locations).tolist()
         random_index = torch.randint(0, len(self.start_point_list), (1,)).item()
         
@@ -53,17 +53,19 @@ class Pedestrian(Agent):
         building = [HOUSE, OFFICE, STORE]
 
         # Find cells that are walking streets and have a house, office, or store around them
-        self.desired_locations = sample_start_goal(world_state_matrix, 1, building, kernel_size=5)
+        self.desired_locations = sample_start_goal(world_state_matrix, 1, building, kernel_size=3)
         desired_locations = self.desired_locations
 
         # Determine the nearest building to the start point
         nearest_building = find_nearest_building(world_state_matrix, start_point)
+        start_block = world_state_matrix[0][nearest_building[0], nearest_building[1]]
 
         # Get the mask for the building containing the nearest_building position
-        building_mask = find_building_mask(world_state_matrix, nearest_building)
+        # building_mask = find_building_mask(world_state_matrix, nearest_building)
+        building_mask = world_state_matrix[0] == start_block
         
         # Create a mask to exclude areas around the building. We'll dilate the building mask.
-        exclusion_radius = 3  # Excludes surrounding 3 grids around the building
+        exclusion_radius = 5  # Excludes surrounding 5 grids around the block
         expanded_mask = F.max_pool2d(building_mask[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2) > 0
         
         desired_locations[expanded_mask[0, 0]] = False
@@ -96,12 +98,14 @@ class Pedestrian(Agent):
 
             # Determine the nearest building to the start point
             nearest_building = find_nearest_building(world_state_matrix, self.start)
+            start_block = world_state_matrix[0][nearest_building[0], nearest_building[1]]
 
             # Get the mask for the building containing the nearest_building position
-            building_mask = find_building_mask(world_state_matrix, nearest_building)
+            # building_mask = find_building_mask(world_state_matrix, nearest_building)
+            building_mask = world_state_matrix[0] == start_block
             
             # Create a mask to exclude areas around the building. We'll dilate the building mask.
-            exclusion_radius = 3  # Excludes surrounding 3 grids around the building
+            exclusion_radius = 5  # Excludes surrounding 5 grids around the block
             expanded_mask = F.max_pool2d(building_mask[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2) > 0
             
             desired_locations[expanded_mask[0, 0]] = False

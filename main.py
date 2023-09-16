@@ -11,7 +11,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
 
     # Add arguments for grid size, agent start and goal positions, etc.
-    parser.add_argument('--map', type=str, default="TEST.yaml", help='YAML path to the map.')
+    parser.add_argument('--map', type=str, default="config/maps/v0.2.yaml", help='YAML path to the map.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log")
     parser.add_argument('--exp', type=str, default="debug")

@@ -24,7 +24,7 @@ class Car(Agent):
         self.pos = self.start.clone()
         self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
         # specify the occupacy map
-        self.movable_region = (world_state_matrix[1] == Traffic_STREET) | (world_state_matrix[1] == CROSSING_STREET)
+        self.movable_region = (world_state_matrix[2] == Traffic_STREET) | (world_state_matrix[2] == CROSSING_STREET)
         # get global traj on the occupacy map
         self.global_traj = self.global_planner(self.movable_region, self.start, self.goal)
         logger.info("{}_{} initialization done!".format(self.type, self.id))
@@ -35,7 +35,7 @@ class Car(Agent):
         GARAGE = 6
         building = [GAS, GARAGE]
         # Find cells that are walking streets and have a house or office around them
-        desired_locations = sample_start_goal(world_state_matrix, 2, building, kernel_size=9)
+        desired_locations = sample_start_goal(world_state_matrix, 2, building, kernel_size=13)
         self.start_point_list = torch.nonzero(desired_locations).tolist()
         random_index = torch.randint(0, len(self.start_point_list), (1,)).item()
         
@@ -58,9 +58,11 @@ class Car(Agent):
 
         # Determine the nearest building to the start point
         nearest_building = find_nearest_building(world_state_matrix, start_point)
+        start_block = world_state_matrix[0][nearest_building[0], nearest_building[1]]
 
         # Get the mask for the building containing the nearest_building position
-        building_mask = find_building_mask(world_state_matrix, nearest_building)
+        # building_mask = find_building_mask(world_state_matrix, nearest_building)
+        building_mask = world_state_matrix[0] == start_block
         
         # Create a mask to exclude areas around the building. We'll dilate the building mask.
         exclusion_radius = 7  # Excludes surrounding 3 grids around the building
