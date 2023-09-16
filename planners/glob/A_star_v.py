@@ -18,8 +18,42 @@ class Node:
 def heuristic(point_a, point_b):
     # Manhattan distance on a grid
     return torch.abs(point_a[0] - point_b[0]).item() + torch.abs(point_a[1] - point_b[1]).item()
+
+def is_movement_valid(current, next_position, midline_matrix):
+    delta_x = next_position[0] - current[0]
+    delta_y = next_position[1] - current[1]
+
+    # Using a 4x4 window to determine road orientation
+    window_size = 3
+    start_x, end_x = max(0, current[0] - window_size), min(midline_matrix.shape[0], current[0] + window_size + 1)
+    start_y, end_y = max(0, current[1] - window_size), min(midline_matrix.shape[1], current[1] + window_size + 1)
+
+    local_midline = midline_matrix[start_x:end_x, start_y:end_y]
+    vertical_lines = torch.sum(local_midline, dim=1)
+    horizontal_lines = torch.sum(local_midline, dim=0)
+
+    if horizontal_lines.max().item()>4:
+        assert vertical_lines.max().item()<4
+        # vertical line, check delta_x
+        if delta_x < 0 :  # Moving up
+            # mid line on the left
+            return torch.any(midline_matrix[start_x:end_x, start_y:current[1]])
+        elif delta_x > 0: # Moving down
+            # mid line on the right
+            return torch.any(midline_matrix[start_x:end_x, current[1]:end_y])
+    elif vertical_lines.max().item()>4:
+        assert horizontal_lines.max().item()<4
+        # horizontal line, check delta_y
+        if delta_y < 0 :  # Moving left
+            # mid line on the bottom
+            return torch.any(midline_matrix[current[0]:end_x, start_y:end_y])
+        elif delta_y > 0: # Moving right
+            # mid line on the top
+            return torch.any(midline_matrix[start_x:current[0], start_y:end_y])
+
+    return True
     
-def astar(movable_map, start, end):
+def astar_v(movable_map, midline_matrix, start, end):
     start_node = Node(start, None)
     end_node = Node(end, None)
 
@@ -59,13 +93,17 @@ def astar(movable_map, start, end):
                 or closed_list[node_position.tolist()[0], node_position.tolist()[1]]:
                 continue
 
+            # Check if the car is moving on the right side of the midline
+            if not is_movement_valid(current_node.position, node_position, midline_matrix):
+                continue
+
             new_node = Node(node_position, current_node)
             children.append(new_node)
 
         for child in children:
             child.g = current_node.g + 1
             child.h = heuristic(child.position, end_node.position)
-            child.f = child.g + 3*child.h
+            child.f = child.g + 5*child.h
 
             if child.position in open_dict and child.g > open_dict[child.position].g:
                 continue

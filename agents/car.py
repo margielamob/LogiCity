@@ -5,6 +5,15 @@ from utils.find import find_nearest_building, find_building_mask
 from utils.sample import sample_start_goal
 from core.city import LABEL_MAP
 import logging
+# import cv2
+# import numpy as np
+# # vis quick tool
+# vis = np.zeros((250, 250, 3))
+# vis[self.movable_region] = [255, 0, 0]
+# vis[self.goal[0], self.goal[1]] = [0, 255, 255]
+# vis[self.start[0], self.start[1]] = [0, 255, 0]
+# vis[self.midline_matrix] = [0, 0, 255]
+# cv2.imwrite("test.png", vis)
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +34,9 @@ class Car(Agent):
         self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
         # specify the occupacy map
         self.movable_region = (world_state_matrix[2] == Traffic_STREET) | (world_state_matrix[2] == CROSSING_STREET)
+        self.midline_matrix = (world_state_matrix[2] == Traffic_STREET+0.5)
         # get global traj on the occupacy map
-        self.global_traj = self.global_planner(self.movable_region, self.start, self.goal)
+        self.global_traj = self.global_planner(self.movable_region, self.midline_matrix, self.start, self.goal)
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
     def get_start(self, world_state_matrix):
@@ -35,7 +45,7 @@ class Car(Agent):
         GARAGE = 6
         building = [GAS, GARAGE]
         # Find cells that are walking streets and have a house or office around them
-        desired_locations = sample_start_goal(world_state_matrix, 2, building, kernel_size=13)
+        desired_locations = sample_start_goal(world_state_matrix, 2, building, kernel_size=9)
         self.start_point_list = torch.nonzero(desired_locations).tolist()
         random_index = torch.randint(0, len(self.start_point_list), (1,)).item()
         
@@ -54,7 +64,7 @@ class Car(Agent):
 
         # Find cells that are walking streets and have a house, office, or store around them
         self.desired_locations = sample_start_goal(world_state_matrix, 2, building, kernel_size=9)
-        desired_locations = self.desired_locations
+        desired_locations = self.desired_locations.detach().clone()
 
         # Determine the nearest building to the start point
         nearest_building = find_nearest_building(world_state_matrix, start_point)
@@ -94,7 +104,7 @@ class Car(Agent):
         else:
             logger.info("Generating new goal and gloabl plans for {}_{}...".format(self.type, self.id))
             self.start = self.goal.clone()
-            desired_locations = self.desired_locations
+            desired_locations = self.desired_locations.detach().clone()
 
             # Determine the nearest building to the start point
             nearest_building = find_nearest_building(world_state_matrix, self.start)
@@ -114,7 +124,7 @@ class Car(Agent):
             
             # Fetch the corresponding location
             self.goal = torch.tensor(goal_point_list[random_index])
-            self.global_traj = self.global_planner(self.movable_region, self.start, self.goal)
+            self.global_traj = self.global_planner(self.movable_region,self.midline_matrix, self.start, self.goal)
             logger.info("Generating new goal and gloabl plans for {}_{} done!".format(self.type, self.id))
             self.reach_goal = False
             world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]

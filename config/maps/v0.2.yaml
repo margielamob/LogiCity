@@ -11,11 +11,11 @@ agents:
   id: 3
   size: 1
   type: Pedestrian
-- gplanner: A*
+- gplanner: A*v
   id: 1
   size: 2
   type: Car
-- gplanner: A*
+- gplanner: A*v
   id: 2
   size: 2
   type: Car

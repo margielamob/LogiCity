@@ -54,7 +54,7 @@ class Pedestrian(Agent):
 
         # Find cells that are walking streets and have a house, office, or store around them
         self.desired_locations = sample_start_goal(world_state_matrix, 1, building, kernel_size=3)
-        desired_locations = self.desired_locations
+        desired_locations = self.desired_locations.detach().clone()
 
         # Determine the nearest building to the start point
         nearest_building = find_nearest_building(world_state_matrix, start_point)
@@ -94,7 +94,7 @@ class Pedestrian(Agent):
         else:
             logger.info("Generating new goal and gloabl plans for {}_{}...".format(self.type, self.id))
             self.start = self.goal.clone()
-            desired_locations = self.desired_locations
+            desired_locations = self.desired_locations.detach().clone()
 
             # Determine the nearest building to the start point
             nearest_building = find_nearest_building(world_state_matrix, self.start)
