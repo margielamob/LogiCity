@@ -80,7 +80,9 @@ def astar_v(movable_map, midline_matrix, start, end):
             return path[::-1]  # Return reversed path
 
         children = []
-        for new_position in [torch.tensor((0, -1)), torch.tensor((0, 1)), torch.tensor((-1, 0)), torch.tensor((1, 0))]:
+        # Consider positions 1 and 2 grids away
+        for new_position in [torch.tensor((0, -1)), torch.tensor((0, 1)), torch.tensor((-1, 0)), torch.tensor((1, 0)),
+                             torch.tensor((0, -2)), torch.tensor((0, 2)), torch.tensor((-2, 0)), torch.tensor((2, 0))]:
             node_position = current_node.position + new_position
 
             if (node_position[0].item() > (movable_map.shape[0] - 1) or 
@@ -101,9 +103,10 @@ def astar_v(movable_map, midline_matrix, start, end):
             children.append(new_node)
 
         for child in children:
-            child.g = current_node.g + 1
+            stride = torch.norm(child.position.float() - current_node.position.float(), p=1).item()  # 1 or 2
+            child.g = current_node.g + (1 if stride == 2 else 1.5)  # Lower cost for a stride of 2
             child.h = heuristic(child.position, end_node.position)
-            child.f = child.g + 5*child.h
+            child.f = child.g + 5 * child.h
 
             if child.position in open_dict and child.g > open_dict[child.position].g:
                 continue

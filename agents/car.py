@@ -139,8 +139,6 @@ class Car(Agent):
         next_pos = self.global_traj[0]
         self.global_traj.pop(0)
         del_pos = next_pos - self.pos
-        dis = torch.tensor(del_pos).float().norm().item()
-        assert dis <= 1
         if del_pos[1] < 0:
             # left
             return self.action_space[0]
