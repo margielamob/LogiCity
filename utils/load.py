@@ -54,7 +54,19 @@ class CityLoader:
                 global_planner=GPlanner_mapper[agents_data['gplanner']],
                 world_state_matrix=city.city_grid
             )
-            city.add_agent(agent)
+            city.add_building(building)
+            
+        # Add agents to the city
+        # logger.info("Adding {} agents".format(len(city_config["agents"])))
+        # for agents_data in tqdm(city_config["agents"]):
+        #     agent = Agent_mapper[agents_data["type"]](
+        #         type=agents_data["type"],
+        #         size=agents_data["size"],
+        #         id=agents_data["id"],
+        #         global_planner=GPlanner_mapper[agents_data['gplanner']],
+        #         world_state_matrix=city.city_grid
+        #     )
+        #     city.add_agent(agent)
 
         logger.info("Done!")
         return city
