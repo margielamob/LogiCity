@@ -34,7 +34,7 @@ def main(args, logger):
         # Visualize the current state of the city (optional)
         visualize_city(city, 1000, -1, "vis/step_{}.png".format(steps))
         steps += 1
-        cached_observation[steps] = city.city_grid
+        # cached_observation[steps] = city.city_grid
 
     # if agent.at_goal():
     #     print("Agent reached its goal!")

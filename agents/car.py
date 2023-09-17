@@ -25,6 +25,18 @@ class Car(Agent):
         self.goal_point_list = None
         self.global_planner = global_planner
         super().__init__(type, size, id, world_state_matrix)
+        # Actions: ["left_1", "right_1", "up_1", "down_1", "left_2", "right_2", "up_2", "down_2", "stop"]
+        self.action_space = torch.tensor(range(9))
+        self.action_to_move = {
+            self.action_space[0].item(): torch.tensor((0, -1)),
+            self.action_space[1].item(): torch.tensor((0, 1)),
+            self.action_space[2].item(): torch.tensor((-1, 0)),
+            self.action_space[3].item(): torch.tensor((1, 0)),
+            self.action_space[4].item(): torch.tensor((0, -2)),
+            self.action_space[5].item(): torch.tensor((0, 2)),
+            self.action_space[6].item(): torch.tensor((-2, 0)),
+            self.action_space[7].item(): torch.tensor((2, 0))
+        }
 
     def init(self, world_state_matrix):
         Traffic_STREET = 2
@@ -124,7 +136,7 @@ class Car(Agent):
             
             # Fetch the corresponding location
             self.goal = torch.tensor(goal_point_list[random_index])
-            self.global_traj = self.global_planner(self.movable_region,self.midline_matrix, self.start, self.goal)
+            self.global_traj = self.global_planner(self.movable_region, self.midline_matrix, self.start, self.goal)
             logger.info("Generating new goal and gloabl plans for {}_{} done!".format(self.type, self.id))
             self.reach_goal = False
             world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
@@ -141,16 +153,16 @@ class Car(Agent):
         del_pos = next_pos - self.pos
         if del_pos[1] < 0:
             # left
-            return self.action_space[0]
+            return self.action_space[0] if torch.abs(del_pos[1]) == 1 else self.action_space[4]
         elif del_pos[1] > 0:
             # right
-            return self.action_space[1]
+            return self.action_space[1] if torch.abs(del_pos[1]) == 1 else self.action_space[5]
         elif del_pos[0] < 0:
             # up
-            return self.action_space[2]
+            return self.action_space[2] if torch.abs(del_pos[0]) == 1 else self.action_space[6]
         elif del_pos[0] > 0:
-            # up
-            return self.action_space[3]
+            # down
+            return self.action_space[3] if torch.abs(del_pos[0]) == 1 else self.action_space[7]
         else:
             return self.action_space[-1]
 
@@ -160,16 +172,7 @@ class Car(Agent):
         next_pos = self.pos.clone()
         # becomes walked grid
         ped_layer[self.pos[0], self.pos[1]] -= 0.1
-        if action == self.action_space[0]:
-            next_pos[1] -= 1
-        elif action == self.action_space[1]:
-            next_pos[1] += 1
-        elif action == self.action_space[2]:
-            next_pos[0] -= 1
-        elif action == self.action_space[3]:
-            next_pos[0] += 1
-        else:
-            next_pos = self.pos.clone()
+        next_pos += self.action_to_move.get(action.item(), torch.tensor((0, 0)))
         self.pos = next_pos.clone()
         # Update Agent Map
         ped_layer[self.start[0], self.start[1]] = TYPE_MAP[self.type] - 0.2
