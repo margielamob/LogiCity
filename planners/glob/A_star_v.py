@@ -31,27 +31,40 @@ def is_movement_valid(current, next_position, midline_matrix):
     local_midline = midline_matrix[start_x:end_x, start_y:end_y]
     vertical_lines = torch.sum(local_midline, dim=1)
     horizontal_lines = torch.sum(local_midline, dim=0)
+    flag = True
 
     if horizontal_lines.max().item()>4:
         assert vertical_lines.max().item()<4
-        # vertical line, check delta_x
-        if delta_x < 0 :  # Moving up
-            # mid line on the left
-            return torch.any(midline_matrix[start_x:end_x, start_y:current[1]])
-        elif delta_x > 0: # Moving down
-            # mid line on the right
-            return torch.any(midline_matrix[start_x:end_x, current[1]:end_y])
+        # vertical line, check delta_y for not cross mid line
+        if delta_y < 0 :  # Moving left
+            flag = not torch.any(midline_matrix[start_x:end_x, next_position[1]:current[1]])
+        elif delta_y > 0: # Moving right
+            flag = not torch.any(midline_matrix[start_x:end_x, current[1]:next_position[1]])
+        if flag:
+        # vertical line, check delta_x for moving on the right
+            if delta_x < 0 :  # Moving up
+                # mid line on the left
+                return torch.any(midline_matrix[start_x:end_x, start_y:current[1]])
+            elif delta_x > 0: # Moving down
+                # mid line on the right
+                return torch.any(midline_matrix[start_x:end_x, current[1]:end_y])
     elif vertical_lines.max().item()>4:
         assert horizontal_lines.max().item()<4
-        # horizontal line, check delta_y
-        if delta_y < 0 :  # Moving left
-            # mid line on the bottom
-            return torch.any(midline_matrix[current[0]:end_x, start_y:end_y])
-        elif delta_y > 0: # Moving right
-            # mid line on the top
-            return torch.any(midline_matrix[start_x:current[0], start_y:end_y])
+        # horizontal line, check delta_x for not cross mid line
+        if delta_x < 0 :  # Moving up
+            flag = not torch.any(midline_matrix[next_position[0]:current[0], start_y:end_y])
+        elif delta_x > 0: # Moving down
+            flag = not torch.any(midline_matrix[current[0]:next_position[0], start_y:end_y])
+        if flag:
+            # horizontal line, check delta_y for moving on the right
+            if delta_y < 0 :  # Moving left
+                # mid line on the bottom
+                return torch.any(midline_matrix[current[0]:end_x, start_y:end_y])
+            elif delta_y > 0: # Moving right
+                # mid line on the top
+                return torch.any(midline_matrix[start_x:current[0], start_y:end_y])
 
-    return True
+    return flag
     
 def astar_v(movable_map, midline_matrix, start, end):
     start_node = Node(start, None)
