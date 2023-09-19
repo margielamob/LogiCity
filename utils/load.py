@@ -1,7 +1,6 @@
 import yaml
 from core import City, Building, Street
 from agents import Agent_mapper
-from planners import GPlanner_mapper
 from tqdm import tqdm
 import logging
 
@@ -52,7 +51,7 @@ class CityLoader:
                 type=agents_data["type"],
                 size=agents_data["size"],
                 id=agents_data["id"],
-                global_planner=GPlanner_mapper[agents_data['gplanner']],
+                global_planner=agents_data['gplanner'],
                 world_state_matrix=city.city_grid
             )
             city.add_agent(agent)

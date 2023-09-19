@@ -1,131 +1,114 @@
 import torch
 import networkx as nx
-from queue import PriorityQueue
+from utils.find import find_midroad_segments
 
-class Node:
-    def __init__(self, position:torch.tensor, parent:torch.tensor):
-        self.position = position
-        self.parent = parent
-        self.g = 0  # Cost from start to current node
-        self.h = 0  # Heuristic based estimated cost from current node to end
-        self.f = 0  # Total cost
+class ASTAR_G:
+    def __init__(self, movable_map, midline_matrix, offset):
+        self.road_offset = offset
+        self.movable_map = movable_map
+        self.midroad_segments = find_midroad_segments(midline_matrix)
+        self.build_graph(self.midroad_segments)
 
-    def __eq__(self, other):
-        return torch.all(self.position == other.position)
-
-    def __lt__(self, other):
-        return self.f < other.f
-
-def heuristic(point_a, point_b):
-    # Manhattan distance on a grid
-    return torch.abs(point_a[0] - point_b[0]).item() + torch.abs(point_a[1] - point_b[1]).item()
-
-def is_movement_valid(current, next_position, midline_matrix):
-    delta_x = next_position[0] - current[0]
-    delta_y = next_position[1] - current[1]
-
-    # Using a 4x4 window to determine road orientation
-    window_size = 3
-    start_x, end_x = max(0, current[0] - window_size), min(midline_matrix.shape[0], current[0] + window_size + 1)
-    start_y, end_y = max(0, current[1] - window_size), min(midline_matrix.shape[1], current[1] + window_size + 1)
-
-    local_midline = midline_matrix[start_x:end_x, start_y:end_y]
-    vertical_lines = torch.sum(local_midline, dim=1)
-    horizontal_lines = torch.sum(local_midline, dim=0)
-    flag = True
-
-    if horizontal_lines.max().item()>4:
-        assert vertical_lines.max().item()<4
-        # vertical line, check delta_y for not cross mid line
-        if delta_y < 0 :  # Moving left
-            flag = not torch.any(midline_matrix[start_x:end_x, next_position[1]:current[1]])
-        elif delta_y > 0: # Moving right
-            flag = not torch.any(midline_matrix[start_x:end_x, current[1]:next_position[1]])
-        if flag:
-        # vertical line, check delta_x for moving on the right
-            if delta_x < 0 :  # Moving up
-                # mid line on the left
-                return torch.any(midline_matrix[start_x:end_x, start_y:current[1]])
-            elif delta_x > 0: # Moving down
-                # mid line on the right
-                return torch.any(midline_matrix[start_x:end_x, current[1]:end_y])
-    elif vertical_lines.max().item()>4:
-        assert horizontal_lines.max().item()<4
-        # horizontal line, check delta_x for not cross mid line
-        if delta_x < 0 :  # Moving up
-            flag = not torch.any(midline_matrix[next_position[0]:current[0], start_y:end_y])
-        elif delta_x > 0: # Moving down
-            flag = not torch.any(midline_matrix[current[0]:next_position[0], start_y:end_y])
-        if flag:
-            # horizontal line, check delta_y for moving on the right
-            if delta_y < 0 :  # Moving left
-                # mid line on the bottom
-                return torch.any(midline_matrix[current[0]:end_x, start_y:end_y])
-            elif delta_y > 0: # Moving right
-                # mid line on the top
-                return torch.any(midline_matrix[start_x:current[0], start_y:end_y])
-
-    return flag
-    
-def astar_v(movable_map, midline_matrix, start, end):
-    start_node = Node(start, None)
-    end_node = Node(end, None)
-
-    open_queue = PriorityQueue()
-    open_queue.put(start_node)
-    open_dict = {start: start_node}
-    closed_list = torch.zeros(movable_map.shape, dtype=torch.bool)
-
-    while not open_queue.empty():
-        current_node = open_queue.get()
+    def build_graph(self, road_segments):
+        self.G = nx.DiGraph()  # Use a directed graph for one-directional edges
+        # Connect each start point to its end point
+        self.start_lists = []
+        self.end_lists = []
+        for segment in road_segments:
+            mid_start, mid_end = segment
+            if mid_start[0] == mid_end[0]:
+                assert mid_end[1] > mid_start[1]
+                # horizonal mid line
+                bottom_s = mid_start + torch.tensor([self.road_offset, -1])
+                bottom_e = mid_end + torch.tensor([self.road_offset, 1])
+                self.G.add_edge(tuple(bottom_s.tolist()), tuple(bottom_e.tolist()), weight=torch.dist(bottom_s.float(), bottom_e.float()).item())
+                self.start_lists.append(bottom_s.unsqueeze(0))
+                self.end_lists.append(bottom_e.unsqueeze(0))
+                top_s = mid_end + torch.tensor([-self.road_offset, 1])
+                top_e = mid_start + torch.tensor([-self.road_offset, -1])
+                self.G.add_edge(tuple(top_s.tolist()), tuple(top_e.tolist()), weight=torch.dist(top_s.float(), top_e.float()).item())
+                self.start_lists.append(top_s.unsqueeze(0))
+                self.end_lists.append(top_e.unsqueeze(0))
+            elif mid_start[1] == mid_end[1]:
+                assert mid_end[0] > mid_start[0]
+                # vertical mid line
+                left_s = mid_start + torch.tensor([-1, -self.road_offset])
+                left_e = mid_end + torch.tensor([1, -self.road_offset])
+                self.G.add_edge(tuple(left_s.tolist()), tuple(left_e.tolist()), weight=torch.dist(left_s.float(), left_e.float()).item())
+                self.start_lists.append(left_s.unsqueeze(0))
+                self.end_lists.append(left_e.unsqueeze(0))
+                right_s = mid_end + torch.tensor([1, self.road_offset])
+                right_e = mid_start + torch.tensor([-1, self.road_offset])
+                self.G.add_edge(tuple(right_s.tolist()), tuple(right_e.tolist()), weight=torch.dist(right_s.float(), right_e.float()).item())
+                self.start_lists.append(right_s.unsqueeze(0))
+                self.end_lists.append(right_e.unsqueeze(0))
         
-        if current_node.position not in open_dict:
-            continue
-            
-        del open_dict[current_node.position]
+        # Connect each end point to other start points (this only happens in intersections)
+        for end_point in self.end_lists:
+            distances = torch.norm(torch.cat(self.start_lists, dim=0).float() - end_point.float(), dim=1)
+            near_starts = torch.cat(self.start_lists, dim=0)[distances < 12]
+            for starts in near_starts.tolist():
+                self.G.add_edge(tuple(end_point.tolist()[0]), tuple(starts), weight=torch.dist(end_point.float(), torch.tensor(starts).float()).item())
 
-        closed_list[current_node.position.tolist()[0], current_node.position.tolist()[1]] = True
+    def find_nearest_node(self, point, origin_list = 's'):
+        intersection = torch.zeros_like(point)
+        next_node_list = self.start_lists if origin_list=='s' else self.end_lists
+        judging_list = self.end_lists if origin_list=='s' else self.start_lists
+        next_node_list = torch.cat(next_node_list, dim=0)
+        judging_list = torch.cat(judging_list, dim=0)
+        dis = torch.abs(point - next_node_list)
+        min_dis_value, ind = torch.min(dis, dim=0)
+        pos_ind = min_dis_value.min(dim=0).indices.item()
+        flag = False
+        if pos_ind == 1:
+            # on vertical street
+            intersection[0] = point[0]
+            intersection[1] = next_node_list[ind[pos_ind]][pos_ind]
+            filtered_node_list = next_node_list[next_node_list[:, pos_ind] == intersection[1]]
+            filtered_juding_list = judging_list[judging_list[:, pos_ind] == intersection[1]]
+            # find the goal that so not have start in between
+            for k in range(filtered_node_list.shape[0]):
+                candidate = filtered_node_list[k]
+                if torch.any(filtered_juding_list[0]<= max(candidate[0].item(), point[0].item()) and filtered_juding_list[0] >= min(candidate[0].item(), point[0].item())):
+                    continue
+                else:
+                    flag = True
+                    break
+        else:
+            # on horizonal street
+            intersection[1] = point[1]
+            intersection[0] = next_node_list[ind[pos_ind]][pos_ind]
+            filtered_node_list = next_node_list[next_node_list[:, pos_ind] == intersection[0]]
+            filtered_juding_list = judging_list[judging_list[:, pos_ind] == intersection[0]]
+            # find the goal that so not have start in between
+            for k in range(filtered_node_list.shape[0]):
+                candidate = filtered_node_list[k]
+                if torch.any(filtered_juding_list[:, 1]<= max(candidate[1].item(), point[1].item()) & filtered_juding_list[:, 1] >= min(candidate[1].item(), point[1].item())):
+                    continue
+                else:
+                    flag = True
+                    break
+        
+        assert flag
+        return intersection, candidate
 
-        if current_node == end_node:
-            path = []
-            while current_node:
-                path.append(current_node.position)
-                current_node = current_node.parent
-            return path[::-1]  # Return reversed path
+    def a_star_on_graph(G, start, end):
+        # Here we're just calling the NetworkX A* but you can replace it with your own A* for more customization.
+        path = nx.astar_path(G, start, end, weight='weight')
+        return path
 
-        children = []
-        # Consider positions 1 and 2 grids away
-        for new_position in [torch.tensor((0, -1)), torch.tensor((0, 1)), torch.tensor((-1, 0)), torch.tensor((1, 0)),
-                             torch.tensor((0, -2)), torch.tensor((0, 2)), torch.tensor((-2, 0)), torch.tensor((2, 0))]:
-            node_position = current_node.position + new_position
 
-            if (node_position[0].item() > (movable_map.shape[0] - 1) or 
-                node_position[0].item() < 0 or 
-                node_position[1].item() > (movable_map.shape[1] -1) or 
-                node_position[1].item() < 0):
-                continue
+    def plan(self, start, end):
 
-            if not movable_map[node_position.tolist()[0], node_position.tolist()[1]] \
-                or closed_list[node_position.tolist()[0], node_position.tolist()[1]]:
-                continue
+        # Find intersections of start and end with their nearest road segments.
+        intersect, close_goal = self.find_nearest_node(start, origin_list = 'g')
+        self.G.add_edge(tuple(start.tolist()), tuple(intersect.tolist()))
+        self.G.add_edge(tuple(intersect.tolist()), tuple(close_goal.tolist()))
+        intersect, close_start = self.find_nearest_node(end)
+        self.G.add_edge(tuple(close_start.tolist()), tuple(intersect.tolist()))
+        self.G.add_edge(tuple(intersect.tolist()), tuple(end.tolist()))
 
-            # Check if the car is moving on the right side of the midline
-            if not is_movement_valid(current_node.position, node_position, midline_matrix):
-                continue
+        path_on_graph = nx.astar_path(self.G, tuple(start_intersection.tolist()), tuple(end_intersection.tolist()))
 
-            new_node = Node(node_position, current_node)
-            children.append(new_node)
-
-        for child in children:
-            stride = torch.norm(child.position.float() - current_node.position.float(), p=1).item()  # 1 or 2
-            child.g = current_node.g + (1 if stride == 2 else 1.5)  # Lower cost for a stride of 2
-            child.h = heuristic(child.position, end_node.position)
-            child.f = child.g + 5 * child.h
-
-            if child.position in open_dict and child.g > open_dict[child.position].g:
-                continue
-
-            open_queue.put(child)
-            open_dict[child.position] = child
-
-    return None
+        # If necessary, interpolate waypoints between the resulting nodes to form a complete path.
+        return path_on_graph

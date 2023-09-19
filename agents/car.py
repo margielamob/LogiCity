@@ -2,7 +2,8 @@ from .basic import Agent
 import torch
 import torch.nn.functional as F
 from utils.find import find_nearest_building, find_building_mask
-from utils.sample import sample_start_goal
+from utils.sample import sample_start_goal, sample_start_goal_vh
+from planners import GPlanner_mapper
 from core.city import LABEL_MAP
 import logging
 # import cv2
@@ -23,7 +24,7 @@ class Car(Agent):
     def __init__(self, type, size, id, world_state_matrix, global_planner):
         self.start_point_list = None
         self.goal_point_list = None
-        self.global_planner = global_planner
+        self.global_planner_type = global_planner
         super().__init__(type, size, id, world_state_matrix)
         # Actions: ["left_1", "right_1", "up_1", "down_1", "left_2", "right_2", "up_2", "down_2", "stop"]
         self.action_space = torch.tensor(range(9))
@@ -47,8 +48,9 @@ class Car(Agent):
         # specify the occupacy map
         self.movable_region = (world_state_matrix[2] == Traffic_STREET) | (world_state_matrix[2] == CROSSING_STREET)
         self.midline_matrix = (world_state_matrix[2] == Traffic_STREET+0.5)
+        self.global_planner = GPlanner_mapper[self.global_planner_type](self.movable_region, self.midline_matrix, 2)
         # get global traj on the occupacy map
-        self.global_traj = self.global_planner(self.movable_region, self.midline_matrix, self.start, self.goal)
+        self.global_traj, self.G = self.global_planner.plan(self.start, self.goal)
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
     def get_start(self, world_state_matrix):
@@ -57,7 +59,7 @@ class Car(Agent):
         GARAGE = 6
         building = [GAS, GARAGE]
         # Find cells that are walking streets and have a house or office around them
-        desired_locations = sample_start_goal(world_state_matrix, 2, building, kernel_size=9)
+        desired_locations = sample_start_goal_vh(world_state_matrix, 2, building, kernel_size=9)
         self.start_point_list = torch.nonzero(desired_locations).tolist()
         random_index = torch.randint(0, len(self.start_point_list), (1,)).item()
         
@@ -75,7 +77,7 @@ class Car(Agent):
         building = [GAS, GARAGE, STORE]
 
         # Find cells that are walking streets and have a house, office, or store around them
-        self.desired_locations = sample_start_goal(world_state_matrix, 2, building, kernel_size=9)
+        self.desired_locations = sample_start_goal_vh(world_state_matrix, 2, building, kernel_size=9)
         desired_locations = self.desired_locations.detach().clone()
 
         # Determine the nearest building to the start point

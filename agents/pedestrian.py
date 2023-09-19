@@ -2,6 +2,7 @@ from .basic import Agent
 import torch
 import torch.nn.functional as F
 from utils.find import find_nearest_building, find_building_mask
+from planners import GPlanner_mapper
 from utils.sample import sample_start_goal
 from core.city import LABEL_MAP
 import logging
@@ -14,7 +15,8 @@ class Pedestrian(Agent):
     def __init__(self, type, size, id, world_state_matrix, global_planner):
         self.start_point_list = None
         self.goal_point_list = None
-        self.global_planner = global_planner
+        # pedestrian use A*, which is just a function
+        self.global_planner = GPlanner_mapper[global_planner]
         super().__init__(type, size, id, world_state_matrix)
 
     def init(self, world_state_matrix):

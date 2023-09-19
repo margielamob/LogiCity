@@ -39,3 +39,34 @@ def find_building_mask(city_grid, start_point):
     mask[top:bottom + 1, left:right + 1] = True
 
     return mask
+
+def find_midroad_segments(midline_matrix):
+    midroad_segments = []
+
+    # Scan horizontally for road segments
+    for row in range(midline_matrix.shape[0]):
+        start_col = None
+        for col in range(midline_matrix.shape[1]):
+            if midline_matrix[row][col] == 1:
+                if start_col is None:
+                    start_col = col
+            else:
+                if start_col is not None:
+                    if col - 1 - start_col > 0:
+                        midroad_segments.append((torch.tensor([row, start_col]), torch.tensor([row, col - 1])))
+                    start_col = None
+
+    # Scan vertically for road segments
+    for col in range(midline_matrix.shape[1]):
+        start_row = None
+        for row in range(midline_matrix.shape[0]):
+            if midline_matrix[row][col] == 1:
+                if start_row is None:
+                    start_row = row
+            else:
+                if start_row is not None:
+                    if row - 1 - start_row > 0:
+                        midroad_segments.append((torch.tensor([start_row, col]), torch.tensor([row - 1, col])))
+                    start_row = None
+
+    return midroad_segments
