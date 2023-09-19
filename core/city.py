@@ -103,10 +103,10 @@ class City:
             top = torch.min(rows).item()
             bottom = torch.max(rows).item()
             # top
-            self.city_grid[2][left:right, top-7] = street_code
-            self.city_grid[2][left:right, bottom+7] = street_code
-            self.city_grid[2][left-7, top:bottom] = street_code
-            self.city_grid[2][right+7, top:bottom] = street_code
+            self.city_grid[2][left:(right+1), top-7] = street_code
+            self.city_grid[2][left:(right+1), bottom+7] = street_code
+            self.city_grid[2][left-7, top:(bottom+1)] = street_code
+            self.city_grid[2][right+7, top:(bottom+1)] = street_code
 
     def add_agent(self, agent):
         """Add a agents to the city and mark its position on the grid. Label correspons

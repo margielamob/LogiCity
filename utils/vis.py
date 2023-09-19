@@ -8,7 +8,7 @@ def visualize_city(city, resolution, agent_layer=None, file_name="city.png"):
     # only visualize a static map with buildings, streets, and one layer agents
     # Create a visual grid of the city, buildings and streets
     visual_grid = np.ones((resolution, resolution, 3), dtype=np.uint8)*200
-    np_grid = city.city_grid.numpy().astype(np.float)
+    np_grid = city.city_grid.numpy().astype(np.float32)
     scale_factor = resolution/city.grid_size[0]
     for k in range(1, 3):
         for i in range(city.grid_size[0]):
