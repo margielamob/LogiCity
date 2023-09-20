@@ -69,7 +69,9 @@ class ASTAR_G:
             # find the goal that so not have start in between
             for k in range(filtered_node_list.shape[0]):
                 candidate = filtered_node_list[k]
-                if torch.any(filtered_juding_list[0]<= max(candidate[0].item(), point[0].item()) and filtered_juding_list[0] >= min(candidate[0].item(), point[0].item())):
+                top = filtered_juding_list[:, 0]<= max(candidate[0].item(), point[0].item())
+                bottom = filtered_juding_list[:, 0] >= min(candidate[0].item(), point[0].item())
+                if torch.any(top & bottom):
                     continue
                 else:
                     flag = True
@@ -83,7 +85,9 @@ class ASTAR_G:
             # find the goal that so not have start in between
             for k in range(filtered_node_list.shape[0]):
                 candidate = filtered_node_list[k]
-                if torch.any(filtered_juding_list[:, 1]<= max(candidate[1].item(), point[1].item()) & filtered_juding_list[:, 1] >= min(candidate[1].item(), point[1].item())):
+                left = filtered_juding_list[:, 1]<= max(candidate[1].item(), point[1].item())
+                right = filtered_juding_list[:, 1] >= min(candidate[1].item(), point[1].item())
+                if torch.any(left & right):
                     continue
                 else:
                     flag = True
@@ -108,7 +112,42 @@ class ASTAR_G:
         self.G.add_edge(tuple(close_start.tolist()), tuple(intersect.tolist()))
         self.G.add_edge(tuple(intersect.tolist()), tuple(end.tolist()))
 
-        path_on_graph = nx.astar_path(self.G, tuple(start_intersection.tolist()), tuple(end_intersection.tolist()))
+        path_on_graph = nx.astar_path(self.G, tuple(start.tolist()), tuple(end.tolist()))
+        interpolated = self.interpolate(path_on_graph)
+
+        # self.G.remove_edge(tuple(start.tolist()), tuple(intersect.tolist()))
+        # self.G.remove_edge(tuple(intersect.tolist()), tuple(close_goal.tolist()))
+        # self.G.remove_edge(tuple(close_start.tolist()), tuple(intersect.tolist()))
+        # self.G.remove_edge(tuple(intersect.tolist()), tuple(end.tolist()))
 
         # If necessary, interpolate waypoints between the resulting nodes to form a complete path.
-        return path_on_graph
+        return interpolated
+
+    def interpolate(self, path_on_graph):
+        interpolated = []
+
+        for i in range(len(path_on_graph) - 1):
+            current_point = path_on_graph[i]
+            next_point = path_on_graph[i+1]
+
+            while current_point != next_point:
+                interpolated.append(torch.tensor(current_point))
+
+                # Determine the dominant direction (X or Y)
+                dx = next_point[0] - current_point[0]
+                dy = next_point[1] - current_point[1]
+
+                if abs(dx) > abs(dy):
+                    # Move along X axis by 1 or 2 grids depending on the distance
+                    step = 2 if abs(dx) >= 2 else 1
+                    step *= int(dx/abs(dx)) if dx != 0 else 0  # Get the direction of movement
+                    current_point = (current_point[0] + step, current_point[1])
+                else:
+                    # Move along Y axis by 1 or 2 grids depending on the distance
+                    step = 2 if abs(dy) >= 2 else 1
+                    step *= int(dy/abs(dy)) if dy != 0 else 0  # Get the direction of movement
+                    current_point = (current_point[0], current_point[1] + step)
+
+        interpolated.append(torch.tensor(path_on_graph[-1]))  # Add the last point
+
+        return interpolated
