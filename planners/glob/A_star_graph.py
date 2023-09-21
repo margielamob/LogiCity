@@ -2,6 +2,9 @@ import torch
 import networkx as nx
 from utils.find import find_midroad_segments
 
+def manhattan_distance(u, v):
+    return abs(u[0] - v[0]) + abs(u[1] - v[1])
+
 class ASTAR_G:
     def __init__(self, movable_map, midline_matrix, offset):
         self.road_offset = offset
@@ -96,11 +99,6 @@ class ASTAR_G:
         assert flag
         return intersection, candidate
 
-    def a_star_on_graph(G, start, end):
-        # Here we're just calling the NetworkX A* but you can replace it with your own A* for more customization.
-        path = nx.astar_path(G, start, end, weight='weight')
-        return path
-
 
     def plan(self, start, end):
 
@@ -112,15 +110,9 @@ class ASTAR_G:
         self.G.add_edge(tuple(close_start.tolist()), tuple(intersect.tolist()))
         self.G.add_edge(tuple(intersect.tolist()), tuple(end.tolist()))
 
-        path_on_graph = nx.astar_path(self.G, tuple(start.tolist()), tuple(end.tolist()))
+        path_on_graph = nx.astar_path(self.G, tuple(start.tolist()), tuple(end.tolist()), heuristic=manhattan_distance)
         interpolated = self.interpolate(path_on_graph)
 
-        # self.G.remove_edge(tuple(start.tolist()), tuple(intersect.tolist()))
-        # self.G.remove_edge(tuple(intersect.tolist()), tuple(close_goal.tolist()))
-        # self.G.remove_edge(tuple(close_start.tolist()), tuple(intersect.tolist()))
-        # self.G.remove_edge(tuple(intersect.tolist()), tuple(end.tolist()))
-
-        # If necessary, interpolate waypoints between the resulting nodes to form a complete path.
         return interpolated
 
     def interpolate(self, path_on_graph):
@@ -131,22 +123,53 @@ class ASTAR_G:
             next_point = path_on_graph[i+1]
 
             while current_point != next_point:
-                interpolated.append(torch.tensor(current_point))
 
-                # Determine the dominant direction (X or Y)
+                # Determine the difference in X and Y
                 dx = next_point[0] - current_point[0]
                 dy = next_point[1] - current_point[1]
 
-                if abs(dx) > abs(dy):
-                    # Move along X axis by 1 or 2 grids depending on the distance
-                    step = 2 if abs(dx) >= 2 else 1
-                    step *= int(dx/abs(dx)) if dx != 0 else 0  # Get the direction of movement
-                    current_point = (current_point[0] + step, current_point[1])
+                if dx != 0 and dy != 0:
+                    # Move to the intersection if both dx and dy are non-zero
+                    assert abs(dx) == abs(dy)
+                    if self.movable_map[current_point[0], next_point[1]]:
+                        intersect = (current_point[0], next_point[1])
+                    else:
+                        assert self.movable_map[next_point[0], current_point[1]]
+                        intersect = (next_point[0], current_point[1])
+                    # First move to intersect:
+                    while current_point != intersect:
+                        dx = intersect[0] - current_point[0]
+                        dy = intersect[1] - current_point[1]
+                        if abs(dx) >= 2:
+                            step = 2 * int(dx/abs(dx))
+                            current_point = (current_point[0] + step, current_point[1])
+                        elif abs(dy) >= 2:
+                            step = 2 * int(dy/abs(dy))
+                            current_point = (current_point[0], current_point[1] + step)
+                        else:
+                            if dx != 0:
+                                step = int(dx)
+                                current_point = (current_point[0] + step, current_point[1])
+                            elif dy != 0:
+                                step = int(dy)
+                                current_point = (current_point[0], current_point[1] + step)
+                        interpolated.append(torch.tensor(current_point))
                 else:
-                    # Move along Y axis by 1 or 2 grids depending on the distance
-                    step = 2 if abs(dy) >= 2 else 1
-                    step *= int(dy/abs(dy)) if dy != 0 else 0  # Get the direction of movement
-                    current_point = (current_point[0], current_point[1] + step)
+                    # If the vehicle doesn't need to turn, just move straight
+                    if abs(dx) >= 2:
+                        step = 2 * int(dx/abs(dx))
+                        current_point = (current_point[0] + step, current_point[1])
+                    elif abs(dy) >= 2:
+                        step = 2 * int(dy/abs(dy))
+                        current_point = (current_point[0], current_point[1] + step)
+                    else:
+                        if dx != 0:
+                            step = int(dx)
+                            current_point = (current_point[0] + step, current_point[1])
+                        elif dy != 0:
+                            step = int(dy)
+                            current_point = (current_point[0], current_point[1] + step)
+                    interpolated.append(torch.tensor(current_point))
 
         interpolated.append(torch.tensor(path_on_graph[-1]))  # Add the last point
 
