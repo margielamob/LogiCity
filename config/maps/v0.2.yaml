@@ -35,6 +35,22 @@ agents:
   id: 4
   size: 2
   type: Car
+- gplanner: A*vg
+  id: 5
+  size: 2
+  type: Car
+- gplanner: A*vg
+  id: 6
+  size: 2
+  type: Car
+- gplanner: A*vg
+  id: 7
+  size: 2
+  type: Car
+- gplanner: A*vg
+  id: 8
+  size: 2
+  type: Car
 
 buildings:
 - block: 1

@@ -1,9 +1,18 @@
 import torch
+from math import *
 import networkx as nx
 from utils.find import find_midroad_segments
 
 def manhattan_distance(u, v):
-    return abs(u[0] - v[0]) + abs(u[1] - v[1])
+    return sqrt(pow(u[0] - v[0], 2) + pow(u[1] - v[1], 2))
+
+def g_value(u, v):
+    dis = torch.dist(u, v)
+    if torch.all((u - v) != 0):
+        dis += 30
+    elif dis == 4:
+        dis += 30
+    return dis
 
 class ASTAR_G:
     def __init__(self, movable_map, midline_matrix, offset):
@@ -24,12 +33,12 @@ class ASTAR_G:
                 # horizonal mid line
                 bottom_s = mid_start + torch.tensor([self.road_offset, -1])
                 bottom_e = mid_end + torch.tensor([self.road_offset, 1])
-                self.G.add_edge(tuple(bottom_s.tolist()), tuple(bottom_e.tolist()), weight=torch.dist(bottom_s.float(), bottom_e.float()).item())
+                self.G.add_edge(tuple(bottom_s.tolist()), tuple(bottom_e.tolist()), weight=g_value(bottom_s.float(), bottom_e.float()).item())
                 self.start_lists.append(bottom_s.unsqueeze(0))
                 self.end_lists.append(bottom_e.unsqueeze(0))
                 top_s = mid_end + torch.tensor([-self.road_offset, 1])
                 top_e = mid_start + torch.tensor([-self.road_offset, -1])
-                self.G.add_edge(tuple(top_s.tolist()), tuple(top_e.tolist()), weight=torch.dist(top_s.float(), top_e.float()).item())
+                self.G.add_edge(tuple(top_s.tolist()), tuple(top_e.tolist()), weight=g_value(top_s.float(), top_e.float()).item())
                 self.start_lists.append(top_s.unsqueeze(0))
                 self.end_lists.append(top_e.unsqueeze(0))
             elif mid_start[1] == mid_end[1]:
@@ -37,21 +46,21 @@ class ASTAR_G:
                 # vertical mid line
                 left_s = mid_start + torch.tensor([-1, -self.road_offset])
                 left_e = mid_end + torch.tensor([1, -self.road_offset])
-                self.G.add_edge(tuple(left_s.tolist()), tuple(left_e.tolist()), weight=torch.dist(left_s.float(), left_e.float()).item())
+                self.G.add_edge(tuple(left_s.tolist()), tuple(left_e.tolist()), weight=g_value(left_s.float(), left_e.float()).item())
                 self.start_lists.append(left_s.unsqueeze(0))
                 self.end_lists.append(left_e.unsqueeze(0))
                 right_s = mid_end + torch.tensor([1, self.road_offset])
                 right_e = mid_start + torch.tensor([-1, self.road_offset])
-                self.G.add_edge(tuple(right_s.tolist()), tuple(right_e.tolist()), weight=torch.dist(right_s.float(), right_e.float()).item())
+                self.G.add_edge(tuple(right_s.tolist()), tuple(right_e.tolist()), weight=g_value(right_s.float(), right_e.float()).item())
                 self.start_lists.append(right_s.unsqueeze(0))
                 self.end_lists.append(right_e.unsqueeze(0))
         
         # Connect each end point to other start points (this only happens in intersections)
         for end_point in self.end_lists:
             distances = torch.norm(torch.cat(self.start_lists, dim=0).float() - end_point.float(), dim=1)
-            near_starts = torch.cat(self.start_lists, dim=0)[distances < 12]
+            near_starts = torch.cat(self.start_lists, dim=0)[distances < 20]
             for starts in near_starts.tolist():
-                self.G.add_edge(tuple(end_point.tolist()[0]), tuple(starts), weight=torch.dist(end_point.float(), torch.tensor(starts).float()).item())
+                self.G.add_edge(tuple(end_point.tolist()[0]), tuple(starts), weight=g_value(end_point.float(), torch.tensor(starts).float()).item())
 
     def find_nearest_node(self, point, origin_list = 's'):
         intersection = torch.zeros_like(point)
@@ -59,44 +68,43 @@ class ASTAR_G:
         judging_list = self.end_lists if origin_list=='s' else self.start_lists
         next_node_list = torch.cat(next_node_list, dim=0)
         judging_list = torch.cat(judging_list, dim=0)
-        dis = torch.abs(point - next_node_list)
+        # which streets?
+        all_nodes = torch.cat([next_node_list, judging_list], dim=0)
+        dis = torch.norm(point.float() - all_nodes.float(), dim=1)
         min_dis_value, ind = torch.min(dis, dim=0)
-        pos_ind = min_dis_value.min(dim=0).indices.item()
-        flag = False
-        if pos_ind == 1:
-            # on vertical street
-            intersection[0] = point[0]
-            intersection[1] = next_node_list[ind[pos_ind]][pos_ind]
-            filtered_node_list = next_node_list[next_node_list[:, pos_ind] == intersection[1]]
-            filtered_juding_list = judging_list[judging_list[:, pos_ind] == intersection[1]]
-            # find the goal that so not have start in between
-            for k in range(filtered_node_list.shape[0]):
-                candidate = filtered_node_list[k]
-                top = filtered_juding_list[:, 0]<= max(candidate[0].item(), point[0].item())
-                bottom = filtered_juding_list[:, 0] >= min(candidate[0].item(), point[0].item())
-                if torch.any(top & bottom):
-                    continue
-                else:
-                    flag = True
-                    break
+        # min value lie in next node list, yes it is
+        if torch.any((next_node_list[:, 0] == all_nodes[ind][0]) & (next_node_list[:, 1] == all_nodes[ind][1])):
+            _, local_ind = torch.min(torch.abs(all_nodes[ind]-point), dim=0)
+            intersection[1-local_ind] = point[1-local_ind]
+            intersection[local_ind] = all_nodes[ind][local_ind]
+            return intersection, all_nodes[ind]
         else:
-            # on horizonal street
-            intersection[1] = point[1]
-            intersection[0] = next_node_list[ind[pos_ind]][pos_ind]
-            filtered_node_list = next_node_list[next_node_list[:, pos_ind] == intersection[0]]
-            filtered_juding_list = judging_list[judging_list[:, pos_ind] == intersection[0]]
+            # min value doesn't lie in next node list
+            next_node = torch.zeros_like(intersection)
+            assert torch.any((judging_list[:, 0] == all_nodes[ind][0]) & (judging_list[:, 1] == all_nodes[ind][1]))
+            if torch.abs(all_nodes[ind]-point)[0] == torch.abs(all_nodes[ind]-point)[1]:
+                mo = self.movable_map[point[0], point[1]-2:point[1]+2]
+                if torch.all(mo):
+                    # horizonal
+                    local_ind = 0
+                else:
+                    local_ind = 1
+            else:
+                _, local_ind = torch.min(torch.abs(all_nodes[ind]-point), dim=0)
+            intersection[1-local_ind] = point[1-local_ind]
+            intersection[local_ind] = all_nodes[ind][local_ind]
+
+            next_node[local_ind] = all_nodes[ind][local_ind]
+            filtered_node_list = next_node_list[next_node_list[:, local_ind]==all_nodes[ind][local_ind]]
             # find the goal that so not have start in between
             for k in range(filtered_node_list.shape[0]):
                 candidate = filtered_node_list[k]
-                left = filtered_juding_list[:, 1]<= max(candidate[1].item(), point[1].item())
-                right = filtered_juding_list[:, 1] >= min(candidate[1].item(), point[1].item())
-                if torch.any(left & right):
-                    continue
-                else:
-                    flag = True
+                left = intersection[1-local_ind]<= max(candidate[1-local_ind].item(), all_nodes[ind][1-local_ind].item())
+                right = intersection[1-local_ind] >= min(candidate[1-local_ind].item(), all_nodes[ind][1-local_ind].item())
+                if left & right:
+                    next_node[1-local_ind] = candidate[1-local_ind]
                     break
         
-        assert flag
         return intersection, candidate
 
 
@@ -110,8 +118,11 @@ class ASTAR_G:
         self.G.add_edge(tuple(close_start.tolist()), tuple(intersect.tolist()))
         self.G.add_edge(tuple(intersect.tolist()), tuple(end.tolist()))
 
-        path_on_graph = nx.astar_path(self.G, tuple(start.tolist()), tuple(end.tolist()), heuristic=manhattan_distance)
+        path_on_graph = nx.shortest_path(self.G, tuple(start.tolist()), tuple(end.tolist()), method='dijkstra')
         interpolated = self.interpolate(path_on_graph)
+        # check
+        for i in interpolated:
+            assert self.movable_map[i[0], i[1]]
 
         return interpolated
 

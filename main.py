@@ -1,6 +1,6 @@
+import os
 import argparse
-import yaml
-from core import City, Building
+import pickle as pkl
 from utils import CityLoader, setup_logger, visualize_city
 # from core.agent import Agent
 # from planners.global_planner import GlobalPlanner
@@ -32,14 +32,12 @@ def main(args, logger):
         logger.info("Simulating Step_{}...".format(steps))
         city.update()
         # Visualize the current state of the city (optional)
-        visualize_city(city, 1000, -1, "vis/step_{}.png".format(steps))
+        # visualize_city(city, 1000, -1, "vis/step_{}.png".format(steps))
         steps += 1
-        # cached_observation[steps] = city.city_grid
+        cached_observation[steps] = city.city_grid
 
-    # if agent.at_goal():
-    #     print("Agent reached its goal!")
-    # else:
-    #     print(f"Agent couldn't reach its goal in {args.max_steps} steps.")
+    # with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
+    #     pkl.dump(cached_observation, f)
 
 if __name__ == '__main__':
     args = parse_arguments()

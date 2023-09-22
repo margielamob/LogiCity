@@ -143,11 +143,11 @@ class Car(Agent):
             self.reach_goal = False
             # delete past traj
             world_state_matrix[self.layer_id] *= 0
-            world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
             world_state_matrix[self.layer_id][self.goal[0], self.goal[1]] = TYPE_MAP[self.type] + 0.3
             for way_points in self.global_traj[1:-1]:
                 world_state_matrix[self.layer_id][way_points[0], way_points[1]] \
                     = TYPE_MAP[self.type] + 0.1
+            world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
 
             return self.get_global_action(), world_state_matrix[self.layer_id]
 

@@ -54,6 +54,8 @@ class City:
             # we use the current map for update, i.e., the agents don't know other's behavior
             # re-initialized agents may update city matrix as well
             local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid)
+            if agent.reach_goal:
+                continue
             next_layer = agent.move(local_action, new_matrix[agent.layer_id])
             new_matrix[agent.layer_id] = next_layer
         # Update city grid after all the agents make decisions
