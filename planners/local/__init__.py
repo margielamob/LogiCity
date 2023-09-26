@@ -1,7 +1,5 @@
-from .LNN import astar
+from .lnn import LNNPlanner
 
-GPlanner_mapper = {
-    'LNN': astar,
-    'A*v': astar_v,
-    'A*vg': ASTAR_G
+LPlanner_mapper = {
+    'LNN': LNNPlanner
 }

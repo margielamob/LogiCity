@@ -1,0 +1,23 @@
+# predicates_rules.yml
+
+predicates:
+  - IsAtIntersection: 
+      arity: 1
+      method: check_is_at_intersection
+      description: Checks if the agent is at an intersection.
+  - ArrivedFirst: 
+      arity: 1
+      method: check_arrived_first
+      description: Checks if this vehicle arrived at the intersection before all others.
+  - Stop:
+      arity: 1
+      method: process_stop_status
+
+rules:
+  - STOP: 
+      formula: Implies(And(IsAtIntersection(x), Not(ArrivedFirst(x))), Stop(x))
+      description: If an agent x IsAtIntersection and not ArrivedFirst, it stops.
+  - NotSTOP: 
+      formula: Implies(Or(Not(IsAtIntersection(x)), ArrivedFirst(x)), Not(Stop(x)))
+      description: Otherwise, do not stop.
+

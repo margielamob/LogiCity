@@ -52,6 +52,8 @@ class CityLoader:
                 size=agents_data["size"],
                 id=agents_data["id"],
                 global_planner=agents_data['gplanner'],
+                local_planner=agents_data['lplanner'],
+                rule_file=agents_data['rule_file'],
                 world_state_matrix=city.city_grid
             )
             city.add_agent(agent)

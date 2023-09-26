@@ -6,3 +6,4 @@ log/
 *.gif
 vis/
 odom_progress/
+*.log
