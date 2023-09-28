@@ -83,6 +83,11 @@ class Pedestrian(Agent):
         # Return the indices of the desired locations
         return goal_point
 
+    def get_action(self, world_state_matrix):
+        self.local_action = self.local_planner.plan(world_state_matrix, self.layer_id, self.type)
+        if not self.local_action:
+            return self.get_global_action()
+
     def get_next_action(self, world_state_matrix):
         # for now, just reckless take the global traj
         # reached goal
@@ -93,7 +98,7 @@ class Pedestrian(Agent):
                 return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
                 # action = local_planner(world_state_matrix, self.layer_id)
-                return self.get_global_action(), world_state_matrix[self.layer_id]
+                return self.get_action(world_state_matrix), world_state_matrix[self.layer_id]
         else:
             logger.info("Generating new goal and gloabl plans for {}_{}...".format(self.type, self.id))
             self.start = self.goal.clone()
@@ -130,7 +135,7 @@ class Pedestrian(Agent):
                 world_state_matrix[self.layer_id][way_points[0], way_points[1]] \
                     = TYPE_MAP[self.type] + 0.1
 
-            return self.get_global_action(), world_state_matrix[self.layer_id]
+            return self.get_action(world_state_matrix), world_state_matrix[self.layer_id]
 
     def get_global_action(self):
         next_pos = self.global_traj[0]

@@ -2,10 +2,8 @@ import os
 import argparse
 import pickle as pkl
 from utils import CityLoader, setup_logger, visualize_city
-# from core.agent import Agent
-# from planners.global_planner import GlobalPlanner
-# from planners.local_planner import LocalPlanner
-# from utils.visualization import visualize_city
+import torch
+import numpy
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
@@ -15,12 +13,15 @@ def parse_arguments():
     # logger
     parser.add_argument('--log_dir', type=str, default="./log")
     parser.add_argument('--exp', type=str, default="debug")
-    parser.add_argument('--max-steps', type=int, default=100, help='Maximum number of steps for the simulation.')
+    parser.add_argument('--max-steps', type=int, default=1000, help='Maximum number of steps for the simulation.')
+    parser.add_argument('--seed', type=int, default=42, help='random seed to use.')
 
     return parser.parse_args()
 
 def main(args, logger):
-    logger.info("Starting city simulation...")
+    logger.info("Starting city simulation with random seed {}...".format(args.seed))
+    torch.manual_seed(args.seed)
+    numpy.random.seed(args.seed)
     # Create a city instance with a predefined grid
     city = CityLoader.from_yaml(args.map)
     visualize_city(city, 1000, -1, "vis/init.png")
@@ -36,8 +37,8 @@ def main(args, logger):
         steps += 1
         cached_observation[steps] = city.city_grid
 
-    # with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
-    #     pkl.dump(cached_observation, f)
+    with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
+        pkl.dump(cached_observation, f)
 
 if __name__ == '__main__':
     args = parse_arguments()

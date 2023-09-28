@@ -3,15 +3,17 @@
 predicates:
   - IsAtIntersection: 
       arity: 1
-      method: check_is_at_intersection
+      method: utils.lnn.check_is_at_intersection
       description: Checks if the agent is at an intersection.
   - ArrivedFirst: 
       arity: 1
-      method: check_arrived_first
+      method: utils.lnn.arrived_first
       description: Checks if this vehicle arrived at the intersection before all others.
+    # all the actions will not have methods, as they are not executed by the simulator, they are initalized as false (0, 0)
   - Stop:
       arity: 1
-      method: process_stop_status
+      method: None
+      description: stop action.
 
 rules:
   - STOP: 
