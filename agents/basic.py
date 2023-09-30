@@ -5,8 +5,17 @@ class Agent:
         self.size = size
         self.type = type
         self.id = id
+        # -1 is always the stop action
         # Actions: ["left", "right", "up", "down", "stop"]
         self.action_space = torch.tensor(range(5))
+        self.action_dist = torch.zeros_like(self.action_space).float()
+        self.action_mapping = {
+            0: "left_1", 
+            1: "right_1", 
+            2: "up_1", 
+            3: "down_1", 
+            4: "stop"
+            }
         self.start = None
         self.goal = None
         self.pos = None

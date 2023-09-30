@@ -1,6 +1,7 @@
 from .basic import Agent
 import torch
 import torch.nn.functional as F
+from torch.distributions import Categorical
 from utils.find import find_nearest_building, find_building_mask
 from planners import GPlanner_mapper, LPlanner_mapper
 from utils.sample import sample_start_goal
@@ -15,10 +16,17 @@ class Pedestrian(Agent):
     def __init__(self, type, size, id, world_state_matrix, global_planner, local_planner, rule_file=None):
         self.start_point_list = None
         self.goal_point_list = None
-        # pedestrian use A*, which is just a function
         self.global_planner = GPlanner_mapper[global_planner]
         self.local_planner = LPlanner_mapper[local_planner](rule_file)
         super().__init__(type, size, id, world_state_matrix)
+        # pedestrian use A*, which is just a function
+        self.action_mapping = {
+            0: "Left", 
+            1: "Right", 
+            2: "Up", 
+            3: "Down", 
+            4: "Stop"
+            }
 
     def init(self, world_state_matrix):
         WALKING_STREET = 1
@@ -84,9 +92,20 @@ class Pedestrian(Agent):
         return goal_point
 
     def get_action(self, world_state_matrix):
-        self.local_action = self.local_planner.plan(world_state_matrix, self.layer_id, self.type)
-        if not self.local_action:
+        self.local_action = self.local_planner.plan(world_state_matrix, self.layer_id, \
+            self.type, self.action_dist, self.action_mapping)
+        if not torch.any(self.local_action):
             return self.get_global_action()
+        else:
+            # sample from the local planner
+            normalized_action_dist = self.local_action / self.local_action.sum()
+            dist = Categorical(normalized_action_dist)
+            # Sample an action index from the distribution
+            action_index = dist.sample()
+            # Get the actual action from the action space using the sampled index
+            return self.action_space[action_index]
+
+
 
     def get_next_action(self, world_state_matrix):
         # for now, just reckless take the global traj
@@ -153,7 +172,7 @@ class Pedestrian(Agent):
             # up
             return self.action_space[2]
         elif del_pos[0] > 0:
-            # up
+            # down
             return self.action_space[3]
         else:
             return self.action_space[-1]

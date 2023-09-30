@@ -79,18 +79,18 @@ class LNNPlanner:
                 
                 # Now only supporting one arity
                 data_dict[self.predicates[p]["instance"]][agent_name] = values
-            else:
-                # By defaul False for actions
-                data_dict[self.predicates[p]["instance"]][agent_name] = torch.tensor([0.0, 0.0])
 
         self.model.add_data(data_dict)
 
-    def plan(self, world_matrix, agent_id, agent_type):
+    def plan(self, world_matrix, agent_id, agent_type, action_dist, action_mapping):
+        agent_name = "{}_{}".format(agent_type, agent_id)
         self.add_world_data(world_matrix, agent_id, agent_type)
         self.model.infer()
-        action_dist = self.predicates["Stop"]["instance"].get_data('Pedestrian_3')
+        # use LNN to get the action distribution
+        for keys in action_mapping.keys():
+            if action_mapping[keys] in self.predicates.keys():
+                action_dist[keys] = self.convert(self.predicates[action_mapping[keys]]["instance"].get_data(agent_name))
+        return action_dist
 
-        return self.model.plan()
-
-    def infer(self, **kwargs):
-        return self.model.infer()
+    def convert(self, LU_bound):
+        return torch.avg_pool1d(LU_bound, kernel_size=2)
