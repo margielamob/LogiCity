@@ -8,10 +8,15 @@ logger = logging.getLogger(__name__)
 
 class CityLoader:
     @staticmethod
-    def from_yaml(yaml_file):
-        with open(yaml_file, 'r') as file:
+    def from_yaml(map_yaml_file, agent_yaml_file):
+        with open(map_yaml_file, 'r') as file:
             city_config = yaml.load(file, Loader=yaml.Loader)
-            logger.info("Get map info from {}".format(yaml_file))
+            logger.info("Get map info from {}".format(map_yaml_file))
+        with open(agent_yaml_file, 'r') as file:
+            agent_config = yaml.load(file, Loader=yaml.Loader)
+            logger.info("Get agent info from {}".format(agent_yaml_file))
+            for keys in agent_config.keys():
+                city_config[keys] = agent_config[keys]
 
         # Create a city instance with the specified grid size
         city = City(grid_size=tuple(city_config["grid_size"]))

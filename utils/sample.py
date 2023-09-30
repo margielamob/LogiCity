@@ -54,3 +54,20 @@ def sample_start_goal_vh(world_matrix, available_street_id, availabe_building_id
     desired_locations = (walking_streets & (conv_res.squeeze() > 0))
 
     return desired_locations
+
+def sample_determine_start_goal(agent_type, id):
+    start_goal_dict = {
+        'Pedestrian': {
+            1: (torch.tensor([30, 45]), torch.tensor([80, 56])),
+            2: (torch.tensor([80, 56]), torch.tensor([30, 45])),
+            3: (torch.tensor([45, 30]), torch.tensor([56, 80])),
+            4: (torch.tensor([56, 80]), torch.tensor([45, 30]))
+        },
+        'Car': {
+            1: (torch.tensor([14, 48]), torch.tensor([91, 48])),
+            2: (torch.tensor([91, 54]), torch.tensor([54, 91])),
+            3: (torch.tensor([54, 14]), torch.tensor([14, 54])),
+            4: (torch.tensor([48, 91]), torch.tensor([48, 14]))
+        }
+    }
+    return start_goal_dict[agent_type][id]

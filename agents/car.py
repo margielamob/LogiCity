@@ -1,9 +1,10 @@
 from .basic import Agent
 import torch
 import torch.nn.functional as F
+from torch.distributions import Categorical
 from utils.find import find_nearest_building, find_building_mask
-from utils.sample import sample_start_goal, sample_start_goal_vh
-from planners import GPlanner_mapper
+from utils.sample import sample_start_goal, sample_start_goal_vh, sample_determine_start_goal
+from planners import GPlanner_mapper, LPlanner_mapper
 from core.city import LABEL_MAP
 import logging
 # import cv2
@@ -21,10 +22,11 @@ logger = logging.getLogger(__name__)
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
 class Car(Agent):
-    def __init__(self, type, size, id, world_state_matrix, global_planner):
+    def __init__(self, type, size, id, world_state_matrix, global_planner, local_planner, rule_file=None):
         self.start_point_list = None
         self.goal_point_list = None
         self.global_planner_type = global_planner
+        self.local_planner = LPlanner_mapper[local_planner](rule_file)
         super().__init__(type, size, id, world_state_matrix)
         # Actions: ["left_1", "right_1", "up_1", "down_1", "left_2", "right_2", "up_2", "down_2", "stop"]
         self.action_space = torch.tensor(range(9))
@@ -38,13 +40,26 @@ class Car(Agent):
             self.action_space[6].item(): torch.tensor((-2, 0)),
             self.action_space[7].item(): torch.tensor((2, 0))
         }
+        self.action_dist = torch.zeros_like(self.action_space).float()
+        self.action_mapping = {
+            0: "Left_1", 
+            1: "Right_1", 
+            2: "Up_1", 
+            3: "Down_1", 
+            4: "Left_2", 
+            5: "Right_2", 
+            6: "Up_2", 
+            7: "Down_2",
+            8: "Stop"
+            }
 
     def init(self, world_state_matrix):
         Traffic_STREET = 2
         CROSSING_STREET = -1
-        self.start = torch.tensor(self.get_start(world_state_matrix))
+        # self.start = torch.tensor(self.get_start(world_state_matrix))
+        self.start, self.goal = sample_determine_start_goal(self.type, self.id)
         self.pos = self.start.clone()
-        self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
+        # self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
         # specify the occupacy map
         self.movable_region = (world_state_matrix[2] == Traffic_STREET) | (world_state_matrix[2] == CROSSING_STREET)
         self.midline_matrix = (world_state_matrix[2] == Traffic_STREET+0.5)
@@ -104,17 +119,30 @@ class Car(Agent):
         # Return the indices of the desired locations
         return goal_point
 
+    def get_action(self, world_state_matrix):
+        self.local_action = self.local_planner.plan(world_state_matrix, self.layer_id, \
+            self.type, self.action_dist, self.action_mapping)
+        if not torch.any(self.local_action):
+            return self.get_global_action()
+        else:
+            # sample from the local planner
+            normalized_action_dist = self.local_action / self.local_action.sum()
+            dist = Categorical(normalized_action_dist)
+            # Sample an action index from the distribution
+            action_index = dist.sample()
+            # Get the actual action from the action space using the sampled index
+            return self.action_space[action_index]
+
     def get_next_action(self, world_state_matrix):
         # for now, just reckless take the global traj
         # reached goal
         if not self.reach_goal:
             if torch.all(self.pos == self.goal):
-                self.reach_goal = True
+                # self.reach_goal = True
                 logger.info("{}_{} reached goal! Will change goal in the next step!".format(self.type, self.id))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
-                # action = local_planner(world_state_matrix, self.layer_id)
-                return self.get_global_action(), world_state_matrix[self.layer_id]
+                return self.get_action(world_state_matrix), world_state_matrix[self.layer_id]
         else:
             logger.info("Generating new goal and gloabl plans for {}_{}...".format(self.type, self.id))
             self.start = self.goal.clone()
@@ -149,7 +177,7 @@ class Car(Agent):
                     = TYPE_MAP[self.type] + 0.1
             world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
 
-            return self.get_global_action(), world_state_matrix[self.layer_id]
+            return self.get_action(world_state_matrix), world_state_matrix[self.layer_id]
 
     def get_global_action(self):
         next_pos = self.global_traj[0]

@@ -1,0 +1,56 @@
+agents:
+- type: Pedestrian
+  id: 1
+  size: 1
+  lplanner: LNN
+  gplanner: A*
+  rule_file: config/rules/LNN/stop_v0.yaml
+
+- type: Pedestrian
+  id: 2
+  size: 1
+  lplanner: LNN
+  gplanner: A*
+  rule_file: config/rules/LNN/stop_v0.yaml
+
+- type: Pedestrian
+  id: 3
+  size: 1
+  lplanner: LNN
+  gplanner: A*
+  rule_file: config/rules/LNN/stop_v0.yaml
+
+- type: Pedestrian
+  id: 4
+  size: 1
+  lplanner: LNN
+  gplanner: A*
+  rule_file: config/rules/LNN/stop_v0.yaml
+
+- type: Car
+  id: 1
+  size: 1
+  lplanner: LNN
+  gplanner: A*vg
+  rule_file: config/rules/LNN/stop_v0.yaml
+
+- type: Car
+  id: 2
+  size: 1
+  lplanner: LNN
+  gplanner: A*vg
+  rule_file: config/rules/LNN/stop_v0.yaml
+
+- type: Car
+  id: 3
+  size: 1
+  lplanner: LNN
+  gplanner: A*vg
+  rule_file: config/rules/LNN/stop_v0.yaml
+
+- type: Car
+  id: 4
+  size: 1
+  lplanner: LNN
+  gplanner: A*vg
+  rule_file: config/rules/LNN/stop_v0.yaml

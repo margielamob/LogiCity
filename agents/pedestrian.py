@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch.distributions import Categorical
 from utils.find import find_nearest_building, find_building_mask
 from planners import GPlanner_mapper, LPlanner_mapper
-from utils.sample import sample_start_goal
+from utils.sample import sample_start_goal, sample_determine_start_goal
 from core.city import LABEL_MAP
 import logging
 
@@ -31,9 +31,10 @@ class Pedestrian(Agent):
     def init(self, world_state_matrix):
         WALKING_STREET = 1
         CROSSING_STREET = -1
-        self.start = torch.tensor(self.get_start(world_state_matrix))
+        # self.start = torch.tensor(self.get_start(world_state_matrix))
+        # self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
+        self.start, self.goal = sample_determine_start_goal(self.type, self.id)
         self.pos = self.start.clone()
-        self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
         # specify the occupacy map
         self.movable_region = (world_state_matrix[2] == WALKING_STREET) | (world_state_matrix[2] == CROSSING_STREET)
         # get global traj on the occupacy map
@@ -105,14 +106,12 @@ class Pedestrian(Agent):
             # Get the actual action from the action space using the sampled index
             return self.action_space[action_index]
 
-
-
     def get_next_action(self, world_state_matrix):
         # for now, just reckless take the global traj
         # reached goal
         if not self.reach_goal:
             if torch.all(self.pos == self.goal):
-                self.reach_goal = True
+                # self.reach_goal = True
                 logger.info("{}_{} reached goal! Will change goal in the next step!".format(self.type, self.id))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
