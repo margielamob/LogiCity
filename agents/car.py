@@ -53,7 +53,7 @@ class Car(Agent):
             }
 
     def init(self, world_state_matrix):
-        Traffic_STREET = TYPE_MAP['Walking Street']
+        Traffic_STREET = TYPE_MAP['Traffic Street']
         CROSSING_STREET = TYPE_MAP['Overlap']
         # self.start = torch.tensor(self.get_start(world_state_matrix))
         self.start, self.goal = sample_determine_start_goal(self.type, self.id)

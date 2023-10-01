@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class CityLoader:
     @staticmethod
-    def from_yaml(map_yaml_file, agent_yaml_file):
+    def from_yaml(map_yaml_file, agent_yaml_file, rule_yaml_file, rule_type):
         with open(map_yaml_file, 'r') as file:
             city_config = yaml.load(file, Loader=yaml.Loader)
             logger.info("Get map info from {}".format(map_yaml_file))
@@ -19,7 +19,7 @@ class CityLoader:
                 city_config[keys] = agent_config[keys]
 
         # Create a city instance with the specified grid size
-        city = City(grid_size=tuple(city_config["grid_size"]))
+        city = City(grid_size=tuple(city_config["grid_size"]), local_planner=rule_type, rule_file=rule_yaml_file)
 
         # Add streets to the city
         logger.info("Constructing {} streets".format(len(city_config["streets"])))
@@ -58,8 +58,6 @@ class CityLoader:
                 size=agents_data["size"],
                 id=agents_data["id"],
                 global_planner=agents_data['gplanner'],
-                local_planner=agents_data['lplanner'],
-                rule_file=agents_data['rule_file'],
                 world_state_matrix=city.city_grid
             )
             city.add_agent(agent)

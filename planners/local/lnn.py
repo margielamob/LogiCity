@@ -4,7 +4,7 @@ import importlib
 import torch
 
 class LNNPlanner:
-    def __init__(self, yaml_path, world_matrix):
+    def __init__(self, yaml_path):
         self.model = Model()
         
         # Load the yaml file
@@ -84,26 +84,25 @@ class LNNPlanner:
 
     def plan(self, world_matrix, intersect_matrix, agents):
         self.reset_predicates_to_unknown()
+        agents_actions = {}
         for agent in agents:
             agent_id = agent.layer_id
             agent_type = agent.type
-            action_mapping = agent.action_mapping
-            action_dist = agent.action_dist
             agent_name = "{}_{}".format(agent_type, agent_id)
             self.add_world_data(world_matrix, intersect_matrix, agent_id, agent_type)
         self.model.infer()
         # use LNN to get the action distribution
         for agent in agents:
-            agent_id = agent["id"]
-            agent_type = agent["type"]
+            agent_id = agent.layer_id
+            agent_type = agent.type
             agent_name = "{}_{}".format(agent_type, agent_id)
             action_mapping = agent.action_mapping
-            action_dist = self.get_action_distribution(world_matrix, intersect_matrix, agent_id, agent_type, action_mapping)
-            agent["action_dist"] = action_dist
+            action_dist = agent.action_dist
             for keys in action_mapping.keys():
                 if action_mapping[keys] in self.predicates.keys():
                     action_dist[keys] = self.convert(self.predicates[action_mapping[keys]]["instance"].get_data(agent_name))
-        return action_dist
+            agents_actions[agent_name] = action_dist
+        return agents_actions
 
     def convert(self, LU_bound):
         return torch.avg_pool1d(LU_bound, kernel_size=2)

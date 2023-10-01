@@ -11,6 +11,8 @@ def parse_arguments():
     # Add arguments for grid size, agent start and goal positions, etc.
     parser.add_argument('--map', type=str, default="config/maps/v1.0.yaml", help='YAML path to the map.')
     parser.add_argument('--agents', type=str, default="config/agents/v0.yaml", help='YAML path to the agent definition.')
+    parser.add_argument('--rule_type', type=str, default="LNN", help='We support ["LNN"].')
+    parser.add_argument('--rules', type=str, default="config/rules/LNN/stop_v0.yaml", help='YAML path to the rule definition.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log")
     parser.add_argument('--exp', type=str, default="debug")
@@ -24,7 +26,7 @@ def main(args, logger):
     torch.manual_seed(args.seed)
     numpy.random.seed(args.seed)
     # Create a city instance with a predefined grid
-    city = CityLoader.from_yaml(args.map, args.agents)
+    city = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type)
     visualize_city(city, 1000, -1, "vis/init.png")
 
     # Main simulation loop
