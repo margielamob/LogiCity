@@ -48,6 +48,7 @@ class CityLoader:
         
         # Mid lane for car planning
         city.add_mid()
+        city.add_intersections()
 
         # Add agents to the city
         logger.info("Adding {} agents".format(len(city_config["agents"])))

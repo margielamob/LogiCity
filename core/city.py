@@ -1,12 +1,14 @@
 from .building import Building
+from planners import LPlanner_mapper
 import numpy as np
 import random
-import cv2
+from skimage.draw import line
+from scipy.ndimage import label
 import torch
 from .config import *
 
 class City:
-    def __init__(self, grid_size=(10, 10)):
+    def __init__(self, grid_size, local_planner, rule_file=None):
         self.grid_size = grid_size
         self.layers = BASIC_LAYER
         # 0 for blocks
@@ -20,15 +22,21 @@ class City:
         self.agents = []
         self.label2type = LABEL_MAP
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
+        # city rule defines local decision of all the agents
+        self.local_planner = LPlanner_mapper[local_planner](rule_file)
         # vis color map
         self.color_map = COLOR_MAP
 
     def update(self):
         new_matrix = torch.zeros_like(self.city_grid)
+        # first do local planning based on city rules
+        agent_action_dist = self.local_planner.plan(self.city_grid, self.intersection_matrix, self.agents)
+        # Then do global action taking acording to the local planning results
         for agent in self.agents:
-            # we use the current map for update, i.e., the agents don't know other's behavior
             # re-initialized agents may update city matrix as well
-            local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid)
+            agent_name = "{}_{}".format(agent.type, agent.layer_id)
+            local_action_dist = agent_action_dist[agent_name]
+            local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, local_action_dist)
             if agent.reach_goal:
                 continue
             next_layer = agent.move(local_action, new_matrix[agent.layer_id])
@@ -84,6 +92,38 @@ class City:
             self.city_grid[STREET_ID][left:(right+1), bottom+TRAFFIC_STREET_WID] = street_code
             self.city_grid[STREET_ID][left-TRAFFIC_STREET_WID, top:(bottom+1)] = street_code
             self.city_grid[STREET_ID][right+TRAFFIC_STREET_WID, top:(bottom+1)] = street_code
+    
+    def add_intersections(self):
+        # Extract the 0-th layer of the world matrix
+        world_layer = self.city_grid[BLOCK_ID, :, :]
+        
+        # Extract the unique block IDs from the 0-th layer
+        unique_blocks = set(world_layer.flatten().tolist())
+        unique_blocks.remove(0)  # Assuming 0 is the ID for non-block pixels
+        
+        # Find the corners of the blocks
+        corners = {}
+        for block_id in unique_blocks:
+            block_positions = (world_layer == block_id).nonzero()
+            xmin, xmax = min(block_positions[:, 1]), max(block_positions[:, 1])
+            ymin, ymax = min(block_positions[:, 0]), max(block_positions[:, 0])
+            corners[block_id] = [(xmin, ymin), (xmin, ymax), (xmax, ymin), (xmax, ymax)]
+
+        intersection_matrix = np.zeros_like(world_layer, dtype=bool)
+
+        for block_id, block_corners in corners.items():
+            for other_block_id, other_block_corners in corners.items():
+                if block_id != other_block_id:
+                    for corner in block_corners:
+                        for other_corner in other_block_corners:
+                            if np.linalg.norm(np.array(corner) - np.array(other_corner)) == 14:
+                                rr, cc = line(corner[0], corner[1], other_corner[0], other_corner[1])
+                                intersection_matrix[rr, cc] = True
+
+        # Label connected regions in the intersection matrix
+        labeled_matrix, num = label(intersection_matrix)
+        assert num == NUM_INTERSECTIONS, "Number of intersections is not 32"
+        self.intersection_matrix = torch.tensor(labeled_matrix)
 
     def add_agent(self, agent):
         """Add a agents to the city and mark its position on the grid. Label correspons

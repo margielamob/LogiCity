@@ -2,7 +2,6 @@ from lnn import Model, Predicates, Variables, Implies, And, Or, Not, Fact, World
 from yaml import load, FullLoader
 import importlib
 import torch
-from utils.lnn_pred_converter import generate_intersection_matrix
 
 class LNNPlanner:
     def __init__(self, yaml_path, world_matrix):
@@ -14,7 +13,6 @@ class LNNPlanner:
         
         self._create_predicates()
         self._create_rules()
-        self.intersect_matrix = generate_intersection_matrix(world_matrix)
         
     def _create_predicates(self):
         # Using a dictionary to store the arity as well
@@ -56,7 +54,7 @@ class LNNPlanner:
             self.model.add_knowledge(rule_instance, world=World.AXIOM)
     
     # Example method to process world matrix for a specific predicate
-    def add_world_data(self, world_matrix, agent_id, agent_type):
+    def add_world_data(self, world_matrix, intersect_matrix, agent_id, agent_type):
         # Convert the world matrix to the format expected by LNN
         data_dict = {}
         agent_name = "{}_{}".format(agent_type, agent_id)
@@ -77,22 +75,34 @@ class LNNPlanner:
                 method = getattr(module, method_name)
 
                 # Call the method
-                values = method(world_matrix, agent_id, agent_type, self.intersect_matrix)
+                values = method(world_matrix, agent_id, agent_type, intersect_matrix)
                 
                 # Now only supporting one arity
                 data_dict[self.predicates[p]["instance"]][agent_name] = values
 
         self.model.add_data(data_dict)
 
-    def plan(self, world_matrix, agent_id, agent_type, action_dist, action_mapping):
+    def plan(self, world_matrix, intersect_matrix, agents):
         self.reset_predicates_to_unknown()
-        agent_name = "{}_{}".format(agent_type, agent_id)
-        self.add_world_data(world_matrix, agent_id, agent_type)
+        for agent in agents:
+            agent_id = agent.layer_id
+            agent_type = agent.type
+            action_mapping = agent.action_mapping
+            action_dist = agent.action_dist
+            agent_name = "{}_{}".format(agent_type, agent_id)
+            self.add_world_data(world_matrix, intersect_matrix, agent_id, agent_type)
         self.model.infer()
         # use LNN to get the action distribution
-        for keys in action_mapping.keys():
-            if action_mapping[keys] in self.predicates.keys():
-                action_dist[keys] = self.convert(self.predicates[action_mapping[keys]]["instance"].get_data(agent_name))
+        for agent in agents:
+            agent_id = agent["id"]
+            agent_type = agent["type"]
+            agent_name = "{}_{}".format(agent_type, agent_id)
+            action_mapping = agent.action_mapping
+            action_dist = self.get_action_distribution(world_matrix, intersect_matrix, agent_id, agent_type, action_mapping)
+            agent["action_dist"] = action_dist
+            for keys in action_mapping.keys():
+                if action_mapping[keys] in self.predicates.keys():
+                    action_dist[keys] = self.convert(self.predicates[action_mapping[keys]]["instance"].get_data(agent_name))
         return action_dist
 
     def convert(self, LU_bound):
