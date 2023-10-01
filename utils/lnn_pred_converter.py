@@ -39,8 +39,19 @@ def intersection_empty(world, agent_id, agent_type, intersect_matrix):
         xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
         ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
         partial_world = world[BASIC_LAYER:, ymin-AT_INTERSECTION_E:ymax+AT_INTERSECTION_E, xmin-AT_INTERSECTION_E:xmax+AT_INTERSECTION_E]
-        is_integer = (partial_world == partial_world.long())
-        if is_integer.any():
+        # EXCLUDE myself
+        partial_world = torch.cat([partial_world[:agent_id-BASIC_LAYER], partial_world[agent_id-BASIC_LAYER+1:]], dim=0)
+        # Create mask for integer values (except 0)
+        int_mask = (partial_world % 1 == 0) & (partial_world != 0)
+
+        # Create mask for float values and zero
+        float_mask = (partial_world % 1 != 0) | (partial_world == 0)
+
+        # Update values using masks
+        partial_world[int_mask] = 1
+        partial_world[float_mask] = 0
+
+        if partial_world.any():
             return torch.tensor([0.0, 0.0])
         else:
             return torch.tensor([1.0, 1.0])

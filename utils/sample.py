@@ -65,7 +65,7 @@ def sample_determine_start_goal(agent_type, id):
             4: (torch.tensor([56, 80]), torch.tensor([45, 30]))
         },
         'Car': {
-            1: (torch.tensor([14, 48]), torch.tensor([91, 48])),
+            1: (torch.tensor([20, 48]), torch.tensor([91, 48])),
             2: (torch.tensor([91, 54]), torch.tensor([54, 91])),
             3: (torch.tensor([54, 14]), torch.tensor([14, 54])),
             4: (torch.tensor([48, 91]), torch.tensor([48, 14]))

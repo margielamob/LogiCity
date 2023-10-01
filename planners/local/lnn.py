@@ -4,15 +4,12 @@ import importlib
 import torch
 
 class LNNPlanner:
-    def __init__(self, yaml_path):
-        self.model = Model()
-        
+    def __init__(self, yaml_path):        
         # Load the yaml file
         with open(yaml_path, 'r') as file:
             self.data = load(file, Loader=FullLoader)
         
         self._create_predicates()
-        self._create_rules()
         
     def _create_predicates(self):
         # Using a dictionary to store the arity as well
@@ -83,7 +80,9 @@ class LNNPlanner:
         self.model.add_data(data_dict)
 
     def plan(self, world_matrix, intersect_matrix, agents):
-        self.reset_predicates_to_unknown()
+        self.model = Model()
+        self.model.reset_bounds()
+        self._create_rules()
         agents_actions = {}
         for agent in agents:
             agent_id = agent.layer_id
@@ -105,9 +104,8 @@ class LNNPlanner:
         return agents_actions
 
     def convert(self, LU_bound):
-        return torch.avg_pool1d(LU_bound, kernel_size=2)
-
-    def reset_predicates_to_unknown(self):
-        for p in self.predicates.values():
-            predicate_instance = p["instance"]
-            predicate_instance.reset_bounds()  # Clearing any existing data
+        value = torch.avg_pool1d(LU_bound, kernel_size=2)
+        if value == 0.5:
+            # UNKOWN means false
+            return 0.0
+        return value
