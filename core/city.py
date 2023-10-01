@@ -3,26 +3,12 @@ import numpy as np
 import random
 import cv2
 import torch
-
-LABEL_MAP = {
-    -1: 'Overlap',
-    0: 'Under Construction',
-    1: 'Walking Street',
-    2: 'Traffic Street',
-    2.5: 'Mid Lane',
-    3: 'House',
-    4: 'Gas Station',
-    5: 'Office',
-    6: 'Garage',
-    7: 'Store',
-    8: 'Pedestrian',
-    9: 'Car'
-}
+from .config import *
 
 class City:
     def __init__(self, grid_size=(10, 10)):
         self.grid_size = grid_size
-        self.layers = 3
+        self.layers = BASIC_LAYER
         # 0 for blocks
         # 1 for buildings
         # 2 for streets
@@ -35,18 +21,7 @@ class City:
         self.label2type = LABEL_MAP
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
         # vis color map
-        self.color_map = {
-            -1: [100, 100, 100],
-            0: [200, 200, 200],       # Grey for empty
-            1: [152, 216, 170],           # Green for walking street
-            2: [168, 161, 150],        # Red for traffic street
-            2.5: [0, 215, 255],        # Red for traffic street
-            3: [255, 204, 112],       # house
-            4: [34, 102, 141],        # gas station
-            5: [255, 250, 221],       # office
-            6: [142, 205, 221],       # garage
-            7: [255, 63, 164]         # store
-        }
+        self.color_map = COLOR_MAP
 
     def update(self):
         new_matrix = torch.zeros_like(self.city_grid)
@@ -59,7 +34,7 @@ class City:
             next_layer = agent.move(local_action, new_matrix[agent.layer_id])
             new_matrix[agent.layer_id] = next_layer
         # Update city grid after all the agents make decisions
-        self.city_grid[3:] = new_matrix[3:]
+        self.city_grid[BASIC_LAYER:] = new_matrix[BASIC_LAYER:]
 
     def add_building(self, building):
         """Add a building to the city and mark its position on the grid."""
@@ -81,7 +56,7 @@ class City:
                         if self.city_grid[2][i][j] == 0 or self.city_grid[2][i][j] == street_code:
                             self.city_grid[2][i][j] = street_code
                         else:
-                            self.city_grid[2][i][j] = -1
+                            self.city_grid[2][i][j] = INTERSECTION_CODE
         else:  # vertical street
             for i in range(street.position[0], street.position[0] + street.length):
                 for j in range(street.position[1], street.position[1] + street.width):
@@ -89,13 +64,13 @@ class City:
                         if self.city_grid[2][i][j] == 0 or self.city_grid[2][i][j] == street_code:
                             self.city_grid[2][i][j] = street_code
                         else:
-                            self.city_grid[2][i][j] = -1
+                            self.city_grid[2][i][j] = INTERSECTION_CODE
 
     def add_mid(self):
         """Add a mid lanes to traffic to the city and mark its position on the grid."""
         assert len(self.buildings) > 0
-        street_code = self.type2label['Traffic Street'] + 0.5
-        for i in range(1, 26):
+        street_code = self.type2label['Traffic Street'] + MID_LINE_CODE_PLUS
+        for i in range(1, NUM_OF_BLOCKS+1):
             current_block = self.city_grid[0] == i
             pixels = torch.nonzero(current_block.float())
             rows = pixels[:, 0]
@@ -105,26 +80,27 @@ class City:
             top = torch.min(rows).item()
             bottom = torch.max(rows).item()
             # top
-            self.city_grid[2][left:(right+1), top-7] = street_code
-            self.city_grid[2][left:(right+1), bottom+7] = street_code
-            self.city_grid[2][left-7, top:(bottom+1)] = street_code
-            self.city_grid[2][right+7, top:(bottom+1)] = street_code
+            self.city_grid[STREET_ID][left:(right+1), top-TRAFFIC_STREET_WID] = street_code
+            self.city_grid[STREET_ID][left:(right+1), bottom+TRAFFIC_STREET_WID] = street_code
+            self.city_grid[STREET_ID][left-TRAFFIC_STREET_WID, top:(bottom+1)] = street_code
+            self.city_grid[STREET_ID][right+TRAFFIC_STREET_WID, top:(bottom+1)] = street_code
 
     def add_agent(self, agent):
         """Add a agents to the city and mark its position on the grid. Label correspons
             to the current position, Label+0.1 denotes planned global path, Label+0.3 denotes goal point,
-            Label+0.2 denoets next position and, Label-0.1 means walked position, Label-0.2 means start position
+            Label+0.2 denoets next position and, Label-0.1 means walked position, Label-0.2 means start position,
+            see config.py for details.
         """
         self.agents.append(agent)
         agent_layer = torch.zeros((1, self.grid_size[0], self.grid_size[1]))
         agent_code = self.type2label[agent.type]
         # draw agent
         agent_layer[0][agent.start[0], agent.start[1]] = agent_code
-        agent_layer[0][agent.goal[0], agent.goal[1]] = agent_code + 0.3
+        agent_layer[0][agent.goal[0], agent.goal[1]] = agent_code + AGENT_GOAL_PLUS
         for way_points in agent.global_traj[1:-1]:
             if torch.all(way_points==agent.start) or torch.all(way_points==agent.goal):
                 continue
-            agent_layer[0][way_points[0], way_points[1]] = agent_code + 0.1
+            agent_layer[0][way_points[0], way_points[1]] = agent_code + AGENT_GLOBAL_PATH_PLUS
         agent.layer_id = self.city_grid.shape[0]
         self.city_grid = torch.concat([self.city_grid, agent_layer], dim=0)
         self.layers += 1

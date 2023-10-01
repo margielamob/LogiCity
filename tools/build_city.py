@@ -1,13 +1,11 @@
 import yaml
 import numpy as np
+from core.config import *
 
 def list_representer(dumper, data):
     return dumper.represent_sequence(u'tag:yaml.org,2002:seq', data, flow_style=False)
 
 yaml.add_representer(list, list_representer)
-
-BUILDING_TYPES = ["House", "Office", "Gas Station", "Garage", "Store"]
-probabilities = [0.2, 0.2, 0.05, 0.15, 0.4]
 np.random.seed(42)
 
 base_yaml_file = 'config/maps/v0.1.yaml'
@@ -128,7 +126,7 @@ for i, col in enumerate(ind):
         h_wid = traf_stree['width']
         h_s = traf_stree['position'][0]
 
-        chosen_building = np.random.choice(BUILDING_TYPES, p=probabilities)
+        chosen_building = np.random.choice(BUILDING_TYPES, p=BUILDING_PROB)
         chosen_building = str(chosen_building)
         # top-left
         building = {
@@ -140,7 +138,7 @@ for i, col in enumerate(ind):
         }
         city_config['buildings'].append(building)
 
-        chosen_building = np.random.choice(BUILDING_TYPES, p=probabilities)
+        chosen_building = np.random.choice(BUILDING_TYPES, p=BUILDING_PROB)
         chosen_building = str(chosen_building)
         # top-right
         building = {
@@ -152,7 +150,7 @@ for i, col in enumerate(ind):
         }
         city_config['buildings'].append(building)
 
-        chosen_building = np.random.choice(BUILDING_TYPES, p=probabilities)
+        chosen_building = np.random.choice(BUILDING_TYPES, p=BUILDING_PROB)
         chosen_building = str(chosen_building)
         # bottom-left
         building = {
@@ -164,7 +162,7 @@ for i, col in enumerate(ind):
         }
         city_config['buildings'].append(building)
 
-        chosen_building = np.random.choice(BUILDING_TYPES, p=probabilities)
+        chosen_building = np.random.choice(BUILDING_TYPES, p=BUILDING_PROB)
         chosen_building = str(chosen_building)
         # bottom-right
         building = {
