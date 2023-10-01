@@ -4,7 +4,7 @@ from skimage.draw import line
 from scipy.ndimage import label
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-from core.city import LABEL_MAP
+from core.config import *
 import logging
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ def intersection_empty(world, agent_id, agent_type, intersect_matrix):
         intersection_positions = (local_intersection).nonzero()
         xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
         ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
-        partial_world = world[3:, ymin-3:ymax+3, xmin-3:xmax+3]
+        partial_world = world[BASIC_LAYER:, ymin-AT_INTERSECTION_E:ymax+AT_INTERSECTION_E, xmin-AT_INTERSECTION_E:xmax+AT_INTERSECTION_E]
         is_integer = (partial_world == partial_world.long())
         if is_integer.any():
             return torch.tensor([0.0, 0.0])
@@ -56,7 +56,7 @@ def is_pedestrian(world, agent_id, agent_type, intersect_matrix):
 
 def generate_intersection_matrix(world):
     # Extract the 0-th layer of the world matrix
-    world_layer = world[0, :, :]
+    world_layer = world[BLOCK_ID, :, :]
     
     # Extract the unique block IDs from the 0-th layer
     unique_blocks = set(world_layer.flatten().tolist())
@@ -83,7 +83,7 @@ def generate_intersection_matrix(world):
 
     # Label connected regions in the intersection matrix
     labeled_matrix, num = label(intersection_matrix)
-    assert num == 32, "Number of intersections is not 32"
+    assert num == NUM_INTERSECTIONS, "Number of intersections is not 32"
     return torch.tensor(labeled_matrix)
 
 def visualize_intersections(intersection_matrix):

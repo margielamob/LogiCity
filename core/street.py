@@ -1,3 +1,5 @@
+from .config import *
+
 class Street:
     def __init__(self, position=[0, 0], length=1, orientation='horizontal', type='Traffic Street', directions=2, width=0):
         """
@@ -18,9 +20,9 @@ class Street:
         # Depending on the street type, we can assign a default width.
         if width == 0:
             if type == 'Walking Street':
-                self.width = 2  # or any default width for walking streets
+                self.width = WALKING_STREET_WID  # or any default width for walking streets
             else:
-                self.width = 6  # or any default width for traffic streets
+                self.width = TRAFFIC_STREET_WID  # or any default width for traffic streets
         else:
             self.width = width
 

@@ -2,6 +2,7 @@ import numpy as np
 import random
 import cv2
 import torch
+from core.config import *
 
 def visualize_city(city, resolution, agent_layer=None, file_name="city.png"):
     # Define a color for each entity
@@ -50,20 +51,20 @@ def visualize_city(city, resolution, agent_layer=None, file_name="city.png"):
 
 def vis_agent(vis_grid, city, agent_layer_ids, scale_factor, curr=True, s=True, g=True, path=True):
     if agent_layer_ids == -1:
-        agent_layer_ids = list(range(3, city.city_grid.shape[0]))
+        agent_layer_ids = list(range(BASIC_LAYER, city.city_grid.shape[0]))
     if isinstance(agent_layer_ids, list):
         # visualize multi-ple agents
         for agent_layer_id in agent_layer_ids:
-            agent_type = city.agents[agent_layer_id-3].type
-            agent_id = city.agents[agent_layer_id-3].id
+            agent_type = city.agents[agent_layer_id-BASIC_LAYER].type
+            agent_id = city.agents[agent_layer_id-BASIC_LAYER].id
             agent_layer = city.city_grid[agent_layer_id]
             agent_color = city.color_map["{}_{}".format(agent_type, agent_id)]
             # get points
             cur_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]).float()).tolist()
-            planned_traj = torch.nonzero((agent_layer == city.type2label[agent_type]+0.1).float()).tolist()
-            walked_traj = torch.nonzero((agent_layer == city.type2label[agent_type]-0.1).float()).tolist()
-            goal_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]+0.3).float()).tolist()
-            start_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]-0.2).float()).tolist()
+            planned_traj = torch.nonzero((agent_layer == city.type2label[agent_type]+AGENT_GLOBAL_PATH_PLUS).float()).tolist()
+            walked_traj = torch.nonzero((agent_layer == city.type2label[agent_type]+AGENT_WALKED_PATH_PLUS).float()).tolist()
+            goal_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]+AGENT_GOAL_PLUS).float()).tolist()
+            start_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]+AGENT_START_PLUS).float()).tolist()
             # Path
             if len(planned_traj) > 0 and path:  
                 for way_point in planned_traj:
@@ -87,17 +88,17 @@ def vis_agent(vis_grid, city, agent_layer_ids, scale_factor, curr=True, s=True, 
 
     elif isinstance(agent_layer_ids, int):
         agent_layer_id = agent_layer_ids
-        assert agent_layer_id > 2
-        agent_type = city.agents[agent_layer_id-3].type
-        agent_id = city.agents[agent_layer_id-3].id
+        assert agent_layer_id >= BASIC_LAYER
+        agent_type = city.agents[agent_layer_id-BASIC_LAYER].type
+        agent_id = city.agents[agent_layer_id-BASIC_LAYER].id
         agent_layer = city.city_grid[agent_layer_id]
         agent_color = city.color_map["{}_{}".format(agent_type, agent_id)]
         # draw points
         cur_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]).float()).tolist()
-        planned_traj = torch.nonzero((agent_layer == city.type2label[agent_type]+0.1).float()).tolist()
-        walked_traj = torch.nonzero((agent_layer == city.type2label[agent_type]-0.1).float()).tolist()
-        goal_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]+0.3).float()).tolist()
-        start_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]-0.2).float()).tolist()
+        planned_traj = torch.nonzero((agent_layer == city.type2label[agent_type]+AGENT_GLOBAL_PATH_PLUS).float()).tolist()
+        walked_traj = torch.nonzero((agent_layer == city.type2label[agent_type]+AGENT_WALKED_PATH_PLUS).float()).tolist()
+        goal_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]+AGENT_GOAL_PLUS).float()).tolist()
+        start_agent_pos = torch.nonzero((agent_layer == city.type2label[agent_type]+AGENT_START_PLUS).float()).tolist()
         # Path
         if len(planned_traj) > 0 and path:  
             if len(planned_traj) > 0 and path:  

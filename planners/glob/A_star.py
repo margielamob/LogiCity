@@ -1,5 +1,6 @@
 import torch
 from queue import PriorityQueue
+from core.config import *
 
 class Node:
     def __init__(self, position:torch.tensor, parent:torch.tensor):
@@ -65,7 +66,7 @@ def astar(movable_map, start, end):
         for child in children:
             child.g = current_node.g + 1
             child.h = heuristic(child.position, end_node.position)
-            child.f = child.g + 3*child.h
+            child.f = child.g + A_START_E * child.h
 
             if child.position in open_dict and child.g > open_dict[child.position].g:
                 continue
