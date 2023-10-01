@@ -4,18 +4,46 @@ from skimage.draw import line
 from scipy.ndimage import label
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+from core.city import LABEL_MAP
+import logging
+
+logger = logging.getLogger(__name__)
+
+TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
 def check_is_at_intersection(world, agent_id, agent_type, intersect_matrix):
-    return torch.tensor([0.0, 0.0])
+    agent_layer = world[agent_id]
+    agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
+    if intersect_matrix[agent_position[0], agent_position[1]]:
+        return torch.tensor([1.0, 1.0])
+    else:
+        return torch.tensor([0.0, 0.0])
 
-def is_car(world, agent_id, agent_type):
-    return torch.tensor([0.0, 0.0])
+def is_car(world, agent_id, agent_type, intersect_matrix):
+    if agent_type == "Car":
+        return torch.tensor([1.0, 1.0])
+    else:
+        return torch.tensor([0.0, 0.0])
 
 def pedestrians_near_intersection(world, agent_id, agent_type, intersect_matrix):
     return torch.tensor([0.0, 0.0])
 
 def intersection_empty(world, agent_id, agent_type, intersect_matrix):
-    return torch.tensor([0.0, 0.0])
+    agent_layer = world[agent_id]
+    agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
+    if not intersect_matrix[agent_position[0], agent_position[1]]:
+        return torch.tensor([1.0, 1.0])
+    else:
+        local_intersection = intersect_matrix == intersect_matrix[agent_position[0], agent_position[1]]
+        intersection_positions = (local_intersection).nonzero()
+        xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
+        ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
+        partial_world = world[3:, ymin-3:ymax+3, xmin-3:xmax+3]
+        is_integer = (partial_world == partial_world.long())
+        if is_integer.any():
+            return torch.tensor([0.0, 0.0])
+        else:
+            return torch.tensor([1.0, 1.0])
 
 def high_priority_agents_near(world, agent_id, agent_type, intersect_matrix):
     return torch.tensor([0.0, 0.0])
@@ -56,7 +84,7 @@ def generate_intersection_matrix(world):
     # Label connected regions in the intersection matrix
     labeled_matrix, num = label(intersection_matrix)
     assert num == 32, "Number of intersections is not 32"
-    return labeled_matrix
+    return torch.tensor(labeled_matrix)
 
 def visualize_intersections(intersection_matrix):
     # Get unique intersection IDs (excluding 0)

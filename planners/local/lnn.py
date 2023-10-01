@@ -85,6 +85,7 @@ class LNNPlanner:
         self.model.add_data(data_dict)
 
     def plan(self, world_matrix, agent_id, agent_type, action_dist, action_mapping):
+        self.reset_predicates_to_unknown()
         agent_name = "{}_{}".format(agent_type, agent_id)
         self.add_world_data(world_matrix, agent_id, agent_type)
         self.model.infer()
@@ -96,3 +97,8 @@ class LNNPlanner:
 
     def convert(self, LU_bound):
         return torch.avg_pool1d(LU_bound, kernel_size=2)
+
+    def reset_predicates_to_unknown(self):
+        for p in self.predicates.values():
+            predicate_instance = p["instance"]
+            predicate_instance.reset_bounds()  # Clearing any existing data
