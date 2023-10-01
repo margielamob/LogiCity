@@ -26,7 +26,7 @@ class Car(Agent):
         self.start_point_list = None
         self.goal_point_list = None
         self.global_planner_type = global_planner
-        self.local_planner = LPlanner_mapper[local_planner](rule_file)
+        self.local_planner = LPlanner_mapper[local_planner](rule_file, world_matrix=world_state_matrix)
         super().__init__(type, size, id, world_state_matrix)
         # Actions: ["left_1", "right_1", "up_1", "down_1", "left_2", "right_2", "up_2", "down_2", "stop"]
         self.action_space = torch.tensor(range(9))

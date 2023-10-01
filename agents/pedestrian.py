@@ -17,7 +17,7 @@ class Pedestrian(Agent):
         self.start_point_list = None
         self.goal_point_list = None
         self.global_planner = GPlanner_mapper[global_planner]
-        self.local_planner = LPlanner_mapper[local_planner](rule_file)
+        self.local_planner = LPlanner_mapper[local_planner](rule_file, world_matrix=world_state_matrix)
         super().__init__(type, size, id, world_state_matrix)
         # pedestrian use A*, which is just a function
         self.action_mapping = {

@@ -2,9 +2,10 @@ from lnn import Model, Predicates, Variables, Implies, And, Or, Not, Fact, World
 from yaml import load, FullLoader
 import importlib
 import torch
+from utils.lnn_pred_converter import generate_intersection_matrix
 
 class LNNPlanner:
-    def __init__(self, yaml_path):
+    def __init__(self, yaml_path, world_matrix):
         self.model = Model()
         
         # Load the yaml file
@@ -13,6 +14,7 @@ class LNNPlanner:
         
         self._create_predicates()
         self._create_rules()
+        self.intersect_matrix = generate_intersection_matrix(world_matrix)
         
     def _create_predicates(self):
         # Using a dictionary to store the arity as well
@@ -75,7 +77,7 @@ class LNNPlanner:
                 method = getattr(module, method_name)
 
                 # Call the method
-                values = method(world_matrix, agent_id, agent_type)
+                values = method(world_matrix, agent_id, agent_type, self.intersect_matrix)
                 
                 # Now only supporting one arity
                 data_dict[self.predicates[p]["instance"]][agent_name] = values
