@@ -1,29 +1,31 @@
 import cv2
 import numpy as np
 import pickle as pkl
+import torch
 import os
 from tqdm import tqdm
+from scipy.ndimage import label
 from core.config import *
 
 IMAGE_BASE_PATH = "./imgs"
 SCALE = 4
 
 PATH_DICT = {
-    "Car": os.path.join(IMAGE_BASE_PATH, "car.jpg"),
+    "Car": os.path.join(IMAGE_BASE_PATH, "car.png"),
     "Pedestrian": os.path.join(IMAGE_BASE_PATH, "pedestrian.png"),
     "Walking Street": os.path.join(IMAGE_BASE_PATH, "walking.png"),
     "Traffic Street": os.path.join(IMAGE_BASE_PATH, "traffic.png"),
     "Overlap": os.path.join(IMAGE_BASE_PATH, "crossing.png"),
-    "Gas Station": os.path.join(IMAGE_BASE_PATH, "gas.jpg"),
-    "Garage": os.path.join(IMAGE_BASE_PATH, "garage.jpg"),
+    "Gas Station": os.path.join(IMAGE_BASE_PATH, "gas.png"),
+    "Garage": os.path.join(IMAGE_BASE_PATH, "garage.png"),
     "House": [os.path.join(IMAGE_BASE_PATH, "house{}.png").format(i) for i in range(1, 4)],
     "Office": [os.path.join(IMAGE_BASE_PATH, "office{}.png").format(i) for i in range(1, 4)],
     "Store": [os.path.join(IMAGE_BASE_PATH, "store{}.png").format(i) for i in range(1, 4)],
 }
 
 ICON_SIZE_DICT = {
-    "Car": SCALE*4,
-    "Pedestrian": SCALE*2,
+    "Car": SCALE*8,
+    "Pedestrian": SCALE*4,
     "Walking Street": SCALE*10,
     "Traffic Street": SCALE*10,
     "Overlap": SCALE*10,
@@ -51,7 +53,6 @@ def resize_with_aspect_ratio(image, base_size):
 
 def gridmap2img_static(gridmap, icon_dict):
     # step 1: get the size of the gridmap, create a blank image with size*SCALE
-    gridmap = gridmap.numpy()
     height, width = gridmap.shape[1], gridmap.shape[2]
     img = np.ones((height*SCALE, width*SCALE, 3), np.uint8) * 255  # assuming white background
     resized_grid = np.repeat(np.repeat(gridmap, SCALE, axis=1), SCALE, axis=2)
@@ -105,23 +106,50 @@ def gridmap2img_static(gridmap, icon_dict):
     img[traffic_mask] = traffic_img[traffic_mask]
 
     # For the building icons
-    # for i in range(0, height):
-    #     for j in range(0, width):
-    #         if gridmap[BUILDING_ID, i, j] != 0:
-    #             entity = LABEL_MAP[int(gridmap[BUILDING_ID, i, j].item())] 
-    #             if entity in ["House", "Office", "Store"]:
-    #                 icon_id = np.random.choice(3)
-    #                 icon = icon_dict[entity][icon_id]
-    #             else:
-    #                 icon = icon_dict[entity]
-    #             h_space_left = min(icon.shape[0], img.shape[0] - i*SCALE)
-    #             w_space_left = min(icon.shape[1], img.shape[1] - j*SCALE)
-    #             img[i*SCALE:i*SCALE+h_space_left, j*SCALE:j*SCALE+w_space_left] = icon[:h_space_left, :w_space_left]
+    for building in BUILDING_TYPES:
+        building_map = resized_grid[BUILDING_ID] == TYPE_MAP[building]
+        building_icon = icon_dict[building]
+        labeled_matrix, num = label(building_map)
+
+        for i in range(1, num+1):
+            local = torch.tensor(labeled_matrix == i)
+            pixels = torch.nonzero(local.float())
+            rows = pixels[:, 0]
+            cols = pixels[:, 1]
+            left = torch.min(cols).item()
+            right = torch.max(cols).item()
+            top = torch.min(rows).item()
+            bottom = torch.max(rows).item()
+            if building in ["House", "Office", "Store"]:
+                icon_id = np.random.choice(3)
+                icon = building_icon[icon_id]
+            else:
+                icon = building_icon
+            icon_mask = np.sum(icon > 1, axis=2) > 0
+            img[bottom-icon.shape[0]:bottom, left:left+icon.shape[1]][icon_mask] = icon[icon_mask]
 
     return img
 
 def gridmap2img_agents(gridmap, icon_dict, static_map):
-    return  
+    current_map = static_map.copy()
+    agent_layer = gridmap[BASIC_LAYER:]
+    resized_grid = np.repeat(np.repeat(agent_layer, SCALE, axis=1), SCALE, axis=2)
+    for i in range(resized_grid.shape[0]):
+        local_layer = resized_grid[i]
+        local_layer[local_layer==0] += 0.1
+        pos_layer = local_layer == local_layer.astype(np.int64)
+        pixels = torch.nonzero(torch.tensor(pos_layer.astype(np.float32)))
+        rows = pixels[:, 0]
+        cols = pixels[:, 1]
+        left = torch.min(cols).item()
+        right = torch.max(cols).item()
+        top = torch.min(rows).item()
+        bottom = torch.max(rows).item()
+        agent_type = LABEL_MAP[local_layer[top, left].item()]
+        icon = icon_dict[agent_type]
+        icon_mask = np.sum(icon > 10, axis=2) > 0
+        current_map[bottom-icon.shape[0]:bottom, left:left+icon.shape[1]][icon_mask] = icon[icon_mask]
+    return current_map
 
 def main():
     icon_dict = {}
@@ -138,6 +166,7 @@ def main():
     with open("log/debug.pkl", "rb") as f:
         data = pkl.load(f)
         static_map = gridmap2img_static(data[0], icon_dict)
+        cv2.imwrite("vis_city/static_layout.png", static_map)
         for key in tqdm(data.keys()):
             grid = data[key]
             img = gridmap2img_agents(grid, icon_dict, static_map)

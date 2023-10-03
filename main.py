@@ -6,7 +6,7 @@ from utils.logger import setup_logger
 from utils.vis import visualize_city
 from core.config import *
 import torch
-import numpy
+import numpy as np
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
@@ -28,21 +28,21 @@ def parse_arguments():
 def main(args, logger):
     logger.info("Starting city simulation with random seed {}... Debug mode: {}".format(args.seed, args.debug))
     torch.manual_seed(args.seed)
-    numpy.random.seed(args.seed)
+    np.random.seed(args.seed)
     # Create a city instance with a predefined grid
     city = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, args.debug)
     visualize_city(city, 4*WORLD_SIZE, -1, "vis/init.png")
 
     # Main simulation loop
     steps = 0
-    cached_observation = {0: city.city_grid}
+    cached_observation = {0: city.city_grid.numpy().astype(np.float32)}
     while steps < args.max_steps:
         logger.info("Simulating Step_{}...".format(steps))
         city.update()
         # Visualize the current state of the city (optional)
         visualize_city(city, 4*WORLD_SIZE, -1, "vis/step_{}.png".format(steps))
         steps += 1
-        cached_observation[steps] = city.city_grid
+        cached_observation[steps] = city.city_grid.numpy().astype(np.float32)
 
     with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
         pkl.dump(cached_observation, f)
