@@ -15,6 +15,7 @@ LABEL_MAP = {
     8: 'Pedestrian',
     9: 'Car'
 }
+TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 COLOR_MAP = {
             -1: [100, 100, 100],
             0: [200, 200, 200],       # Grey for empty
