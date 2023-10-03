@@ -147,8 +147,16 @@ def gridmap2img_agents(gridmap, icon_dict, static_map):
         bottom = torch.max(rows).item()
         agent_type = LABEL_MAP[local_layer[top, left].item()]
         icon = icon_dict[agent_type]
+        bottom_img = max(0, (top+bottom)//2-icon.shape[0]//2)
+        left_img = max(0, (left+right)//2-icon.shape[1]//2)
+        top_img = min(current_map.shape[0], (top+bottom)//2+icon.shape[0]-icon.shape[0]//2)
+        right_img = min(current_map.shape[1], (left+right)//2+icon.shape[1]-icon.shape[1]//2)
+
+        icon = icon[top_img:bottom_img, left_img:right_img]
         icon_mask = np.sum(icon > 10, axis=2) > 0
-        current_map[bottom-icon.shape[0]:bottom, left:left+icon.shape[1]][icon_mask] = icon[icon_mask]
+
+        # Paste the walking_icon (or its sliced version) to img
+        current_map[bottom_img:top_img, left_img:right_img][icon_mask] = icon[icon_mask]
     return current_map
 
 def main():
@@ -168,6 +176,7 @@ def main():
         static_map = gridmap2img_static(data[0], icon_dict)
         cv2.imwrite("vis_city/static_layout.png", static_map)
         for key in tqdm(data.keys()):
+            key = 94
             grid = data[key]
             img = gridmap2img_agents(grid, icon_dict, static_map)
             cv2.imwrite("vis_city/{}.png".format(key), img)
