@@ -83,15 +83,12 @@ class ASTAR_G:
             # min value doesn't lie in next node list
             next_node = torch.zeros_like(intersection)
             assert torch.any((judging_list[:, 0] == all_nodes[ind][0]) & (judging_list[:, 1] == all_nodes[ind][1]))
-            if torch.abs(all_nodes[ind]-point)[0] == torch.abs(all_nodes[ind]-point)[1]:
-                mo = self.movable_map[point[0], point[1]-2:point[1]+2]
-                if torch.all(mo):
-                    # horizonal
-                    local_ind = 0
-                else:
-                    local_ind = 1
+            mo = self.movable_map[point[0], point[1]-TRAFFIC_STREET_WID//2:point[1]+TRAFFIC_STREET_WID//2]
+            if torch.all(mo):
+                # horizonal
+                local_ind = 0
             else:
-                _, local_ind = torch.min(torch.abs(all_nodes[ind]-point), dim=0)
+                local_ind = 1
             intersection[1-local_ind] = point[1-local_ind]
             intersection[local_ind] = all_nodes[ind][local_ind]
 

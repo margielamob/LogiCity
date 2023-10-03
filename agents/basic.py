@@ -21,6 +21,7 @@ class Agent:
         self.pos = None
         self.layer_id = 0
         self.reach_goal = False
+        self.debug = debug
         self.init(world_state_matrix, debug)
 
     def init(self, world_state_matrix, debug=False):

@@ -17,7 +17,7 @@ class Pedestrian(Agent):
         self.start_point_list = None
         self.goal_point_list = None
         self.global_planner = GPlanner_mapper[global_planner]
-        super().__init__(type, size, id, world_state_matrix)
+        super().__init__(type, size, id, world_state_matrix, debug=debug)
         # pedestrian use A*, which is just a function
         self.action_mapping = {
             0: "Left", 
@@ -104,8 +104,11 @@ class Pedestrian(Agent):
         # reached goal
         if not self.reach_goal:
             if torch.all(self.pos == self.goal):
-                # self.reach_goal = True
-                logger.info("{}_{} reached goal! Will change goal in the next step!".format(self.type, self.id))
+                if not self.debug:
+                    self.reach_goal = True
+                    logger.info("{}_{} reached goal! Will change goal in the next step!".format(self.type, self.id))
+                else:
+                    logger.info("{}_{} reached goal! In Debug, it will stop".format(self.type, self.id))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
                 return self.get_action(local_action_dist), world_state_matrix[self.layer_id]

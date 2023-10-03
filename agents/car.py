@@ -26,7 +26,7 @@ class Car(Agent):
         self.start_point_list = None
         self.goal_point_list = None
         self.global_planner_type = global_planner
-        super().__init__(type, size, id, world_state_matrix)
+        super().__init__(type, size, id, world_state_matrix, debug=debug)
         # Actions: ["left_1", "right_1", "up_1", "down_1", "left_2", "right_2", "up_2", "down_2", "stop"]
         self.action_space = torch.tensor(range(9))
         self.action_to_move = {
@@ -133,8 +133,11 @@ class Car(Agent):
         # reached goal
         if not self.reach_goal:
             if torch.all(self.pos == self.goal):
-                # self.reach_goal = True
-                logger.info("{}_{} reached goal! Will change goal in the next step!".format(self.type, self.id))
+                if not self.debug:
+                    self.reach_goal = True
+                    logger.info("{}_{} reached goal! Will change goal in the next step!".format(self.type, self.id))
+                else:
+                    logger.info("{}_{} reached goal! In Debug, it will stop".format(self.type, self.id))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
                 return self.get_action(local_action_dist), world_state_matrix[self.layer_id]
