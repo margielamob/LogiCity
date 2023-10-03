@@ -8,129 +8,113 @@ def list_representer(dumper, data):
 yaml.add_representer(list, list_representer)
 np.random.seed(42)
 
-base_yaml_file = 'config/maps/v0.1.yaml'
+base_yaml_file = 'config/maps/v1.0.yaml'
 
 with open(base_yaml_file, 'r') as file:
     city_config = yaml.safe_load(file)
 
 city_config['buildings'] = []
+city_config['streets'] = []
 # Traffic Streets
-for j in range(48, 200, 48):
+for j in range(0, WORLD_SIZE, (BUILDING_SIZE*2+WALKING_STREET_WID*3+TRAFFIC_STREET_WID)):
     # vertical
     traf_stree = {
-        'position': [7, j],
-        'length': 243,
+        'position': [0, j],
+        'length': WORLD_SIZE,
         'orientation': 'vertical',
         'type': 'Traffic Street',
         'directions': 2,
-        'width': 7
+        'width': TRAFFIC_STREET_WID
     }
     city_config['streets'].append(traf_stree)
     # horison
     traf_stree = {
-        'position': [j, 7],
-        'length': 243,
+        'position': [j, 0],
+        'length': WORLD_SIZE,
         'orientation': 'horizontal',
         'type': 'Traffic Street',
         'directions': 2,
-        'width': 7
+        'width': TRAFFIC_STREET_WID
     }
     city_config['streets'].append(traf_stree)
 
 # Walking
-for j in range(45, 200, 48):
+for j in range(TRAFFIC_STREET_WID, WORLD_SIZE, (BUILDING_SIZE*2+WALKING_STREET_WID*3+TRAFFIC_STREET_WID)):
     # vertical
     traf_stree = {
-        'position': [10, j],
-        'length': 230,
+        'position': [TRAFFIC_STREET_WID, j],
+        'length': WORLD_SIZE-2*TRAFFIC_STREET_WID,
         'orientation': 'vertical',
         'type': 'Walking Street',
         'directions': 2,
-        'width': 3
+        'width': WALKING_STREET_WID
     }
     city_config['streets'].append(traf_stree)
     traf_stree = {
-        'position': [10, j+10],
-        'length': 230,
+        'position': [TRAFFIC_STREET_WID, j+BUILDING_SIZE*2+WALKING_STREET_WID*2],
+        'length': WORLD_SIZE-2*TRAFFIC_STREET_WID,
         'orientation': 'vertical',
         'type': 'Walking Street',
         'directions': 2,
-        'width': 3
+        'width': WALKING_STREET_WID
     }
     city_config['streets'].append(traf_stree)
     # horison
     traf_stree = {
-        'position': [j, 10],
-        'length': 230,
+        'position': [j, TRAFFIC_STREET_WID],
+        'length': WORLD_SIZE-2*TRAFFIC_STREET_WID,
         'orientation': 'horizontal',
         'type': 'Walking Street',
         'directions': 2,
-        'width': 3
+        'width': WALKING_STREET_WID
     }
     city_config['streets'].append(traf_stree)
     traf_stree = {
-        'position': [j+10, 10],
-        'length': 230,
+        'position': [j+BUILDING_SIZE*2+WALKING_STREET_WID*2, TRAFFIC_STREET_WID],
+        'length': WORLD_SIZE-2*TRAFFIC_STREET_WID,
         'orientation': 'horizontal',
         'type': 'Walking Street',
         'directions': 2,
-        'width': 3
+        'width': WALKING_STREET_WID
     }
     city_config['streets'].append(traf_stree)
 
 # inter walking and buildings
-ind = list(range(26, 200, 48))
-ind.append(219)
+n = np.sqrt(NUM_OF_BLOCKS).astype(np.int16)
 
-for i, col in enumerate(ind):
-    for j, row in enumerate(ind):
+for i in range(n):
+    for j in range(n):
         # buildings
         block_id = i*5 + j + 1
-        size = 16
-        if i == 4 or j == 4:
-            size = 17
+        size = BUILDING_SIZE
         # vertical
+        vs = WALKING_STREET_WID+TRAFFIC_STREET_WID + BUILDING_SIZE + j*(BUILDING_SIZE*2+WALKING_STREET_WID*3+TRAFFIC_STREET_WID)
+        hs = WALKING_STREET_WID+TRAFFIC_STREET_WID + BUILDING_SIZE + i*(BUILDING_SIZE*2+WALKING_STREET_WID*3+TRAFFIC_STREET_WID)
         traf_stree = {
-        'position': [10 + i*48, row],
-        'length': 35 if i != 4 else 38,
+        'position': [WALKING_STREET_WID+TRAFFIC_STREET_WID + i*(BUILDING_SIZE*2+WALKING_STREET_WID*3+TRAFFIC_STREET_WID), vs],
+        'length': WALKING_STREET_LENGTH,
         'orientation': 'vertical',
         'type': 'Walking Street',
         'directions': 2,
-        'width': 3
+        'width': WALKING_STREET_WID
         }
-        if i == 4 and j != 4:
-            traf_stree['width'] = 1
-            traf_stree['position'][1] = row+1
-        if j==4:
-            traf_stree['width'] = 4
-            traf_stree['position'][1] = row
         city_config['streets'].append(traf_stree)
-        v_wid = traf_stree['width']
-        v_s = traf_stree['position'][1]
 
         traf_stree = {
-        'position': [col, 10 + j*48],
-        'length': 35 if j != 4 else 38,
+        'position': [hs, WALKING_STREET_WID+TRAFFIC_STREET_WID + j*(BUILDING_SIZE*2+WALKING_STREET_WID*3+TRAFFIC_STREET_WID)],
+        'length': WALKING_STREET_LENGTH,
         'orientation': 'horizontal',
         'type': 'Walking Street',
         'directions': 2,
-        'width': 3
+        'width': WALKING_STREET_WID
         }
-        if j == 4 and i != 4:
-            traf_stree['width'] = 1
-            traf_stree['position'][0] = col+1
-        if i==4:
-            traf_stree['width'] = 4
-            traf_stree['position'][0] = col
         city_config['streets'].append(traf_stree)
-        h_wid = traf_stree['width']
-        h_s = traf_stree['position'][0]
 
         chosen_building = np.random.choice(BUILDING_TYPES, p=BUILDING_PROB)
         chosen_building = str(chosen_building)
         # top-left
         building = {
-            'position': [v_s - size, h_s - size],
+            'position': [hs - size, vs - size],
             'size': [size, size],
             'block': block_id,
             'type': chosen_building,
@@ -142,7 +126,7 @@ for i, col in enumerate(ind):
         chosen_building = str(chosen_building)
         # top-right
         building = {
-            'position': [v_s + v_wid, h_s - size],
+            'position': [hs - size, vs + WALKING_STREET_WID],
             'size': [size, size],
             'block': block_id,
             'type': chosen_building,
@@ -154,7 +138,7 @@ for i, col in enumerate(ind):
         chosen_building = str(chosen_building)
         # bottom-left
         building = {
-            'position': [v_s - size, h_s + h_wid],
+            'position': [hs + WALKING_STREET_WID, vs - size],
             'size': [size, size],
             'block': block_id,
             'type': chosen_building,
@@ -166,7 +150,7 @@ for i, col in enumerate(ind):
         chosen_building = str(chosen_building)
         # bottom-right
         building = {
-            'position': [v_s + v_wid, h_s + h_wid],
+            'position': [hs + WALKING_STREET_WID, vs + WALKING_STREET_WID],
             'size': [size, size],
             'block': block_id,
             'type': chosen_building,

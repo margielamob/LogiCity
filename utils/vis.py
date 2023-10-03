@@ -2,6 +2,8 @@ import numpy as np
 import random
 import cv2
 import torch
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from core.config import *
 
 def visualize_city(city, resolution, agent_layer=None, file_name="city.png"):
@@ -122,3 +124,26 @@ def vis_agent(vis_grid, city, agent_layer_ids, scale_factor, curr=True, s=True, 
                     agent_color, markerType=cv2.MARKER_DIAMOND, markerSize=14, thickness=3, line_type=cv2.LINE_AA)
 
     return vis_grid
+
+def visualize_intersections(intersection_matrix):
+    # Get unique intersection IDs (excluding 0)
+    unique_intersections = np.unique(intersection_matrix)
+    unique_intersections = unique_intersections[unique_intersections != 0]
+    
+    # Create a color map for each intersection ID
+    colors = list(mcolors.CSS4_COLORS.values())
+    intersection_colors = {uid: colors[i % len(colors)] for i, uid in enumerate(unique_intersections)}
+
+    # Create an RGB visualization matrix
+    vis_matrix = np.zeros((*intersection_matrix.shape, 3), dtype=np.uint8)
+
+    for uid, color in intersection_colors.items():
+        r, g, b = mcolors.hex2color(color)
+        mask = (intersection_matrix == uid)
+        vis_matrix[mask] = (np.array([r, g, b]) * 255).astype(np.uint8)
+
+    # Plot
+    plt.imshow(vis_matrix)
+    plt.title("Intersections Visualization")
+    plt.axis('off')
+    plt.imsave("test.png", vis_matrix)

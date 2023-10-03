@@ -1,5 +1,8 @@
 import yaml
-from core import City, Building, Street
+from core.city import City
+from core.building import Building
+from core.street import Street
+from core.config import *
 from agents import Agent_mapper
 from tqdm import tqdm
 import logging
@@ -8,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class CityLoader:
     @staticmethod
-    def from_yaml(map_yaml_file, agent_yaml_file, rule_yaml_file, rule_type):
+    def from_yaml(map_yaml_file, agent_yaml_file, rule_yaml_file, rule_type, debug=False):
         with open(map_yaml_file, 'r') as file:
             city_config = yaml.load(file, Loader=yaml.Loader)
             logger.info("Get map info from {}".format(map_yaml_file))
@@ -19,7 +22,7 @@ class CityLoader:
                 city_config[keys] = agent_config[keys]
 
         # Create a city instance with the specified grid size
-        city = City(grid_size=tuple(city_config["grid_size"]), local_planner=rule_type, rule_file=rule_yaml_file)
+        city = City(grid_size=(WORLD_SIZE, WORLD_SIZE), local_planner=rule_type, rule_file=rule_yaml_file)
 
         # Add streets to the city
         logger.info("Constructing {} streets".format(len(city_config["streets"])))
@@ -58,7 +61,8 @@ class CityLoader:
                 size=agents_data["size"],
                 id=agents_data["id"],
                 global_planner=agents_data['gplanner'],
-                world_state_matrix=city.city_grid
+                world_state_matrix=city.city_grid,
+                debug=debug
             )
             city.add_agent(agent)
 

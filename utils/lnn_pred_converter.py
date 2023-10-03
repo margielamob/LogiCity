@@ -1,7 +1,5 @@
 import torch
 import numpy as np
-from skimage.draw import line
-from scipy.ndimage import label
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from core.config import *

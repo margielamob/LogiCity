@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
 class Pedestrian(Agent):
-    def __init__(self, type, size, id, world_state_matrix, global_planner):
+    def __init__(self, type, size, id, world_state_matrix, global_planner, debug=False):
         self.start_point_list = None
         self.goal_point_list = None
         self.global_planner = GPlanner_mapper[global_planner]
@@ -27,13 +27,15 @@ class Pedestrian(Agent):
             4: "Stop"
             }
 
-    def init(self, world_state_matrix):
+    def init(self, world_state_matrix, debug=False):
         WALKING_STREET = TYPE_MAP['Walking Street']
         CROSSING_STREET = TYPE_MAP['Overlap']
-        # self.start = torch.tensor(self.get_start(world_state_matrix))
-        # self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
-        self.start, self.goal = sample_determine_start_goal(self.type, self.id)
-        self.pos = self.start.clone()
+        if debug:
+            self.start, self.goal = sample_determine_start_goal(self.type, self.id)
+        else:
+            self.start = torch.tensor(self.get_start(world_state_matrix))
+            self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
+            self.pos = self.start.clone()
         # specify the occupacy map
         self.movable_region = (world_state_matrix[STREET_ID] == WALKING_STREET) | (world_state_matrix[STREET_ID] == CROSSING_STREET)
         # get global traj on the occupacy map

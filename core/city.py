@@ -5,7 +5,8 @@ import random
 from skimage.draw import line
 from scipy.ndimage import label
 import torch
-from .config import *
+from core.config import *
+from utils.vis import visualize_intersections
 
 class City:
     def __init__(self, grid_size, local_planner, rule_file=None):
@@ -116,7 +117,7 @@ class City:
                 if block_id != other_block_id:
                     for corner in block_corners:
                         for other_corner in other_block_corners:
-                            if np.linalg.norm(np.array(corner) - np.array(other_corner)) == 14:
+                            if np.linalg.norm(np.array(corner) - np.array(other_corner)) == TRAFFIC_STREET_WID + 2*WALKING_STREET_WID + 1:
                                 rr, cc = line(corner[0], corner[1], other_corner[0], other_corner[1])
                                 intersection_matrix[rr, cc] = True
 

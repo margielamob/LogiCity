@@ -100,11 +100,10 @@ class ASTAR_G:
             # find the goal that so not have start in between
             for k in range(filtered_node_list.shape[0]):
                 candidate = filtered_node_list[k]
-                if torch.abs(candidate[1-local_ind] - all_nodes[ind][1-local_ind]) in TRAFFIC_STREET_LENGTH:
+                if torch.abs(candidate[1-local_ind] - all_nodes[ind][1-local_ind]) == TRAFFIC_STREET_LENGTH + 1:
                     assert min(candidate[1-local_ind], all_nodes[ind][1-local_ind])<=intersection[1-local_ind]<=max(candidate[1-local_ind], all_nodes[ind][1-local_ind])
                     return intersection, candidate
-                else:
-                    ValueError('Not a valid intersection')
+            ValueError('Not a valid intersection')
 
 
     def plan(self, start, end):

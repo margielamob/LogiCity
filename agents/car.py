@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
 class Car(Agent):
-    def __init__(self, type, size, id, world_state_matrix, global_planner):
+    def __init__(self, type, size, id, world_state_matrix, global_planner, debug=False):
         self.start_point_list = None
         self.goal_point_list = None
         self.global_planner_type = global_planner
@@ -52,13 +52,15 @@ class Car(Agent):
             8: "Stop"
             }
 
-    def init(self, world_state_matrix):
+    def init(self, world_state_matrix, debug=False):
         Traffic_STREET = TYPE_MAP['Traffic Street']
         CROSSING_STREET = TYPE_MAP['Overlap']
-        # self.start = torch.tensor(self.get_start(world_state_matrix))
-        self.start, self.goal = sample_determine_start_goal(self.type, self.id)
-        self.pos = self.start.clone()
-        # self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
+        if debug:
+            self.start, self.goal = sample_determine_start_goal(self.type, self.id)
+        else:
+            self.start = torch.tensor(self.get_start(world_state_matrix))
+            self.pos = self.start.clone()
+            self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
         # specify the occupacy map
         self.movable_region = (world_state_matrix[STREET_ID] == Traffic_STREET) | (world_state_matrix[STREET_ID] == CROSSING_STREET)
         self.midline_matrix = (world_state_matrix[STREET_ID] == Traffic_STREET+MID_LINE_CODE_PLUS)

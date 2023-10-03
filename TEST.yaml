@@ -1,267 +1,246 @@
-agents:
-- gplanner: A*
-  id: 1
-  size: 1
-  type: Pedestrian
-- gplanner: A*
-  id: 2
-  size: 1
-  type: Pedestrian
-- gplanner: A*
-  id: 3
-  size: 1
-  type: Pedestrian
-- gplanner: A*
-  id: 1
-  size: 2
-  type: Car
-- gplanner: A*
-  id: 2
-  size: 2
-  type: Car
 buildings:
 - block: 1
   height: 24
   position:
-  - 10
-  - 10
+  - 16
+  - 16
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 1
   height: 16
   position:
-  - 29
-  - 10
+  - 16
+  - 31
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 1
   height: 20
   position:
-  - 10
-  - 29
+  - 31
+  - 16
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Gas Station
 - block: 1
   height: 13
   position:
-  - 29
-  - 29
+  - 31
+  - 31
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Garage
 - block: 2
   height: 12
   position:
-  - 58
-  - 10
+  - 16
+  - 62
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 2
   height: 11
   position:
+  - 16
   - 77
-  - 10
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 2
   height: 15
   position:
-  - 58
-  - 29
+  - 31
+  - 62
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 2
   height: 10
   position:
+  - 31
   - 77
-  - 29
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 3
   height: 21
   position:
-  - 106
-  - 10
+  - 16
+  - 108
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 3
   height: 19
   position:
-  - 125
-  - 10
+  - 16
+  - 123
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 3
   height: 25
   position:
-  - 106
-  - 29
+  - 31
+  - 108
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 3
   height: 24
   position:
-  - 125
-  - 29
+  - 31
+  - 123
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 4
   height: 21
   position:
+  - 16
   - 154
-  - 10
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 4
   height: 12
   position:
-  - 173
-  - 10
+  - 16
+  - 169
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Garage
 - block: 4
   height: 16
   position:
+  - 31
   - 154
-  - 29
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 4
   height: 16
   position:
-  - 173
-  - 29
+  - 31
+  - 169
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 5
   height: 23
   position:
-  - 202
-  - 10
+  - 16
+  - 200
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: House
 - block: 5
   height: 18
   position:
-  - 223
-  - 10
+  - 16
+  - 215
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Store
 - block: 5
   height: 11
   position:
-  - 202
-  - 28
+  - 31
+  - 200
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: House
 - block: 5
   height: 24
   position:
-  - 223
-  - 28
+  - 31
+  - 215
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Store
 - block: 6
   height: 21
   position:
-  - 10
-  - 58
+  - 62
+  - 16
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 6
   height: 24
   position:
-  - 29
-  - 58
+  - 62
+  - 31
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Garage
 - block: 6
   height: 26
   position:
-  - 10
   - 77
+  - 16
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 6
   height: 17
   position:
-  - 29
   - 77
+  - 31
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 7
   height: 15
   position:
-  - 58
-  - 58
+  - 62
+  - 62
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 7
   height: 13
   position:
+  - 62
   - 77
-  - 58
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 7
   height: 27
   position:
-  - 58
   - 77
+  - 62
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 7
   height: 11
@@ -269,404 +248,404 @@ buildings:
   - 77
   - 77
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 8
   height: 13
   position:
-  - 106
-  - 58
+  - 62
+  - 108
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 8
   height: 25
   position:
-  - 125
-  - 58
+  - 62
+  - 123
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Garage
 - block: 8
   height: 23
   position:
-  - 106
   - 77
+  - 108
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 8
   height: 17
   position:
-  - 125
   - 77
+  - 123
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 9
   height: 22
   position:
+  - 62
   - 154
-  - 58
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 9
   height: 22
   position:
-  - 173
-  - 58
+  - 62
+  - 169
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 9
   height: 24
   position:
-  - 154
   - 77
+  - 154
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 9
   height: 16
   position:
-  - 173
   - 77
+  - 169
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 10
   height: 10
   position:
-  - 202
-  - 58
+  - 62
+  - 200
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Gas Station
 - block: 10
   height: 20
   position:
-  - 223
-  - 58
+  - 62
+  - 215
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: House
 - block: 10
   height: 17
   position:
-  - 202
-  - 76
+  - 77
+  - 200
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: House
 - block: 10
   height: 10
   position:
-  - 223
-  - 76
+  - 77
+  - 215
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Store
 - block: 11
   height: 19
   position:
-  - 10
-  - 106
+  - 108
+  - 16
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 11
   height: 18
   position:
-  - 29
-  - 106
+  - 108
+  - 31
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 11
   height: 18
   position:
-  - 10
-  - 125
+  - 123
+  - 16
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 11
   height: 11
   position:
-  - 29
-  - 125
+  - 123
+  - 31
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 12
   height: 14
   position:
-  - 58
-  - 106
+  - 108
+  - 62
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 12
   height: 17
   position:
+  - 108
   - 77
-  - 106
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 12
   height: 12
   position:
-  - 58
-  - 125
+  - 123
+  - 62
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 12
   height: 14
   position:
+  - 123
   - 77
-  - 125
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Garage
 - block: 13
   height: 12
   position:
-  - 106
-  - 106
+  - 108
+  - 108
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 13
   height: 23
   position:
-  - 125
-  - 106
+  - 108
+  - 123
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 13
   height: 18
   position:
-  - 106
-  - 125
+  - 123
+  - 108
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Garage
 - block: 13
   height: 19
   position:
-  - 125
-  - 125
+  - 123
+  - 123
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 14
   height: 28
   position:
+  - 108
   - 154
-  - 106
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Gas Station
 - block: 14
   height: 16
   position:
-  - 173
-  - 106
+  - 108
+  - 169
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 14
   height: 13
   position:
+  - 123
   - 154
-  - 125
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Garage
 - block: 14
   height: 16
   position:
-  - 173
-  - 125
+  - 123
+  - 169
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 15
   height: 20
   position:
-  - 202
-  - 106
+  - 108
+  - 200
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Gas Station
 - block: 15
   height: 22
   position:
-  - 223
-  - 106
+  - 108
+  - 215
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Office
 - block: 15
   height: 28
   position:
-  - 202
-  - 124
+  - 123
+  - 200
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: House
 - block: 15
   height: 11
   position:
-  - 223
-  - 124
+  - 123
+  - 215
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: House
 - block: 16
   height: 15
   position:
-  - 10
   - 154
+  - 16
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 16
   height: 21
   position:
-  - 29
   - 154
+  - 31
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Garage
 - block: 16
   height: 20
   position:
-  - 10
-  - 173
+  - 169
+  - 16
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 16
   height: 16
   position:
-  - 29
-  - 173
+  - 169
+  - 31
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 17
   height: 10
   position:
-  - 58
   - 154
+  - 62
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 17
   height: 29
   position:
-  - 77
   - 154
+  - 77
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 17
   height: 12
   position:
-  - 58
-  - 173
+  - 169
+  - 62
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 17
   height: 17
   position:
+  - 169
   - 77
-  - 173
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 18
   height: 14
   position:
-  - 106
   - 154
+  - 108
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Garage
 - block: 18
   height: 19
   position:
-  - 125
   - 154
+  - 123
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 18
   height: 24
   position:
-  - 106
-  - 173
+  - 169
+  - 108
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 18
   height: 18
   position:
-  - 125
-  - 173
+  - 169
+  - 123
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: House
 - block: 19
   height: 26
@@ -674,909 +653,909 @@ buildings:
   - 154
   - 154
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Gas Station
 - block: 19
   height: 21
   position:
-  - 173
   - 154
+  - 169
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 19
   height: 11
   position:
+  - 169
   - 154
-  - 173
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Office
 - block: 19
   height: 14
   position:
-  - 173
-  - 173
+  - 169
+  - 169
   size:
-  - 16
-  - 16
+  - 10
+  - 10
   type: Store
 - block: 20
   height: 26
   position:
-  - 202
   - 154
+  - 200
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Office
 - block: 20
   height: 11
   position:
-  - 223
   - 154
+  - 215
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Office
 - block: 20
   height: 14
   position:
-  - 202
-  - 172
+  - 169
+  - 200
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Garage
 - block: 20
   height: 10
   position:
-  - 223
-  - 172
+  - 169
+  - 215
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Office
 - block: 21
   height: 11
   position:
-  - 10
-  - 202
+  - 200
+  - 16
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Office
 - block: 21
   height: 15
   position:
-  - 28
-  - 202
+  - 200
+  - 31
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Garage
 - block: 21
   height: 13
   position:
-  - 10
-  - 223
+  - 215
+  - 16
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Office
 - block: 21
   height: 26
   position:
-  - 28
-  - 223
+  - 215
+  - 31
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: House
 - block: 22
   height: 14
   position:
-  - 58
-  - 202
+  - 200
+  - 62
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Store
 - block: 22
   height: 15
   position:
-  - 76
-  - 202
+  - 200
+  - 77
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Store
 - block: 22
   height: 25
   position:
-  - 58
-  - 223
+  - 215
+  - 62
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Office
 - block: 22
   height: 18
   position:
-  - 76
-  - 223
+  - 215
+  - 77
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Store
 - block: 23
   height: 15
   position:
-  - 106
-  - 202
+  - 200
+  - 108
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Office
 - block: 23
   height: 12
   position:
-  - 124
-  - 202
+  - 200
+  - 123
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Store
 - block: 23
   height: 13
   position:
-  - 106
-  - 223
+  - 215
+  - 108
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Garage
 - block: 23
   height: 12
   position:
-  - 124
-  - 223
+  - 215
+  - 123
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: House
 - block: 24
   height: 29
   position:
+  - 200
   - 154
-  - 202
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Store
 - block: 24
   height: 29
   position:
-  - 172
-  - 202
+  - 200
+  - 169
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Store
 - block: 24
   height: 17
   position:
+  - 215
   - 154
-  - 223
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Store
 - block: 24
   height: 27
   position:
-  - 172
-  - 223
+  - 215
+  - 169
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Office
 - block: 25
   height: 20
   position:
-  - 202
-  - 202
+  - 200
+  - 200
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Store
 - block: 25
   height: 27
   position:
-  - 223
-  - 202
+  - 200
+  - 215
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Office
 - block: 25
   height: 19
   position:
-  - 202
-  - 223
+  - 215
+  - 200
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Store
 - block: 25
   height: 25
   position:
-  - 223
-  - 223
+  - 215
+  - 215
   size:
-  - 17
-  - 17
+  - 10
+  - 10
   type: Office
 grid_size:
 - 250
 - 250
 streets:
 - directions: 2
-  length: 250
-  orientation: horizontal
-  position:
-  - 0
-  - 0
-  type: Traffic Street
-  width: 7
-- directions: 2
-  length: 250
-  orientation: horizontal
-  position:
-  - 243
-  - 0
-  type: Traffic Street
-  width: 7
-- directions: 2
-  length: 236
-  orientation: horizontal
-  position:
-  - 7
-  - 7
-  type: Walking Street
-  width: 3
-- directions: 2
-  length: 236
-  orientation: horizontal
-  position:
-  - 240
-  - 7
-  type: Walking Street
-  width: 3
-- directions: 2
-  length: 250
+  length: 241
   orientation: vertical
   position:
   - 0
   - 0
   type: Traffic Street
-  width: 7
+  width: 11
 - directions: 2
-  length: 250
+  length: 241
+  orientation: horizontal
+  position:
+  - 0
+  - 0
+  type: Traffic Street
+  width: 11
+- directions: 2
+  length: 241
   orientation: vertical
   position:
   - 0
-  - 243
+  - 46
   type: Traffic Street
-  width: 7
+  width: 11
 - directions: 2
-  length: 236
-  orientation: vertical
-  position:
-  - 7
-  - 7
-  type: Walking Street
-  width: 3
-- directions: 2
-  length: 236
-  orientation: vertical
-  position:
-  - 7
-  - 240
-  type: Walking Street
-  width: 3
-- directions: 2
-  length: 243
-  orientation: vertical
-  position:
-  - 7
-  - 48
-  type: Traffic Street
-  width: 7
-- directions: 2
-  length: 243
+  length: 241
   orientation: horizontal
   position:
-  - 48
-  - 7
+  - 46
+  - 0
   type: Traffic Street
-  width: 7
+  width: 11
 - directions: 2
-  length: 243
+  length: 241
   orientation: vertical
   position:
-  - 7
-  - 96
+  - 0
+  - 92
   type: Traffic Street
-  width: 7
+  width: 11
 - directions: 2
-  length: 243
+  length: 241
   orientation: horizontal
   position:
-  - 96
-  - 7
+  - 92
+  - 0
   type: Traffic Street
-  width: 7
+  width: 11
 - directions: 2
-  length: 243
+  length: 241
   orientation: vertical
   position:
-  - 7
-  - 144
+  - 0
+  - 138
   type: Traffic Street
-  width: 7
+  width: 11
 - directions: 2
-  length: 243
+  length: 241
   orientation: horizontal
   position:
-  - 144
-  - 7
+  - 138
+  - 0
   type: Traffic Street
-  width: 7
+  width: 11
 - directions: 2
-  length: 243
+  length: 241
   orientation: vertical
   position:
-  - 7
-  - 192
+  - 0
+  - 184
   type: Traffic Street
-  width: 7
+  width: 11
 - directions: 2
-  length: 243
+  length: 241
   orientation: horizontal
   position:
-  - 192
-  - 7
+  - 184
+  - 0
   type: Traffic Street
-  width: 7
+  width: 11
 - directions: 2
-  length: 230
+  length: 241
   orientation: vertical
   position:
-  - 10
-  - 45
-  type: Walking Street
-  width: 3
+  - 0
+  - 230
+  type: Traffic Street
+  width: 11
 - directions: 2
-  length: 230
-  orientation: vertical
-  position:
-  - 10
-  - 55
-  type: Walking Street
-  width: 3
-- directions: 2
-  length: 230
+  length: 241
   orientation: horizontal
   position:
-  - 45
-  - 10
-  type: Walking Street
-  width: 3
+  - 230
+  - 0
+  type: Traffic Street
+  width: 11
 - directions: 2
-  length: 230
+  length: 219
+  orientation: vertical
+  position:
+  - 11
+  - 11
+  type: Walking Street
+  width: 5
+- directions: 2
+  length: 219
+  orientation: vertical
+  position:
+  - 11
+  - 41
+  type: Walking Street
+  width: 5
+- directions: 2
+  length: 219
   orientation: horizontal
   position:
-  - 55
-  - 10
+  - 11
+  - 11
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 230
+  length: 219
+  orientation: horizontal
+  position:
+  - 41
+  - 11
+  type: Walking Street
+  width: 5
+- directions: 2
+  length: 219
   orientation: vertical
   position:
-  - 10
-  - 93
+  - 11
+  - 57
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 230
+  length: 219
   orientation: vertical
   position:
-  - 10
+  - 11
+  - 87
+  type: Walking Street
+  width: 5
+- directions: 2
+  length: 219
+  orientation: horizontal
+  position:
+  - 57
+  - 11
+  type: Walking Street
+  width: 5
+- directions: 2
+  length: 219
+  orientation: horizontal
+  position:
+  - 87
+  - 11
+  type: Walking Street
+  width: 5
+- directions: 2
+  length: 219
+  orientation: vertical
+  position:
+  - 11
   - 103
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 230
-  orientation: horizontal
+  length: 219
+  orientation: vertical
   position:
-  - 93
-  - 10
+  - 11
+  - 133
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 230
+  length: 219
   orientation: horizontal
   position:
   - 103
-  - 10
+  - 11
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 230
-  orientation: vertical
-  position:
-  - 10
-  - 141
-  type: Walking Street
-  width: 3
-- directions: 2
-  length: 230
-  orientation: vertical
-  position:
-  - 10
-  - 151
-  type: Walking Street
-  width: 3
-- directions: 2
-  length: 230
+  length: 219
   orientation: horizontal
   position:
-  - 141
-  - 10
+  - 133
+  - 11
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 230
-  orientation: horizontal
-  position:
-  - 151
-  - 10
-  type: Walking Street
-  width: 3
-- directions: 2
-  length: 230
+  length: 219
   orientation: vertical
   position:
-  - 10
-  - 189
+  - 11
+  - 149
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 230
+  length: 219
   orientation: vertical
   position:
-  - 10
-  - 199
+  - 11
+  - 179
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 230
+  length: 219
   orientation: horizontal
   position:
-  - 189
-  - 10
+  - 149
+  - 11
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 230
+  length: 219
   orientation: horizontal
   position:
-  - 199
-  - 10
+  - 179
+  - 11
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 219
   orientation: vertical
   position:
-  - 10
+  - 11
+  - 195
+  type: Walking Street
+  width: 5
+- directions: 2
+  length: 219
+  orientation: vertical
+  position:
+  - 11
+  - 225
+  type: Walking Street
+  width: 5
+- directions: 2
+  length: 219
+  orientation: horizontal
+  position:
+  - 195
+  - 11
+  type: Walking Street
+  width: 5
+- directions: 2
+  length: 219
+  orientation: horizontal
+  position:
+  - 225
+  - 11
+  type: Walking Street
+  width: 5
+- directions: 2
+  length: 25
+  orientation: vertical
+  position:
+  - 16
   - 26
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
-  orientation: horizontal
-  position:
-  - 26
-  - 10
-  type: Walking Street
-  width: 3
-- directions: 2
-  length: 35
-  orientation: vertical
-  position:
-  - 10
-  - 74
-  type: Walking Street
-  width: 3
-- directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
   - 26
-  - 58
+  - 16
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
-  - 10
-  - 122
+  - 16
+  - 72
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
   - 26
-  - 106
+  - 62
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
-  - 10
-  - 170
+  - 16
+  - 118
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
+  orientation: horizontal
+  position:
+  - 26
+  - 108
+  type: Walking Street
+  width: 5
+- directions: 2
+  length: 25
+  orientation: vertical
+  position:
+  - 16
+  - 164
+  type: Walking Street
+  width: 5
+- directions: 2
+  length: 25
   orientation: horizontal
   position:
   - 26
   - 154
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
-  - 10
-  - 219
+  - 16
+  - 210
   type: Walking Street
-  width: 4
+  width: 5
 - directions: 2
-  length: 38
+  length: 25
   orientation: horizontal
   position:
-  - 27
-  - 202
+  - 26
+  - 200
   type: Walking Street
-  width: 1
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
-  - 58
+  - 62
   - 26
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 74
-  - 10
+  - 72
+  - 16
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
-  - 58
-  - 74
+  - 62
+  - 72
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 74
-  - 58
+  - 72
+  - 62
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
-  - 58
-  - 122
+  - 62
+  - 118
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 74
-  - 106
+  - 72
+  - 108
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
-  - 58
-  - 170
+  - 62
+  - 164
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 74
+  - 72
   - 154
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
-  - 58
-  - 219
+  - 62
+  - 210
   type: Walking Street
-  width: 4
+  width: 5
 - directions: 2
-  length: 38
+  length: 25
   orientation: horizontal
   position:
-  - 75
-  - 202
+  - 72
+  - 200
   type: Walking Street
-  width: 1
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
-  - 106
+  - 108
   - 26
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 122
-  - 10
+  - 118
+  - 16
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
-  - 106
-  - 74
+  - 108
+  - 72
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 122
-  - 58
+  - 118
+  - 62
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
-  - 106
-  - 122
+  - 108
+  - 118
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 122
-  - 106
+  - 118
+  - 108
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
-  - 106
-  - 170
+  - 108
+  - 164
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 122
+  - 118
   - 154
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
-  - 106
-  - 219
+  - 108
+  - 210
   type: Walking Street
-  width: 4
+  width: 5
 - directions: 2
-  length: 38
+  length: 25
   orientation: horizontal
   position:
-  - 123
-  - 202
+  - 118
+  - 200
   type: Walking Street
-  width: 1
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
   - 154
   - 26
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 170
-  - 10
+  - 164
+  - 16
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
   - 154
-  - 74
+  - 72
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 170
-  - 58
+  - 164
+  - 62
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
   - 154
-  - 122
+  - 118
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 170
-  - 106
+  - 164
+  - 108
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
   - 154
-  - 170
+  - 164
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 170
+  - 164
   - 154
   type: Walking Street
-  width: 3
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: vertical
   position:
   - 154
-  - 219
+  - 210
   type: Walking Street
-  width: 4
+  width: 5
 - directions: 2
-  length: 38
+  length: 25
   orientation: horizontal
   position:
-  - 171
-  - 202
+  - 164
+  - 200
   type: Walking Street
-  width: 1
+  width: 5
 - directions: 2
-  length: 38
+  length: 25
   orientation: vertical
   position:
-  - 202
-  - 27
+  - 200
+  - 26
   type: Walking Street
-  width: 1
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 219
-  - 10
+  - 210
+  - 16
   type: Walking Street
-  width: 4
+  width: 5
 - directions: 2
-  length: 38
+  length: 25
   orientation: vertical
   position:
-  - 202
-  - 75
+  - 200
+  - 72
   type: Walking Street
-  width: 1
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 219
-  - 58
+  - 210
+  - 62
   type: Walking Street
-  width: 4
+  width: 5
 - directions: 2
-  length: 38
+  length: 25
   orientation: vertical
   position:
-  - 202
-  - 123
+  - 200
+  - 118
   type: Walking Street
-  width: 1
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 219
-  - 106
+  - 210
+  - 108
   type: Walking Street
-  width: 4
+  width: 5
 - directions: 2
-  length: 38
+  length: 25
   orientation: vertical
   position:
-  - 202
-  - 171
+  - 200
+  - 164
   type: Walking Street
-  width: 1
+  width: 5
 - directions: 2
-  length: 35
+  length: 25
   orientation: horizontal
   position:
-  - 219
+  - 210
   - 154
   type: Walking Street
-  width: 4
+  width: 5
 - directions: 2
-  length: 38
+  length: 25
   orientation: vertical
   position:
-  - 202
-  - 219
+  - 200
+  - 210
   type: Walking Street
-  width: 4
+  width: 5
 - directions: 2
-  length: 38
+  length: 25
   orientation: horizontal
   position:
-  - 219
-  - 202
+  - 210
+  - 200
   type: Walking Street
-  width: 4
+  width: 5
