@@ -11,8 +11,8 @@ IMAGE_BASE_PATH = "./imgs"
 SCALE = 4
 
 PATH_DICT = {
-    "Car": os.path.join(IMAGE_BASE_PATH, "car.png"),
-    "Pedestrian": os.path.join(IMAGE_BASE_PATH, "pedestrian.png"),
+    "Car": [os.path.join(IMAGE_BASE_PATH, "car{}.png").format(i) for i in range(1, 5)],
+    "Pedestrian": [os.path.join(IMAGE_BASE_PATH, "pedestrian{}.png").format(i) for i in range(1, 6)],
     "Walking Street": os.path.join(IMAGE_BASE_PATH, "walking.png"),
     "Traffic Street": os.path.join(IMAGE_BASE_PATH, "traffic.png"),
     "Overlap": os.path.join(IMAGE_BASE_PATH, "crossing.png"),
@@ -146,17 +146,19 @@ def gridmap2img_agents(gridmap, icon_dict, static_map):
         top = torch.min(rows).item()
         bottom = torch.max(rows).item()
         agent_type = LABEL_MAP[local_layer[top, left].item()]
-        icon = icon_dict[agent_type]
-        bottom_img = max(0, (top+bottom)//2-icon.shape[0]//2)
+        icon_list = icon_dict[agent_type]
+        icon_id = i%len(icon_list)
+        icon = icon_list[icon_id]
+        top_img = max(0, (top+bottom)//2-icon.shape[0]//2)
         left_img = max(0, (left+right)//2-icon.shape[1]//2)
-        top_img = min(current_map.shape[0], (top+bottom)//2+icon.shape[0]-icon.shape[0]//2)
+        bottom_img = min(current_map.shape[0], (top+bottom)//2+icon.shape[0]-icon.shape[0]//2)
         right_img = min(current_map.shape[1], (left+right)//2+icon.shape[1]-icon.shape[1]//2)
 
-        icon = icon[top_img:bottom_img, left_img:right_img]
+        icon = icon[:bottom_img-top_img, :right_img-left_img]
         icon_mask = np.sum(icon > 10, axis=2) > 0
 
         # Paste the walking_icon (or its sliced version) to img
-        current_map[bottom_img:top_img, left_img:right_img][icon_mask] = icon[icon_mask]
+        current_map[top_img:bottom_img, left_img:right_img][icon_mask] = icon[icon_mask]
     return current_map
 
 def main():
@@ -176,7 +178,6 @@ def main():
         static_map = gridmap2img_static(data[0], icon_dict)
         cv2.imwrite("vis_city/static_layout.png", static_map)
         for key in tqdm(data.keys()):
-            key = 94
             grid = data[key]
             img = gridmap2img_agents(grid, icon_dict, static_map)
             cv2.imwrite("vis_city/{}.png".format(key), img)

@@ -11,18 +11,10 @@ predicates:
       arity: 1
       method: utils.lnn_pred_converter.is_pedestrian
       description: Checks if the agent is a pedestrian.
-#   - PedestriansNearIntersection:
-#       arity: 1
-#       method: utils.lnn_pred_converter.pedestrians_near_intersection
-#       description: Checks if pedestrians are near the intersection.
   - IntersectionEmpty:
       arity: 1
       method: utils.lnn_pred_converter.intersection_empty
       description: Checks if the intersection is not empty.
-#   - HighPriorityAgentsNear:
-#       arity: 1
-#       method: utils.lnn_pred_converter.high_priority_agents_near
-#       description: Checks if high-priority agents are near the intersection.
   - Stop:
       arity: 1
       method: None
@@ -32,15 +24,6 @@ rules:
   - CAR_MOVE_1:
       formula: Implies(IsCar(x), Not(Stop(x)))
       description: Cars move if they are not at intersections.
-#   CAR_MOVE_2:
-#       formula: Implies(And(IsCar(x), IsAtIntersection(x), IntersectionEmpty(x), Not(PedestriansNearIntersection(x))), Not(Stop(x)))
-#       description: Cars move if they are at intersections, the intersection is empty, and no pedestrians are near.
-#   CAR_MOVE_3:
-#       formula: Implies(And(IsCar(x), IsAtIntersection(x), Not(HighPriorityAgentsNear(x)), Not(PedestriansNearIntersection(x))), Not(Stop(x)))
-#       description: Cars move if they are at intersections, they have the highest priority, and no pedestrians are near.
-#   CAR_STOP:
-#       formula: Implies(And(IsCar(x), Not(Or(Not(IsAtIntersection(x)), And(IntersectionEmpty(x), Not(PedestriansNearIntersection(x))), And(Not(HighPriorityAgentsNear(x)), Not(PedestriansNearIntersection(x)))))), Stop(x))
-#       description: Otherwise, cars stop.
   - PEDESTRIAN_MOVE_1:
       formula: Implies(And(IsPedestrian(x), Not(IsAtIntersection(x))), Not(Stop(x)))
       description: Pedestrians move if they are not at intersections.
