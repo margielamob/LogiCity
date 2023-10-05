@@ -10,6 +10,8 @@ class LNNPlanner:
             self.data = load(file, Loader=FullLoader)
         
         self._create_predicates()
+        self.model = Model()
+        self._create_rules()
         
     def _create_predicates(self):
         # Using a dictionary to store the arity as well
@@ -80,9 +82,7 @@ class LNNPlanner:
         self.model.add_data(data_dict)
 
     def plan(self, world_matrix, intersect_matrix, agents):
-        self.model = Model()
-        self.model.reset_bounds()
-        self._create_rules()
+        self.model.flush()
         agents_actions = {}
         for agent in agents:
             agent_id = agent.layer_id

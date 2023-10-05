@@ -130,25 +130,58 @@ def gridmap2img_static(gridmap, icon_dict):
 
     return img
 
-def gridmap2img_agents(gridmap, icon_dict, static_map):
+def get_pos(local_layer):
+    local_layer[local_layer==0] += 0.1
+    pos_layer = local_layer == local_layer.astype(np.int64)
+    pixels = torch.nonzero(torch.tensor(pos_layer.astype(np.float32)))
+    rows = pixels[:, 0]
+    cols = pixels[:, 1]
+    left = torch.min(cols).item()
+    right = torch.max(cols).item()
+    top = torch.min(rows).item()
+    bottom = torch.max(rows).item()
+    return (left, top, right, bottom)
+
+def flip_icon(icon, left, left_, top, top_, type):
+    if type == "Car":
+        # Cars by defual face the left
+        if left_ > left:
+            icon = cv2.flip(icon, 1)
+        if top_ > top:
+            icon_up = cv2.flip(cv2.transpose(icon), 1)
+            return icon_up
+        elif top_ < top:
+            icon_down = cv2.flip(cv2.transpose(icon), 0)
+            return icon_down
+        return icon
+    elif type == "Pedestrian":
+        if left_ < left:
+            icon_left = cv2.flip(icon, 1)
+            return icon_left
+        else: 
+            return icon
+    else:
+        return icon
+
+def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map):
     current_map = static_map.copy()
     agent_layer = gridmap[BASIC_LAYER:]
     resized_grid = np.repeat(np.repeat(agent_layer, SCALE, axis=1), SCALE, axis=2)
+    agent_layer_ = gridmap_[BASIC_LAYER:]
+    resized_grid_ = np.repeat(np.repeat(agent_layer_, SCALE, axis=1), SCALE, axis=2)
+
     for i in range(resized_grid.shape[0]):
         local_layer = resized_grid[i]
-        local_layer[local_layer==0] += 0.1
-        pos_layer = local_layer == local_layer.astype(np.int64)
-        pixels = torch.nonzero(torch.tensor(pos_layer.astype(np.float32)))
-        rows = pixels[:, 0]
-        cols = pixels[:, 1]
-        left = torch.min(cols).item()
-        right = torch.max(cols).item()
-        top = torch.min(rows).item()
-        bottom = torch.max(rows).item()
+        left, top, right, bottom = get_pos(local_layer)
+        local_layer_ = resized_grid_[i]
+        left_, top_, right_, bottom_ = get_pos(local_layer_)
+        
         agent_type = LABEL_MAP[local_layer[top, left].item()]
         icon_list = icon_dict[agent_type]
         icon_id = i%len(icon_list)
         icon = icon_list[icon_id]
+        icon = flip_icon(icon, left, left_, top, top_, agent_type)
+
         top_img = max(0, (top+bottom)//2-icon.shape[0]//2)
         left_img = max(0, (left+right)//2-icon.shape[1]//2)
         bottom_img = min(current_map.shape[0], (top+bottom)//2+icon.shape[0]-icon.shape[0]//2)
@@ -179,7 +212,8 @@ def main():
         cv2.imwrite("vis_city/static_layout.png", static_map)
         for key in tqdm(data.keys()):
             grid = data[key]
-            img = gridmap2img_agents(grid, icon_dict, static_map)
+            grid_ = data[key+1]
+            img = gridmap2img_agents(grid, grid_, icon_dict, static_map)
             cv2.imwrite("vis_city/{}.png".format(key), img)
         cv2.destroyAllWindows()
     return

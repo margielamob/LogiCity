@@ -57,18 +57,41 @@ def sample_start_goal_vh(world_matrix, available_street_id, availabe_building_id
     return desired_locations
 
 def sample_determine_start_goal(agent_type, id):
+    # Pedestrian
+    p1_s_x = TRAFFIC_STREET_WID+WALKING_STREET_LENGTH//2
+    p1_s_y = TRAFFIC_STREET_WID+2*WALKING_STREET_WID+2*BUILDING_SIZE+2
+    p1_g_x = p1_s_x + WALKING_STREET_LENGTH + TRAFFIC_STREET_WID*2
+    p1_g_y = p1_s_y + TRAFFIC_STREET_WID + WALKING_STREET_WID
+    # Vehicles
+    c1_s_x = TRAFFIC_STREET_WID + WALKING_STREET_WID + 1
+    c1_s_y = TRAFFIC_STREET_WID+3*WALKING_STREET_WID+2*BUILDING_SIZE+2
+    c1_g_x = c1_s_x + WALKING_STREET_LENGTH + TRAFFIC_STREET_WID*3
+    c1_g_y = c1_s_y
+    c2_s_x = c1_s_y + TRAFFIC_STREET_WID//2
+    c2_s_y = c1_s_x
+    c2_g_x = c1_g_x
+    c2_g_y = c1_g_y 
+    c3_s_x = c1_g_y
+    c3_s_y = c1_g_x
+    c3_g_x = c1_s_x
+    c3_g_y = c2_s_x
+    c4_s_x = c2_g_x
+    c4_s_y = c2_g_y
+    c4_g_x = c3_s_x
+    c4_g_y = c3_s_y
+
     start_goal_dict = {
         'Pedestrian': {
-            1: (torch.tensor([30, 45]), torch.tensor([80, 56])),
-            2: (torch.tensor([80, 56]), torch.tensor([30, 45])),
-            3: (torch.tensor([45, 30]), torch.tensor([56, 80])),
-            4: (torch.tensor([56, 80]), torch.tensor([45, 30]))
+            1: (torch.tensor([p1_s_x, p1_s_y]), torch.tensor([p1_g_x, p1_g_y])),
+            2: (torch.tensor([p1_g_x, p1_g_y]), torch.tensor([p1_s_y, p1_s_x])),
+            3: (torch.tensor([p1_g_y, p1_g_x]), torch.tensor([p1_s_x, p1_s_y])),
+            4: (torch.tensor([p1_s_y, p1_s_x]), torch.tensor([p1_g_y, p1_g_x]))
         },
         'Car': {
-            1: (torch.tensor([20, 48]), torch.tensor([91, 48])),
-            2: (torch.tensor([91, 54]), torch.tensor([54, 91])),
-            3: (torch.tensor([54, 14]), torch.tensor([14, 54])),
-            4: (torch.tensor([48, 91]), torch.tensor([48, 14]))
+            1: (torch.tensor([c1_s_x, c1_s_y]), torch.tensor([c1_g_x, c1_g_y])),
+            2: (torch.tensor([c2_s_x, c2_s_y]), torch.tensor([c2_g_x, c2_g_y])),
+            3: (torch.tensor([c3_s_x, c3_s_y]), torch.tensor([c3_g_x, c3_g_y])),
+            4: (torch.tensor([c4_s_x, c4_s_y]), torch.tensor([c4_g_x, c4_g_y]))
         }
     }
     return start_goal_dict[agent_type][id]

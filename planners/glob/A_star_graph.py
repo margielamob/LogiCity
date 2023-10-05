@@ -59,7 +59,7 @@ class ASTAR_G:
         # Connect each end point to other start points (this only happens in intersections)
         for end_point in self.end_lists:
             distances = torch.norm(torch.cat(self.start_lists, dim=0).float() - end_point.float(), dim=1)
-            near_starts = torch.cat(self.start_lists, dim=0)[distances < 20]
+            near_starts = torch.cat(self.start_lists, dim=0)[distances < max(2*WALKING_STREET_WID+TRAFFIC_STREET_WID, sqrt(2)*(WALKING_STREET_WID+TRAFFIC_STREET_WID))+3]
             for starts in near_starts.tolist():
                 self.G.add_edge(tuple(end_point.tolist()[0]), tuple(starts), weight=g_value(end_point.float(), torch.tensor(starts).float()).item())
 

@@ -20,62 +20,62 @@ agents:
   lplanner: LNN
   gplanner: A*
 
-- type: Pedestrian
-  id: 5
-  size: 1
-  gplanner: A*
+# - type: Pedestrian
+#   id: 5
+#   size: 1
+#   gplanner: A*
 
-- type: Pedestrian
-  id: 6
-  size: 1
-  gplanner: A*
+# - type: Pedestrian
+#   id: 6
+#   size: 1
+#   gplanner: A*
 
-- type: Pedestrian
-  id: 7
-  size: 1
-  gplanner: A*
+# - type: Pedestrian
+#   id: 7
+#   size: 1
+#   gplanner: A*
 
-- type: Pedestrian
-  id: 8
-  size: 1
-  gplanner: A*
+# - type: Pedestrian
+#   id: 8
+#   size: 1
+#   gplanner: A*
 
 - type: Car
   id: 1
   size: 1
   gplanner: A*vg
 
-- type: Car
-  id: 2
-  size: 1
-  gplanner: A*vg
+# - type: Car
+#   id: 2
+#   size: 1
+#   gplanner: A*vg
 
-- type: Car
-  id: 3
-  size: 1
-  gplanner: A*vg
+# - type: Car
+#   id: 3
+#   size: 1
+#   gplanner: A*vg
 
-- type: Car
-  id: 4
-  size: 1
-  gplanner: A*vg
+# - type: Car
+#   id: 4
+#   size: 1
+#   gplanner: A*vg
 
-- type: Car
-  id: 5
-  size: 1
-  gplanner: A*vg
+# - type: Car
+#   id: 5
+#   size: 1
+#   gplanner: A*vg
 
-- type: Car
-  id: 6
-  size: 1
-  gplanner: A*vg
+# - type: Car
+#   id: 6
+#   size: 1
+#   gplanner: A*vg
 
-- type: Car
-  id: 7
-  size: 1
-  gplanner: A*vg
+# - type: Car
+#   id: 7
+#   size: 1
+#   gplanner: A*vg
 
-- type: Car
-  id: 8
-  size: 1
-  gplanner: A*vg
+# - type: Car
+#   id: 8
+#   size: 1
+#   gplanner: A*vg

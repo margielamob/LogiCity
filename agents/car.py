@@ -57,6 +57,7 @@ class Car(Agent):
         CROSSING_STREET = TYPE_MAP['Overlap']
         if debug:
             self.start, self.goal = sample_determine_start_goal(self.type, self.id)
+            self.pos = self.start.clone()
         else:
             self.start = torch.tensor(self.get_start(world_state_matrix))
             self.pos = self.start.clone()
