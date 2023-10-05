@@ -21,15 +21,9 @@ predicates:
       description: Stop action.
 
 rules:
-  - CAR_MOVE_1:
-      formula: Implies(IsCar(x), Not(Stop(x)))
-      description: Cars move if they are not at intersections.
-  - PEDESTRIAN_MOVE_1:
-      formula: Implies(And(IsPedestrian(x), Not(IsAtIntersection(x))), Not(Stop(x)))
-      description: Pedestrians move if they are not at intersections.
   - PEDESTRIAN_MOVE_2:
-      formula: Implies(And(IsPedestrian(x), IsAtIntersection(x), IntersectionEmpty(x)), Not(Stop(x)))
-      description: Pedestrians move if they are at intersections and the intersection is empty.
+      formula: Implies(Or(And(IsPedestrian(x), IsAtIntersection(x), IntersectionEmpty(x)), And(IsPedestrian(x), Not(IsAtIntersection(x))), IsCar(x)), Not(Stop(x)))
+      description: Cars move, Pedestrians move if they are not at intersections, Pedestrians move if they are at intersections and the intersection is empty.
   - PEDESTRIAN_STOP:
       formula: Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x))), Stop(x))
       description: Otherwise, pedestrians stop.

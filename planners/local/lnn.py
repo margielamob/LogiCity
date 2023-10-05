@@ -82,7 +82,9 @@ class LNNPlanner:
         self.model.add_data(data_dict)
 
     def plan(self, world_matrix, intersect_matrix, agents):
-        self.model.flush()
+        self.model.reset_bounds()
+        for p in self.predicates.keys():
+            self.predicates[p]["instance"].flush()
         agents_actions = {}
         for agent in agents:
             agent_id = agent.layer_id
