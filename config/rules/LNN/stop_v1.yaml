@@ -15,23 +15,38 @@ predicates:
       arity: 1
       method: utils.lnn_pred_converter.intersection_empty
       description: Checks if the intersection is not empty.
-  - IntersectionEmptyCars:
+  - IntersectionCarsEmpty:
       arity: 1
       method: utils.lnn_pred_converter.intersection_empty_cars
       description: Checks if the intersection is not empty with cars.
-  - IntersectionEmpty:
+  - PreviousCars:
       arity: 1
-      method: utils.lnn_pred_converter.intersection_empty
-      description: Checks if the intersection is not empty.
+      method: utils.lnn_pred_converter.previous_cars
+      description: Checks if the previous cars exist.
   - Stop:
       arity: 1
       method: None
       description: Stop action.
 
 rules:
-  - PEDESTRIAN_MOVE_2:
-      formula: Implies(Or(And(IsPedestrian(x), IsAtIntersection(x), IntersectionEmpty(x)), And(IsPedestrian(x), Not(IsAtIntersection(x))), IsCar(x)), Not(Stop(x)))
-      description: Cars move, Pedestrians move if they are not at intersections, Pedestrians move if they are at intersections and the intersection is empty.
-  - PEDESTRIAN_STOP:
-      formula: Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x))), Stop(x))
-      description: Otherwise, pedestrians stop.
+  - MOVE:
+      formula: Implies(Or(And(IsCar(x), IsAtIntersection(x), IntersectionEmpty(x), Not(PreviousCars(x))), And(IsCar(x), Not(IsAtIntersection(x))), And(IsPedestrian(x), IsAtIntersection(x), IntersectionCarsEmpty(x)), And(IsPedestrian(x), Not(IsAtIntersection(x)))), Not(Stop(x)))
+      description: cars at intersection, intersection empty, no previous car, move
+#   - Cars_MOVE2:
+#       formula: Implies(And(IsCar(x), Not(IsAtIntersection(x))), Not(Stop(x)))
+#       description: cars not at intersection, move
+  - Stop:
+      formula: Implies(Or(And(IsCar(x), IsAtIntersection(x), Not(IntersectionEmpty(x))), And(IsCar(x), IsAtIntersection(x), IntersectionEmpty(x), PreviousCars(x)), And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x)))), Stop(x))
+      description: cars at intersection, not intersection empty, stop
+#   - Cars_Stop2:
+#       formula: Implies(And(IsCar(x), IsAtIntersection(x), IntersectionEmpty(x), PreviousCars(x)), Stop(x))
+#       description: cars at intersection, intersection empty, previous car, stop
+#   - Pedestrians_MOVE1:
+#       formula: Implies(And(IsPedestrian(x), IsAtIntersection(x), IntersectionEmptyCars(x)), Not(Stop(x)))
+#       description: pedestrians at intersection, intersection empty with cars, move
+#   - Pedestrians_MOVE2:
+#       formula: Implies(And(IsPedestrian(x), Not(IsAtIntersection(x))), Not(Stop(x)))
+#       description: pedestrians not at intersection, move
+#   - Pedestrians_STOP1:
+#       formula: Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmptyCars(x))), Stop(x))
+#       description: pedestrians at intersection, not intersection empty with cars, stop

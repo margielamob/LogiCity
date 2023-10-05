@@ -54,8 +54,57 @@ def intersection_empty(world, agent_id, agent_type, intersect_matrix):
         else:
             return torch.tensor([1.0, 1.0])
 
-def high_priority_agents_near(world, agent_id, agent_type, intersect_matrix):
-    return torch.tensor([0.0, 0.0])
+def intersection_empty_cars(world, agent_id, agent_type, intersect_matrix):
+    agent_layer = world[agent_id]
+    agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
+    if not intersect_matrix[agent_position[0], agent_position[1]]:
+        return torch.tensor([1.0, 1.0])
+    else:
+        local_intersection = intersect_matrix == intersect_matrix[agent_position[0], agent_position[1]]
+        intersection_positions = (local_intersection).nonzero()
+        xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
+        ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
+        partial_world = world[BASIC_LAYER:, ymin-AT_INTERSECTION_E:ymax+AT_INTERSECTION_E, xmin-AT_INTERSECTION_E:xmax+AT_INTERSECTION_E]
+        # EXCLUDE myself
+        partial_world = torch.cat([partial_world[:agent_id-BASIC_LAYER], partial_world[agent_id-BASIC_LAYER+1:]], dim=0)
+        # Create mask for integer values (except 0)
+        int_mask = partial_world == TYPE_MAP["Car"]
+
+        # Create mask for float values and zero
+        float_mask = partial_world != TYPE_MAP["Car"]
+
+        # Update values using masks
+        partial_world[int_mask] = 1
+        partial_world[float_mask] = 0
+
+        if partial_world.any():
+            return torch.tensor([0.0, 0.0])
+        else:
+            return torch.tensor([1.0, 1.0])
+
+def previous_cars(world, agent_id, agent_type, intersect_matrix):
+    agent_layer = world[agent_id]
+    agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
+    if not intersect_matrix[agent_position[0], agent_position[1]]:
+        return torch.tensor([0.0, 0.0])
+    else:
+        local_intersection = intersect_matrix == intersect_matrix[agent_position[0], agent_position[1]]
+        intersection_positions = (local_intersection).nonzero()
+        xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
+        ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
+        priority_lines = torch.tensor([[[ymin, xmax], [ymax, xmax]], [[ymax, xmin], [ymax, xmax]], [[ymin, xmin], [ymax, xmin]], [[ymin, xmin], [ymin, xmax]]])
+        pos_id = (torch.all((priority_lines[:, 0] <= agent_position) & (agent_position <= priority_lines[:, 1]), dim=1)).nonzero(as_tuple=True)[0].item()
+        bounds = torch.tensor([0.0, 0.0])
+        for line_id in range(pos_id+1, priority_lines.shape[0]):
+            line = priority_lines[line_id]
+            partial_world = world[BASIC_LAYER:, line[0, 0]:line[1, 0]+1, line[0, 1]:line[1, 1]+1]
+            # EXCLUDE myself
+            partial_world = torch.cat([partial_world[:agent_id-BASIC_LAYER], partial_world[agent_id-BASIC_LAYER+1:]], dim=0)
+            # Create mask for integer values (except 0)
+            int_mask = partial_world == TYPE_MAP["Car"]
+            if torch.any(int_mask):
+                bounds = torch.tensor([1.0, 1.0])
+    return bounds
 
 def is_pedestrian(world, agent_id, agent_type, intersect_matrix):
     if agent_type == "Pedestrian":
