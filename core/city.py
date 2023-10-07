@@ -81,7 +81,7 @@ class City:
         assert len(self.buildings) > 0
         street_code = self.type2label['Traffic Street'] + MID_LINE_CODE_PLUS
         for i in range(1, NUM_OF_BLOCKS+1):
-            current_block = self.city_grid[0] == i
+            current_block = self.city_grid[BLOCK_ID] == i
             pixels = torch.nonzero(current_block.float())
             rows = pixels[:, 0]
             cols = pixels[:, 1]
@@ -107,8 +107,8 @@ class City:
         corners = {}
         for block_id in unique_blocks:
             block_positions = (world_layer == block_id).nonzero()
-            xmin, xmax = min(block_positions[:, 1]), max(block_positions[:, 1])
-            ymin, ymax = min(block_positions[:, 0]), max(block_positions[:, 0])
+            xmin, xmax = min(block_positions[:, 1])-1, max(block_positions[:, 1])+1
+            ymin, ymax = min(block_positions[:, 0])-1, max(block_positions[:, 0])+1
             corners[block_id] = [(xmin, ymin), (xmin, ymax), (xmax, ymin), (xmax, ymax)]
 
         intersection_matrix = np.zeros_like(world_layer, dtype=bool)
@@ -118,17 +118,17 @@ class City:
                 if block_id != other_block_id:
                     for corner in block_corners:
                         for other_corner in other_block_corners:
-                            if np.linalg.norm(np.array(corner) - np.array(other_corner)) == TRAFFIC_STREET_WID + 2*WALKING_STREET_WID + 1:
+                            if np.linalg.norm(np.array(corner) - np.array(other_corner)) == TRAFFIC_STREET_WID + 2*WALKING_STREET_WID - 1:
                                 rr, cc = line(corner[0], corner[1], other_corner[0], other_corner[1])
                                 intersection_matrix[rr, cc] = True
 
         # Label connected regions in the intersection matrix
         labeled_matrix, num = label(intersection_matrix)
         assert num == NUM_INTERSECTIONS, "Number of intersections is not 32"
-        intersection_matrix = torch.tensor(labeled_matrix)
-        exclusion_radius = 2*AT_INTERSECTION_E+1
-        self.intersection_matrix = F.max_pool2d(intersection_matrix[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2)
-        self.intersection_matrix = self.intersection_matrix.squeeze(0).squeeze(0)
+        self.intersection_matrix = torch.tensor(labeled_matrix)
+        # exclusion_radius = 2*AT_INTERSECTION_E+1
+        # self.intersection_matrix = F.max_pool2d(intersection_matrix[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2)
+        # self.intersection_matrix = self.intersection_matrix.squeeze(0).squeeze(0)
 
     def add_agent(self, agent):
         """Add a agents to the city and mark its position on the grid. Label correspons

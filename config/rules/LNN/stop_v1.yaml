@@ -13,7 +13,7 @@ predicates:
       description: Checks if the agent is a pedestrian.
   - IntersectionEmpty:
       arity: 1
-      method: utils.lnn_pred_converter.intersection_empty
+      method: utils.lnn_pred_converter.intersection_empty_ped
       description: Checks if the intersection is not empty.
   - IntersectionCarsEmpty:
       arity: 1
@@ -44,10 +44,10 @@ rules:
 #       formula: Implies(And(IsCar(x), Not(IsAtIntersection(x))), Not(Stop(x)))
 #       description: cars not at intersection, move
   - Cars_Stop1:
-      formula: Implies(And(IsCar(x), IsAtIntersection(x), Not(IntersectionEmpty(x))), Car_Stop1(x))
+      formula: Implies(And(IsCar(x), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), Car_Stop1(x))
       description: cars at intersection, not intersection empty, stop
   - Cars_Stop2:
-      formula: Implies(And(IsCar(x), IsAtIntersection(x), IntersectionEmpty(x), PreviousCars(x)), Car_Stop2(x))
+      formula: Implies(And(IsCar(x), IsAtIntersection(x), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), Car_Stop2(x))
       description: cars at intersection, intersection empty, previous car, stop
 #   - Pedestrians_MOVE1:
 #       formula: Implies(And(IsPedestrian(x), IsAtIntersection(x), IntersectionCarsEmpty(x)), Not(Stop(x)))
