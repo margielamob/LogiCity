@@ -24,7 +24,7 @@ PATH_DICT = {
 }
 
 ICON_SIZE_DICT = {
-    "Car": SCALE*8,
+    "Car": SCALE*6,
     "Pedestrian": SCALE*4,
     "Walking Street": SCALE*10,
     "Traffic Street": SCALE*10,
@@ -142,17 +142,21 @@ def get_pos(local_layer):
     bottom = torch.max(rows).item()
     return (left, top, right, bottom)
 
-def flip_icon(icon, left, left_, top, top_, type):
+def flip_icon(icon, left, left_, top, top_, type, last_icon=None):
     if type == "Car":
-        # Cars by defual face the left
+        # Cars by defual face the top
         if left_ > left:
-            icon = cv2.flip(icon, 1)
-        if top_ > top:
-            icon_up = cv2.flip(cv2.transpose(icon), 1)
-            return icon_up
+            # move right
+            icon = cv2.flip(cv2.transpose(icon), 1)
+        elif left_ < left:
+            # move left
+            icon = cv2.transpose(icon)
+        elif top_ > top:
+            icon = cv2.flip(icon, 0)
         elif top_ < top:
-            icon_down = cv2.flip(cv2.transpose(icon), 0)
-            return icon_down
+            icon = icon
+        else:
+            icon = last_icon if last_icon is not None else icon
         return icon
     elif type == "Pedestrian":
         if left_ < left:
@@ -163,12 +167,13 @@ def flip_icon(icon, left, left_, top, top_, type):
     else:
         return icon
 
-def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map):
+def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None):
     current_map = static_map.copy()
     agent_layer = gridmap[BASIC_LAYER:]
     resized_grid = np.repeat(np.repeat(agent_layer, SCALE, axis=1), SCALE, axis=2)
     agent_layer_ = gridmap_[BASIC_LAYER:]
     resized_grid_ = np.repeat(np.repeat(agent_layer_, SCALE, axis=1), SCALE, axis=2)
+    icon_dict_local = {}
 
     for i in range(resized_grid.shape[0]):
         local_layer = resized_grid[i]
@@ -180,7 +185,13 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map):
         icon_list = icon_dict[agent_type]
         icon_id = i%len(icon_list)
         icon = icon_list[icon_id]
-        icon = flip_icon(icon, left, left_, top, top_, agent_type)
+        if last_icons is not None:
+            last_icon = last_icons["{}_{}".format(agent_type, icon_id)]
+            icon = flip_icon(icon, left, left_, top, top_, agent_type, last_icon)
+            last_icons["{}_{}".format(agent_type, icon_id)] = icon
+        else:
+            icon = flip_icon(icon, left, left_, top, top_, agent_type)
+            icon_dict_local["{}_{}".format(agent_type, icon_id)] = icon
 
         top_img = max(0, (top+bottom)//2-icon.shape[0]//2)
         left_img = max(0, (left+right)//2-icon.shape[1]//2)
@@ -192,7 +203,10 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map):
 
         # Paste the walking_icon (or its sliced version) to img
         current_map[top_img:bottom_img, left_img:right_img][icon_mask] = icon[icon_mask]
-    return current_map
+    if last_icons is not None:
+        return current_map, last_icons
+    else:
+        return current_map, icon_dict_local
 
 def main():
     icon_dict = {}
@@ -210,10 +224,11 @@ def main():
         data = pkl.load(f)
         static_map = gridmap2img_static(data[0], icon_dict)
         cv2.imwrite("vis_city/static_layout.png", static_map)
+        last_icons = None
         for key in tqdm(data.keys()):
             grid = data[key]
             grid_ = data[key+1]
-            img = gridmap2img_agents(grid, grid_, icon_dict, static_map)
+            img, last_icons = gridmap2img_agents(grid, grid_, icon_dict, static_map, last_icons)
             cv2.imwrite("vis_city/{}.png".format(key), img)
         cv2.destroyAllWindows()
     return
