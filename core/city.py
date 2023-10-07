@@ -5,6 +5,7 @@ import random
 from skimage.draw import line
 from scipy.ndimage import label
 import torch
+import torch.nn.functional as F
 from core.config import *
 from utils.vis import visualize_intersections
 
@@ -124,7 +125,10 @@ class City:
         # Label connected regions in the intersection matrix
         labeled_matrix, num = label(intersection_matrix)
         assert num == NUM_INTERSECTIONS, "Number of intersections is not 32"
-        self.intersection_matrix = torch.tensor(labeled_matrix)
+        intersection_matrix = torch.tensor(labeled_matrix)
+        exclusion_radius = 2*AT_INTERSECTION_E+1
+        self.intersection_matrix = F.max_pool2d(intersection_matrix[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2)
+        self.intersection_matrix = self.intersection_matrix.squeeze(0).squeeze(0)
 
     def add_agent(self, agent):
         """Add a agents to the city and mark its position on the grid. Label correspons

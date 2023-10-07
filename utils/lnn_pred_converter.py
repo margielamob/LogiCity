@@ -36,7 +36,19 @@ def intersection_empty(world, agent_id, agent_type, intersect_matrix):
         intersection_positions = (local_intersection).nonzero()
         xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
         ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
-        partial_world = world[BASIC_LAYER:, ymin-AT_INTERSECTION_E:ymax+AT_INTERSECTION_E, xmin-AT_INTERSECTION_E:xmax+AT_INTERSECTION_E]
+        # T junctions
+        if ymax-ymin == 2*AT_INTERSECTION_E:
+            if ymax < TRAFFIC_STREET_WID + 3*WALKING_STREET_WID + 2*BUILDING_SIZE:
+                ymin = 0
+            else:
+                ymax = world.shape[1] - 1
+        elif xmax-xmin == 2*AT_INTERSECTION_E:
+            if xmax < TRAFFIC_STREET_WID + 3*WALKING_STREET_WID + 2*BUILDING_SIZE:
+                xmin = 0
+            else:
+                xmax = world.shape[2] - 1
+        off_set = 2*AT_INTERSECTION_E + 1
+        partial_world = world[BASIC_LAYER:, ymin+off_set:ymax-off_set+1, xmin+off_set:xmax-off_set+1]
         # EXCLUDE myself
         partial_world = torch.cat([partial_world[:agent_id-BASIC_LAYER], partial_world[agent_id-BASIC_LAYER+1:]], dim=0)
         # Create mask for integer values (except 0)
@@ -64,7 +76,8 @@ def intersection_empty_cars(world, agent_id, agent_type, intersect_matrix):
         intersection_positions = (local_intersection).nonzero()
         xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
         ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
-        partial_world = world[BASIC_LAYER:, ymin-AT_INTERSECTION_E:ymax+AT_INTERSECTION_E, xmin-AT_INTERSECTION_E:xmax+AT_INTERSECTION_E]
+        off_set = 2*AT_INTERSECTION_E + 1
+        partial_world = world[BASIC_LAYER:, ymin+off_set:ymax-off_set+1, xmin+off_set:xmax-off_set+1]
         # EXCLUDE myself
         partial_world = torch.cat([partial_world[:agent_id-BASIC_LAYER], partial_world[agent_id-BASIC_LAYER+1:]], dim=0)
         # Create mask for integer values (except 0)
@@ -82,7 +95,34 @@ def intersection_empty_cars(world, agent_id, agent_type, intersect_matrix):
         else:
             return torch.tensor([1.0, 1.0])
 
+def inter2priority_list(intersection_positions):
+    '''
+    intersection_positions: tensor of shape (n, 2) where n is the number of points belonging to intersections
+    Returns a list of lists containing the points of the intersection in order of priority, 
+    [[left side], [bottom side], [right side], [top side]]
+    '''
+    priority_list = [[], [], [], []]
+    xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
+    ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
+    linewidth = 2*AT_INTERSECTION_E + 1
+
+    for point in intersection_positions:
+        y, x = point
+        
+        if x < xmin + linewidth and y >= ymin + linewidth:  # Left side
+            priority_list[0].append(point.tolist())
+        elif y < ymin + linewidth and x <= xmax - linewidth:  # Top side
+            priority_list[1].append(point.tolist())
+        elif x > xmax - linewidth and y <= ymax - linewidth:  # Right side
+            priority_list[2].append(point.tolist())
+        elif y > ymax - linewidth:  # Bottom side
+            priority_list[3].append(point.tolist())
+
+    return torch.tensor(priority_list)
+
 def previous_cars(world, agent_id, agent_type, intersect_matrix):
+    if agent_type != "Car":
+        return torch.tensor([0.0, 0.0])
     agent_layer = world[agent_id]
     agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
     if not intersect_matrix[agent_position[0], agent_position[1]]:
@@ -92,19 +132,23 @@ def previous_cars(world, agent_id, agent_type, intersect_matrix):
         intersection_positions = (local_intersection).nonzero()
         xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
         ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
-        priority_lines = torch.tensor([[[ymin, xmax], [ymax, xmax]], [[ymax, xmin], [ymax, xmax]], [[ymin, xmin], [ymax, xmin]], [[ymin, xmin], [ymin, xmax]]])
-        pos_id = (torch.all((priority_lines[:, 0] <= agent_position) & (agent_position <= priority_lines[:, 1]), dim=1)).nonzero(as_tuple=True)[0].item()
-        bounds = torch.tensor([0.0, 0.0])
-        for line_id in range(pos_id+1, priority_lines.shape[0]):
-            line = priority_lines[line_id]
-            partial_world = world[BASIC_LAYER:, line[0, 0]:line[1, 0]+1, line[0, 1]:line[1, 1]+1]
-            # EXCLUDE myself
-            partial_world = torch.cat([partial_world[:agent_id-BASIC_LAYER], partial_world[agent_id-BASIC_LAYER+1:]], dim=0)
-            # Create mask for integer values (except 0)
-            int_mask = partial_world == TYPE_MAP["Car"]
-            if torch.any(int_mask):
-                bounds = torch.tensor([1.0, 1.0])
+        # T junctions, no previous cars
+        if ymax-ymin == 2*AT_INTERSECTION_E or xmax-xmin == 2*AT_INTERSECTION_E:
+            return torch.tensor([0.0, 0.0])
+        partial_world = torch.cat([world[:agent_id-BASIC_LAYER], world[agent_id-BASIC_LAYER+1:]], dim=0)
+        # Create mask for integer values (except 0)
+        int_mask = partial_world == TYPE_MAP["Car"]
+        priority_list = inter2priority_list(intersection_positions)
+        # higher priority lines
+        my_id = torch.all(((priority_list == agent_position).sum(dim=1)) > 0, dim=1).nonzero()[0].item()
+        other_groups = priority_list[my_id+1:, :, :].reshape(-1, 2)
+        other_groups_cars = int_mask[:, other_groups[:, 0], other_groups[:, 1]]
+        if other_groups_cars.any():
+            bounds = torch.tensor([1.0, 1.0])
+        else:
+            bounds = torch.tensor([0.0, 0.0])
     return bounds
+
 
 def is_pedestrian(world, agent_id, agent_type, intersect_matrix):
     if agent_type == "Pedestrian":

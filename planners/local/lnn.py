@@ -1,4 +1,4 @@
-from lnn import Model, Predicates, Variables, Implies, And, Or, Not, Fact, World
+from lnn import Model, Predicates, Variables, Implies, And, Or, Not, Fact, World, Direction
 from yaml import load, FullLoader
 import importlib
 import torch
@@ -91,7 +91,8 @@ class LNNPlanner:
             agent_type = agent.type
             agent_name = "{}_{}".format(agent_type, agent_id)
             self.add_world_data(world_matrix, intersect_matrix, agent_id, agent_type)
-        self.model.infer()
+        self.model.infer(Direction.UPWARD)
+        self.model.infer(Direction.DOWNWARD)
         # use LNN to get the action distribution
         for agent in agents:
             agent_id = agent.layer_id
@@ -100,14 +101,19 @@ class LNNPlanner:
             action_mapping = agent.action_mapping
             action_dist = agent.action_dist
             for keys in action_mapping.keys():
-                if action_mapping[keys] in self.predicates.keys():
-                    action_dist[keys] = self.convert(self.predicates[action_mapping[keys]]["instance"].get_data(agent_name))
+                if "{}_{}1".format(agent_type, action_mapping[keys]) in self.predicates.keys():
+                    action_dist[keys] = self.convert("{}_{}".format(agent_type, action_mapping[keys]), agent_name)
             agents_actions[agent_name] = action_dist
         return agents_actions
 
-    def convert(self, LU_bound):
+    def convert(self, key_name, agent_name):
+        pred_list = []
+        for key in self.predicates.keys():
+            if key_name in key:
+                pred_list.append(self.predicates[key]["instance"].get_data(agent_name))
+        LU_bound = torch.cat(pred_list, dim=0)
+
         value = torch.avg_pool1d(LU_bound, kernel_size=2)
-        if value == 0.5:
-            # UNKOWN means false
-            return 0.0
+        value[value==0.5] = 0.0
+        value = torch.clip(value.sum(), 0.0, 1.0)
         return value
