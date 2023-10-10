@@ -20,25 +20,25 @@ agents:
   lplanner: LNN
   gplanner: A*
 
-# - type: Pedestrian
-#   id: 5
-#   size: 1
-#   gplanner: A*
+- type: Pedestrian
+  id: 5
+  size: 1
+  gplanner: A*
 
-# - type: Pedestrian
-#   id: 6
-#   size: 1
-#   gplanner: A*
+- type: Pedestrian
+  id: 6
+  size: 1
+  gplanner: A*
 
-# - type: Pedestrian
-#   id: 7
-#   size: 1
-#   gplanner: A*
+- type: Pedestrian
+  id: 7
+  size: 1
+  gplanner: A*
 
-# - type: Pedestrian
-#   id: 8
-#   size: 1
-#   gplanner: A*
+- type: Pedestrian
+  id: 8
+  size: 1
+  gplanner: A*
 
 - type: Car
   id: 1
@@ -60,22 +60,22 @@ agents:
   size: 1
   gplanner: A*vg
 
-# - type: Car
-#   id: 5
-#   size: 1
-#   gplanner: A*vg
+- type: Car
+  id: 5
+  size: 1
+  gplanner: A*vg
 
-# - type: Car
-#   id: 6
-#   size: 1
-#   gplanner: A*vg
+- type: Car
+  id: 6
+  size: 1
+  gplanner: A*vg
 
-# - type: Car
-#   id: 7
-#   size: 1
-#   gplanner: A*vg
+- type: Car
+  id: 7
+  size: 1
+  gplanner: A*vg
 
-# - type: Car
-#   id: 8
-#   size: 1
-#   gplanner: A*vg
+- type: Car
+  id: 8
+  size: 1
+  gplanner: A*vg

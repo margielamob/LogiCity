@@ -136,13 +136,18 @@ class Car(Agent):
             if torch.all(self.pos == self.goal):
                 if not self.debug:
                     self.reach_goal = True
-                    logger.info("{}_{} reached goal! Will change goal in the next step!".format(self.type, self.id))
+                    self.reach_goal_buffer += REACH_GOAL_WAITING
+                    logger.info("{}_{} reached goal! Will change goal in the next {} step!".format(self.type, self.id, self.reach_goal_buffer))
                 else:
                     logger.info("{}_{} reached goal! In Debug, it will stop".format(self.type, self.id))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
                 return self.get_action(local_action_dist), world_state_matrix[self.layer_id]
         else:
+            if self.reach_goal_buffer > 0:
+                self.reach_goal_buffer -= 1
+                logger.info("{}_{} reached goal! Will change goal in the next {} step!".format(self.type, self.id, self.reach_goal_buffer))
+                return self.action_space[-1], world_state_matrix[self.layer_id]
             logger.info("Generating new goal and gloabl plans for {}_{}...".format(self.type, self.id))
             self.start = self.goal.clone()
             desired_locations = self.desired_locations.detach().clone()

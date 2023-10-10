@@ -19,7 +19,7 @@ def parse_arguments():
     # logger
     parser.add_argument('--log_dir', type=str, default="./log")
     parser.add_argument('--exp', type=str, default="debug")
-    parser.add_argument('--max-steps', type=int, default=100, help='Maximum number of steps for the simulation.')
+    parser.add_argument('--max-steps', type=int, default=1000, help='Maximum number of steps for the simulation.')
     parser.add_argument('--seed', type=int, default=20, help='random seed to use.')
     parser.add_argument('--debug', type=bool, default=True, help='In debug mode, the agents are in defined positions.')
 
