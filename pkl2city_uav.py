@@ -8,6 +8,7 @@ from scipy.ndimage import label
 from core.config import *
 
 IMAGE_BASE_PATH = "./imgs"
+UAV_TRAJ_PATH = "uav_path.txt"
 SCALE = 4
 
 PATH_DICT = {
@@ -21,10 +22,12 @@ PATH_DICT = {
     "House": [os.path.join(IMAGE_BASE_PATH, "house{}.png").format(i) for i in range(1, 4)],
     "Office": [os.path.join(IMAGE_BASE_PATH, "office{}.png").format(i) for i in range(1, 4)],
     "Store": [os.path.join(IMAGE_BASE_PATH, "store{}.png").format(i) for i in range(1, 4)],
+    "UAV": os.path.join(IMAGE_BASE_PATH, "uav.png"),
 }
 
 ICON_SIZE_DICT = {
     "Car": SCALE*6,
+    "UAV": SCALE*8,
     "Pedestrian": SCALE*4,
     "Walking Street": SCALE*10,
     "Traffic Street": SCALE*10,
@@ -208,8 +211,123 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
     else:
         return current_map, icon_dict_local
 
+def uav_fov(city_img, uav_center, uav_icon, fov=200):
+    # Create a new image with a white background to represent the UAV's field of view
+    fov_img = np.ones((fov, fov, 3), dtype=np.uint8) * 255
+    clipped = np.clip(uav_center, 0, city_img.shape[0])  # Clipping the values
+    uav_center = clipped.astype(int)
+
+    # Calculate the region of the city image that falls within the UAV's field of view
+    x_start = max(uav_center[0] - fov//2, 0)
+    y_start = max(uav_center[1] - fov//2, 0)
+    x_end = min(uav_center[0] + fov//2, city_img.shape[0])
+    y_end = min(uav_center[1] + fov//2, city_img.shape[1])
+
+    # Calculate where this region should be placed in the fov_img
+    new_x_start = max(fov//2 - uav_center[0], 0)
+    new_y_start = max(fov//2 - uav_center[1], 0)
+    new_x_end = new_x_start + (x_end - x_start)
+    new_y_end = new_y_start + (y_end - y_start)
+
+    # Place the part of the city image that's within the UAV's field of view into the fov_img
+    fov_img[new_x_start:new_x_end, new_y_start:new_y_end] = city_img[x_start:x_end, y_start:y_end]
+
+    # Paste the uav_icon on the original image
+    city_img_with_uav = city_img.copy()
+    top_img = max(0, (uav_center[0] - uav_icon.shape[0]//2))
+    left_img = max(0, (uav_center[1] - uav_icon.shape[1]//2))
+    bottom_img = min(city_img_with_uav.shape[0], uav_center[0]+uav_icon.shape[0]-uav_icon.shape[0]//2)
+    right_img = min(city_img_with_uav.shape[1], uav_center[1]+uav_icon.shape[1]-uav_icon.shape[1]//2)
+    uav_icon = uav_icon[:bottom_img-top_img, :right_img-left_img]
+    uav_icon_mask = np.sum(uav_icon > 0, axis=2) > 0
+    city_img_with_uav[top_img:bottom_img, left_img:right_img][uav_icon_mask] = uav_icon[uav_icon_mask]
+
+    # Draw a dashed square on the original image showing the UAV FOV
+    color = (0, 0, 255)  # Blue color
+    thickness = 2
+    dash_length = 5
+    for i in range(0, fov, dash_length * 2):
+        # Top border
+        start_point = (max(uav_center[1] - fov//2 + i, 0), max(uav_center[0] - fov//2, 0))
+        end_point = (min(uav_center[1] - fov//2 + i + dash_length, city_img.shape[1]-1), max(uav_center[0] - fov//2, 0))
+        cv2.line(city_img_with_uav, start_point, end_point, color, thickness)
+
+        # Bottom border
+        start_point = (max(uav_center[1] - fov//2 + i, 0), min(uav_center[0] + fov//2, city_img.shape[0]-1))
+        end_point = (min(uav_center[1] - fov//2 + i + dash_length, city_img.shape[1]-1), min(uav_center[0] + fov//2, city_img.shape[0]-1))
+        cv2.line(city_img_with_uav, start_point, end_point, color, thickness)
+
+        # Left border
+        start_point = (max(uav_center[1] - fov//2, 0), max(uav_center[0] - fov//2 + i, 0))
+        end_point = (max(uav_center[1] - fov//2, 0), min(uav_center[0] - fov//2 + i + dash_length, city_img.shape[0]-1))
+        cv2.line(city_img_with_uav, start_point, end_point, color, thickness)
+
+        # Right border
+        start_point = (min(uav_center[1] + fov//2, city_img.shape[1]-1), max(uav_center[0] - fov//2 + i, 0))
+        end_point = (min(uav_center[1] + fov//2, city_img.shape[1]-1), min(uav_center[0] - fov//2 + i + dash_length, city_img.shape[0]-1))
+        cv2.line(city_img_with_uav, start_point, end_point, color, thickness)
+
+    return fov_img, city_img_with_uav
+
+
+class PIDController:
+    def __init__(self, kp, ki, kd, dt):
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.dt = dt
+        self.integral = np.array([0.0, 0.0])
+        self.previous_error = np.array([0.0, 0.0])
+
+    def compute(self, error):
+        self.integral += error * self.dt
+        derivative = (error - self.previous_error) / self.dt
+        self.previous_error = error
+        output = self.kp * error + self.ki * self.integral + self.kd * derivative
+        return output
+
+def calculate_trajectory(waypoints, max_acceleration=1000, dt=0.01, total_frames=10000):
+    new_waypoints = np.zeros_like(waypoints)
+    new_waypoints[:, 0] = waypoints[:, 1]
+    new_waypoints[:, 1] = waypoints[:, 0]
+    waypoints = new_waypoints
+    waypoint_intervals = 200  # The UAV gets a new waypoint every 20 frames
+    num_waypoints = waypoints.shape[0]
+
+    kp, ki, kd = 2.0, 0.1, 0.1  # PID constants
+    pid_controller = PIDController(kp, ki, kd, dt)
+
+    frames = np.arange(total_frames)
+    trajectory = np.zeros((total_frames, 2))
+    velocities = np.zeros((total_frames, 2))
+    accelerations = np.zeros((total_frames, 2))
+
+    # Start at the initial position
+    trajectory[0] = np.array([20, 963])
+
+    current_waypoint_index = 0
+
+    for i in frames[1:]:  # start from 1 since the 0th frame is the initial position
+        if i % waypoint_intervals == 0 and current_waypoint_index < num_waypoints - 1:
+            current_waypoint_index += 1
+
+        error = waypoints[current_waypoint_index] - trajectory[i-1]
+
+        acceleration = pid_controller.compute(error)
+
+        norm = np.linalg.norm(acceleration)
+        if norm > max_acceleration:
+            acceleration = acceleration / norm * max_acceleration
+
+        accelerations[i] = acceleration
+        velocities[i] = velocities[i-1] + acceleration * dt
+        trajectory[i] = trajectory[i-1] + velocities[i] * dt
+
+    return trajectory
+
 def main():
     icon_dict = {}
+    way_points = np.loadtxt(UAV_TRAJ_PATH)
     for key in PATH_DICT.keys():
         if isinstance(PATH_DICT[key], list):
             raw_img = [cv2.imread(path) for path in PATH_DICT[key]]
@@ -223,13 +341,16 @@ def main():
     with open("log/debug.pkl", "rb") as f:
         data = pkl.load(f)
         static_map = gridmap2img_static(data[0], icon_dict)
+        dense_uav_waypoints = calculate_trajectory(way_points, total_frames=(len(data.keys())-1)*10)
         cv2.imwrite("vis_city/static_layout.png", static_map)
         last_icons = None
         for key in tqdm(data.keys()):
             grid = data[key]
             grid_ = data[key+1]
             img, last_icons = gridmap2img_agents(grid, grid_, icon_dict, static_map, last_icons)
-            cv2.imwrite("vis_city/{}.png".format(key), img)
+            cropped_img, visual_img = uav_fov(img, dense_uav_waypoints[10*key], icon_dict["UAV"])
+            cv2.imwrite("vis_city_uav/{}.png".format(key), visual_img)
+            cv2.imwrite("vis_city_uav/{}_uav.png".format(key), cropped_img)
         cv2.destroyAllWindows()
     return
 

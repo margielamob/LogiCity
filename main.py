@@ -20,8 +20,8 @@ def parse_arguments():
     parser.add_argument('--log_dir', type=str, default="./log")
     parser.add_argument('--exp', type=str, default="debug")
     parser.add_argument('--max-steps', type=int, default=1000, help='Maximum number of steps for the simulation.')
-    parser.add_argument('--seed', type=int, default=20, help='random seed to use.')
-    parser.add_argument('--debug', type=bool, default=True, help='In debug mode, the agents are in defined positions.')
+    parser.add_argument('--seed', type=int, default=18, help='random seed to use.')
+    parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
 
     return parser.parse_args()
 
@@ -40,7 +40,7 @@ def main(args, logger):
         logger.info("Simulating Step_{}...".format(steps))
         city.update()
         # Visualize the current state of the city (optional)
-        visualize_city(city, 4*WORLD_SIZE, -1, "vis/step_{}.png".format(steps))
+        # visualize_city(city, 4*WORLD_SIZE, -1, "vis/step_{}.png".format(steps))
         steps += 1
         cached_observation[steps] = city.city_grid.numpy().astype(np.float32)
 
