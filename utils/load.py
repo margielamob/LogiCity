@@ -78,6 +78,7 @@ class CityLoader:
                 size=agents_data["size"],
                 id=agents_data["id"],
                 global_planner=agents_data['gplanner'],
+                concepts=agents_data['concepts'] if 'concepts' in agents_data else None,
                 world_state_matrix=city.city_grid,
                 debug=debug
             )

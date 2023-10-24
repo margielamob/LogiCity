@@ -3,22 +3,30 @@ agents:
   id: 1
   size: 1
   gplanner: A*
+  concepts:
+    mayor: 1.0
 
 - type: Pedestrian
   id: 2
   size: 1
   gplanner: A*
+  concepts:
+    mayor: 0.0
 
 - type: Pedestrian
   id: 3
   size: 1
   gplanner: A*
+  concepts:
+    mayor: 0.0
 
 - type: Pedestrian
   id: 4
   size: 1
   lplanner: LNN
   gplanner: A*
+  concepts:
+    mayor: 0.0
 
 # - type: Pedestrian
 #   id: 5
@@ -111,22 +119,30 @@ agents:
   id: 1
   size: 1
   gplanner: A*vg
+  concepts:
+    ambulance: 1.0
 
 - type: Car
   id: 2
   size: 1
   gplanner: A*vg
+  concepts:
+    ambulance: 0.0
 
 - type: Car
   id: 3
   size: 1
   gplanner: A*vg
+  concepts:
+    ambulance: 0.0
 
 - type: Car
   id: 4
   size: 1
   gplanner: A*vg
-
+  concepts:
+    ambulance: 0.0
+    
 # - type: Car
 #   id: 5
 #   size: 1
