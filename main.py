@@ -30,19 +30,18 @@ def main(args, logger):
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     # Create a city instance with a predefined grid
-    city = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, args.debug)
+    city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, args.debug)
     visualize_city(city, 4*WORLD_SIZE, -1, "vis/init.png")
 
     # Main simulation loop
     steps = 0
-    cached_observation = {0: city.city_grid.numpy().astype(np.float32)}
     while steps < args.max_steps:
         logger.info("Simulating Step_{}...".format(steps))
-        city.update()
+        time_obs = city.update()
         # Visualize the current state of the city (optional)
         visualize_city(city, 4*WORLD_SIZE, -1, "vis/step_{}.png".format(steps))
         steps += 1
-        cached_observation[steps] = city.city_grid.numpy().astype(np.float32)
+        cached_observation["Time_Obs"][steps] = time_obs
 
     with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
         pkl.dump(cached_observation, f)

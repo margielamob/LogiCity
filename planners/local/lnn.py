@@ -121,3 +121,10 @@ class LNNPlanner:
         value[value==0.5] = 0.0
         value = torch.clip(value.sum(), 0.0, 1.0)
         return value
+
+    def get_current_lnn_state(self, logic_groundings):
+        all_grounding = []
+        for pred in logic_groundings.keys():
+            for agent_name in logic_groundings[pred]:
+                all_grounding.append(self.predicates[pred]["instance"].get_data(agent_name))
+        return torch.cat(all_grounding, dim=0)

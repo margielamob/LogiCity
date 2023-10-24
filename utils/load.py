@@ -12,6 +12,19 @@ logger = logging.getLogger(__name__)
 class CityLoader:
     @staticmethod
     def from_yaml(map_yaml_file, agent_yaml_file, rule_yaml_file, rule_type, debug=False):
+
+        cached_observation = {
+                "Time_Obs": {},
+                "Static Info": {
+                    "Agents": {},
+                    "Logic": {
+                        "Predicates": [],
+                        "Rules": [],
+                        "Groundings": {},
+                    }
+                }
+            }
+
         with open(map_yaml_file, 'r') as file:
             city_config = yaml.load(file, Loader=yaml.Loader)
             logger.info("Get map info from {}".format(map_yaml_file))
@@ -23,6 +36,10 @@ class CityLoader:
 
         # Create a city instance with the specified grid size
         city = City(grid_size=(WORLD_SIZE, WORLD_SIZE), local_planner=rule_type, rule_file=rule_yaml_file)
+        cached_observation["Static Info"]["Logic"]["Predicates"] = list(city.local_planner.predicates.keys())
+        cached_observation["Static Info"]["Logic"]["Rules"] = city.local_planner.data["rules"]
+        for predicate in city.local_planner.predicates.keys():
+            cached_observation["Static Info"]["Logic"]["Groundings"][predicate] = []
 
         # Add streets to the city
         logger.info("Constructing {} streets".format(len(city_config["streets"])))
@@ -65,6 +82,16 @@ class CityLoader:
                 debug=debug
             )
             city.add_agent(agent)
+            agent_name = "{}_{}".format(agents_data["type"], agent.layer_id)
+            cached_observation["Static Info"]["Agents"][agent_name] = {
+                "id": agent.layer_id,
+                "type": agent.type,
+                "size": agent.size,
+            }
+            for predicate in city.local_planner.predicates.keys():
+                # ONLY Arity-1 predicate is supported
+                cached_observation["Static Info"]["Logic"]["Groundings"][predicate].append(agent_name)
 
         logger.info("Done!")
-        return city
+        city.logic_grounds = cached_observation["Static Info"]["Logic"]["Groundings"]
+        return city, cached_observation

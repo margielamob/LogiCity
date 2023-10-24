@@ -26,25 +26,40 @@ class City:
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
         # city rule defines local decision of all the agents
         self.local_planner = LPlanner_mapper[local_planner](rule_file)
+        self.logic_grounds = {}
         # vis color map
         self.color_map = COLOR_MAP
 
     def update(self):
+        current_obs = {}
+        # state at time t
+        current_obs["World"] = self.city_grid
+        current_obs["Agent_actions"] = {}
+
         new_matrix = torch.zeros_like(self.city_grid)
         # first do local planning based on city rules
         agent_action_dist = self.local_planner.plan(self.city_grid, self.intersection_matrix, self.agents)
+        pred_grounds = self.local_planner.get_current_lnn_state(self.logic_grounds)
+        current_obs["LNN_state"] = pred_grounds
         # Then do global action taking acording to the local planning results
         for agent in self.agents:
             # re-initialized agents may update city matrix as well
             agent_name = "{}_{}".format(agent.type, agent.layer_id)
+            empty_action = agent.action_dist.clone()
+            # local reasoning-based action distribution
             local_action_dist = agent_action_dist[agent_name]
+            # global trajectory-based action or sampling from local action distribution
             local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, local_action_dist)
+            # save the current action in the action
+            empty_action[local_action] = 1.0
+            current_obs["Agent_actions"][agent_name] = empty_action
             if agent.reach_goal:
                 continue
             next_layer = agent.move(local_action, new_matrix[agent.layer_id])
             new_matrix[agent.layer_id] = next_layer
         # Update city grid after all the agents make decisions
         self.city_grid[BASIC_LAYER:] = new_matrix[BASIC_LAYER:]
+        return current_obs
 
     def add_building(self, building):
         """Add a building to the city and mark its position on the grid."""
