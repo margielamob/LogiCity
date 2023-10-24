@@ -18,4 +18,4 @@ with Image.open(image_files[0]) as im:
     # save the first image as the animated GIF
     im.save(output_file, save_all=True, \
         append_images=[Image.open(os.path.join(image_folder, "{}.png".format(k))) for k in range(n_images)], \
-            duration=100, loop=0)
+            duration=200, loop=0)

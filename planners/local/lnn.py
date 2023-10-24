@@ -101,8 +101,12 @@ class LNNPlanner:
             action_mapping = agent.action_mapping
             action_dist = agent.action_dist
             for keys in action_mapping.keys():
+                # several predicates contribute to the same action
                 if "{}_{}1".format(agent_type, action_mapping[keys]) in self.predicates.keys():
                     action_dist[keys] = self.convert("{}_{}".format(agent_type, action_mapping[keys]), agent_name)
+                # only one predicate contributes to the action
+                elif action_mapping[keys] in self.predicates.keys():
+                    action_dist[keys] = self.convert(action_mapping[keys], agent_name)
             agents_actions[agent_name] = action_dist
         return agents_actions
 
