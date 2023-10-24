@@ -26,6 +26,15 @@ class Pedestrian(Agent):
             3: "Down", 
             4: "Stop"
             }
+        self.action_to_move = {
+            self.action_space[0].item(): torch.tensor((0, -1)),
+            self.action_space[1].item(): torch.tensor((0, 1)),
+            self.action_space[2].item(): torch.tensor((-1, 0)),
+            self.action_space[3].item(): torch.tensor((1, 0))
+        }
+        self.move_to_action = {
+            tuple(self.action_to_move[k].tolist()): k for k in self.action_to_move
+        }
 
     def init(self, world_state_matrix, debug=False):
         WALKING_STREET = TYPE_MAP['Walking Street']
@@ -88,18 +97,6 @@ class Pedestrian(Agent):
         # Return the indices of the desired locations
         return goal_point
 
-    def get_action(self, local_action_dist):
-        if not torch.any(local_action_dist):
-            return self.get_global_action()
-        else:
-            # sample from the local planner
-            normalized_action_dist = local_action_dist / local_action_dist.sum()
-            dist = Categorical(normalized_action_dist)
-            # Sample an action index from the distribution
-            action_index = dist.sample()
-            # Get the actual action from the action space using the sampled index
-            return self.action_space[action_index]
-
     def get_next_action(self, world_state_matrix, local_action_dist):
         # for now, just reckless take the global traj
         # reached goal
@@ -154,47 +151,3 @@ class Pedestrian(Agent):
             world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
 
             return self.get_action(local_action_dist), world_state_matrix[self.layer_id]
-
-    def get_global_action(self):
-        next_pos = self.global_traj[0]
-        self.global_traj.pop(0)
-        del_pos = next_pos - self.pos
-        dis = torch.tensor(del_pos).float().norm().item()
-        assert dis <= 1
-        if del_pos[1] < 0:
-            # left
-            return self.action_space[0]
-        elif del_pos[1] > 0:
-            # right
-            return self.action_space[1]
-        elif del_pos[0] < 0:
-            # up
-            return self.action_space[2]
-        elif del_pos[0] > 0:
-            # down
-            return self.action_space[3]
-        else:
-            return self.action_space[-1]
-
-    def move(self, action, ped_layer):
-        curr_pos = torch.nonzero((ped_layer==TYPE_MAP[self.type]).float())[0]
-        assert torch.all(self.pos == curr_pos)
-        next_pos = self.pos.clone()
-        # becomes walked grid
-        ped_layer[self.pos[0], self.pos[1]] += AGENT_WALKED_PATH_PLUS
-        if action == self.action_space[0]:
-            next_pos[1] -= 1
-        elif action == self.action_space[1]:
-            next_pos[1] += 1
-        elif action == self.action_space[2]:
-            next_pos[0] -= 1
-        elif action == self.action_space[3]:
-            next_pos[0] += 1
-        else:
-            next_pos = self.pos.clone()
-        self.pos = next_pos.clone()
-        # Update Agent Map
-        ped_layer[self.start[0], self.start[1]] = TYPE_MAP[self.type] + AGENT_START_PLUS
-        ped_layer[self.goal[0], self.goal[1]] = TYPE_MAP[self.type] + AGENT_GOAL_PLUS
-        ped_layer[self.pos[0], self.pos[1]] = TYPE_MAP[self.type]
-        return ped_layer
