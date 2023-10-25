@@ -15,7 +15,7 @@ def parse_arguments():
     parser.add_argument('--map', type=str, default="config/maps/v1.1.yaml", help='YAML path to the map.')
     parser.add_argument('--agents', type=str, default="config/agents/v0.yaml", help='YAML path to the agent definition.')
     parser.add_argument('--rule_type', type=str, default="LNN", help='We support ["LNN"].')
-    parser.add_argument('--rules', type=str, default="config/rules/LNN/stop_v2.yaml", help='YAML path to the rule definition.')
+    parser.add_argument('--rules', type=str, default="config/rules/LNN/medium/medium_rule.yaml", help='YAML path to the rule definition.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log")
     parser.add_argument('--exp', type=str, default="debug")

@@ -22,11 +22,11 @@ logger = logging.getLogger(__name__)
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
 class Car(Agent):
-    def __init__(self, type, size, id, world_state_matrix, global_planner, debug=False):
+    def __init__(self, type, size, id, world_state_matrix, global_planner, concepts=None, debug=False):
         self.start_point_list = None
         self.goal_point_list = None
         self.global_planner_type = global_planner
-        super().__init__(type, size, id, world_state_matrix, debug=debug)
+        super().__init__(type, size, id, world_state_matrix, concepts=concepts, debug=debug)
         # Actions: ["left_1", "right_1", "up_1", "down_1", "left_2", "right_2", "up_2", "down_2", "stop"]
         self.action_space = torch.tensor(range(9))
         self.action_to_move = {

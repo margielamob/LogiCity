@@ -53,7 +53,7 @@ class LNNPlanner:
             self.model.add_knowledge(rule_instance, world=World.AXIOM)
     
     # Example method to process world matrix for a specific predicate
-    def add_world_data(self, world_matrix, intersect_matrix, agent_id, agent_type):
+    def add_world_data(self, world_matrix, intersect_matrix, agent_id, agent_type, agents):
         # Convert the world matrix to the format expected by LNN
         data_dict = {}
         agent_name = "{}_{}".format(agent_type, agent_id)
@@ -74,7 +74,7 @@ class LNNPlanner:
                 method = getattr(module, method_name)
 
                 # Call the method
-                values = method(world_matrix, agent_id, agent_type, intersect_matrix)
+                values = method(world_matrix, agent_id, agent_type, intersect_matrix, agents)
                 
                 # Now only supporting one arity
                 data_dict[self.predicates[p]["instance"]][agent_name] = values
@@ -87,10 +87,11 @@ class LNNPlanner:
             self.predicates[p]["instance"].flush()
         agents_actions = {}
         for agent in agents:
+            # ego id
             agent_id = agent.layer_id
             agent_type = agent.type
             agent_name = "{}_{}".format(agent_type, agent_id)
-            self.add_world_data(world_matrix, intersect_matrix, agent_id, agent_type)
+            self.add_world_data(world_matrix, intersect_matrix, agent_id, agent_type, agents)
         self.model.infer(Direction.UPWARD)
         self.model.infer(Direction.DOWNWARD)
         # use LNN to get the action distribution
