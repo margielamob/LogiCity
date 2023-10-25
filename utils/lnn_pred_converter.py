@@ -17,14 +17,19 @@ def check_is_at_intersection(world, agent_id, agent_type, intersect_matrix, agen
     else:
         return torch.tensor([0.0, 0.0])
 
+def check_is_in_intersection(world, agent_id, agent_type, intersect_matrix, agents):
+    # TODO: check if the agent is in the intersection
+    return torch.tensor([0.0, 0.0])
+
+def check_is_ambulance_in_intersection(world, agent_id, agent_type, intersect_matrix, agents):
+    # TODO: checks if there is ambumance in the agent's ego intersection.
+    return torch.tensor([0.0, 0.0])
+
 def is_car(world, agent_id, agent_type, intersect_matrix, agents):
     if agent_type == "Car":
         return torch.tensor([1.0, 1.0])
     else:
         return torch.tensor([0.0, 0.0])
-
-def pedestrians_near_intersection(world, agent_id, agent_type, intersect_matrix, agents):
-    return torch.tensor([0.0, 0.0])
 
 def intersection_empty_ped(world, agent_id, agent_type, intersect_matrix, agents):
     agent_layer = world[agent_id]
@@ -154,8 +159,12 @@ def is_pedestrian(world, agent_id, agent_type, intersect_matrix, agents):
         return torch.tensor([0.0, 0.0])
 
 def is_ambulance(world, agent_id, agent_type, intersect_matrix, agents):
-    if agent_type == "Car" and agents[agent_id].concepts["ambulance"] == 1.0:
-        return torch.tensor([1.0, 1.0])
+    if agent_type == "Car":
+        # note that agent_id is the layer_id, not the id in agents
+        if agents[agent_id-BASIC_LAYER].concepts["ambulance"] == 1.0:
+            return torch.tensor([1.0, 1.0])
+        else:
+            return torch.tensor([0.0, 0.0])
     else:
         return torch.tensor([0.0, 0.0])
 
