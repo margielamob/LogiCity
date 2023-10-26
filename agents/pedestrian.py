@@ -13,11 +13,11 @@ logger = logging.getLogger(__name__)
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
 class Pedestrian(Agent):
-    def __init__(self, type, size, id, world_state_matrix, global_planner, debug=False):
+    def __init__(self, type, size, id, world_state_matrix, global_planner, concepts=None, debug=False):
         self.start_point_list = None
         self.goal_point_list = None
         self.global_planner = GPlanner_mapper[global_planner]
-        super().__init__(type, size, id, world_state_matrix, debug=debug)
+        super().__init__(type, size, id, world_state_matrix, concepts=concepts, debug=debug)
         # pedestrian use A*, which is just a function
         self.action_mapping = {
             0: "Left", 

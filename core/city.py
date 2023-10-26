@@ -2,7 +2,7 @@ from .building import Building
 from planners import LPlanner_mapper
 import numpy as np
 import random
-from skimage.draw import line
+from skimage.draw import line, polygon
 from scipy.ndimage import label
 import torch
 import torch.nn.functional as F
@@ -126,21 +126,33 @@ class City:
             ymin, ymax = min(block_positions[:, 0])-1, max(block_positions[:, 0])+1
             corners[block_id] = [(xmin, ymin), (xmin, ymax), (xmax, ymin), (xmax, ymax)]
 
-        intersection_matrix = np.zeros_like(world_layer, dtype=bool)
-
+        intersection_matrix = np.zeros((2, world_layer.shape[0], world_layer.shape[1]), dtype=bool)
+        intersection_line_len = TRAFFIC_STREET_WID + 2*WALKING_STREET_WID - 1
         for block_id, block_corners in corners.items():
             for other_block_id, other_block_corners in corners.items():
                 if block_id != other_block_id:
                     for corner in block_corners:
                         for other_corner in other_block_corners:
-                            if np.linalg.norm(np.array(corner) - np.array(other_corner)) == TRAFFIC_STREET_WID + 2*WALKING_STREET_WID - 1:
+                            corner_dis = np.linalg.norm(np.array(corner) - np.array(other_corner))
+                            if corner_dis == intersection_line_len:
                                 rr, cc = line(corner[0], corner[1], other_corner[0], other_corner[1])
-                                intersection_matrix[rr, cc] = True
+                                # first layer is for check "At intersection, they are lines"
+                                intersection_matrix[0, rr, cc] = True
+                            elif corner_dis > 1.4*intersection_line_len and corner_dis < 1.5*intersection_line_len:
+                                # second layer is for check "In intersection, they are blocks"
+                                rr, cc = line(corner[0], corner[1], other_corner[0], other_corner[1])
+                                # Gather the vertices of the polygon
+                                assert rr.max()!=rr.min() and cc.max()!=cc.min()
+                                intersection_matrix[1, rr.min():rr.max(), cc.min():cc.max()] = True
+                                
 
         # Label connected regions in the intersection matrix
-        labeled_matrix, num = label(intersection_matrix)
-        assert num == NUM_INTERSECTIONS, "Number of intersections is not 32"
-        self.intersection_matrix = torch.tensor(labeled_matrix)
+        labeled_matrix_line, num_line = label(intersection_matrix[0])
+        assert num_line == NUM_INTERSECTIONS_LINES, "Number of intersection lines is not {}".format(NUM_INTERSECTIONS_LINES)
+        labeled_matrix_block, num_block = label(intersection_matrix[1])
+        assert num_block == NUM_INTERSECTIONS_BLOCKS, "Number of intersection blocks is not {}".format(NUM_INTERSECTIONS_BLOCKS)
+        intersection_matrix = np.array([labeled_matrix_line, labeled_matrix_block])
+        self.intersection_matrix = torch.tensor(intersection_matrix)
         # exclusion_radius = 2*AT_INTERSECTION_E+1
         # self.intersection_matrix = F.max_pool2d(intersection_matrix[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2)
         # self.intersection_matrix = self.intersection_matrix.squeeze(0).squeeze(0)

@@ -1,0 +1,69 @@
+predicates:
+  - IsAtIntersection:
+      arity: 1
+      method: utils.lnn_pred_converter.check_is_at_intersection
+      description: Checks if the agent is at an intersection.
+  - IsCar:
+      arity: 1
+      method: utils.lnn_pred_converter.is_car
+      description: Checks if the agent is a car.
+  - IsAmbulance:
+      arity: 1
+      method: utils.lnn_pred_converter.is_ambulance
+      description: Checks if the agent is a car and has concept "ambulance".
+  - IsInIntersection:
+      arity: 1
+      method: utils.lnn_pred_converter.check_is_in_intersection
+      description: Checks if the agent is in the intersection.
+  - AmbulanceIntersection:
+      arity: 1
+      method: utils.lnn_pred_converter.check_is_ambulance_in_intersection
+      description: Checks if there is ambumance in the agent's ego intersection.
+  - IsPedestrian:
+      arity: 1
+      method: utils.lnn_pred_converter.is_pedestrian
+      description: Checks if the agent is a pedestrian.
+  - IsMayor:
+      arity: 1
+      method: utils.lnn_pred_converter.is_mayor
+      description: Checks if the agent is a pedestrian and has concept "mayor".
+  - MayorAround:
+      arity: 1
+      method: utils.lnn_pred_converter.is_mayor_around
+      description: Checks if there is a mayor around.
+  - IntersectionEmpty:
+      arity: 1
+      method: utils.lnn_pred_converter.intersection_empty_ped
+      description: Checks if the intersection is not empty.
+  - IntersectionCarsEmpty:
+      arity: 1
+      method: utils.lnn_pred_converter.intersection_empty_cars
+      description: Checks if the intersection is not empty with cars.
+  - PreviousCars:
+      arity: 1
+      method: utils.lnn_pred_converter.previous_cars
+      description: Checks if the previous cars exist.
+  - Stop:
+      arity: 1
+      method: None
+      description: Stop action.
+
+rules:
+  - Intersect_Stop:
+      formula: Implies(Or(And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x))), And(IsPedestrian(x), MayorAround(x), Not(IsMayor(x))), And(Not(IsAmbulance(x)), IsInIntersection(x), AmbulanceIntersection(x))), Stop(x))
+      description: Or version of the following stop rule.
+#   - Cars_Stop1:
+#       formula: Implies(And(IsCar(x), IsAtIntersection(x), Not(IsAmbulance(x)), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), Car_Stop1(x))
+#       description: cars at intersection, not intersection empty, stop, ambulance not stop
+#   - Cars_Stop2:
+#       formula: Implies(And(IsCar(x), IsAtIntersection(x), Not(IsAmbulance(x)), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), Car_Stop2(x))
+#       description: cars at intersection, intersection empty, previous car, stop, ambulance not stop
+#   - Pedestrians_Stop1:
+#       formula: Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x))), Pedestrian_Stop1(x))
+#       description: pedestrians at intersection, not intersection empty with cars, stop
+#   - Pedestrians_Stop2:
+#       formula: Implies(And(IsPedestrian(x), IsMayorAround(x), Not(IsMayor(x))), Pedestrian_Stop1(x))
+#       description: pedestrians respect the mayor, stop
+#   - All_stop_ambulance:
+#       formula: Implies(And(Not(IsAmbulance(x)), IsInIntersection(x), AmbulanceIntersection(x)), Stop(x))
+#       description: In the intersection, there is ambulance in the intersection, not ambulance, stop
