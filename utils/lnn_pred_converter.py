@@ -12,18 +12,43 @@ TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 def check_is_at_intersection(world, agent_id, agent_type, intersect_matrix, agents):
     agent_layer = world[agent_id]
     agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
-    if intersect_matrix[agent_position[0], agent_position[1]]:
+    if intersect_matrix[0, agent_position[0], agent_position[1]]:
         return torch.tensor([1.0, 1.0])
     else:
         return torch.tensor([0.0, 0.0])
 
 def check_is_in_intersection(world, agent_id, agent_type, intersect_matrix, agents):
-    # TODO: check if the agent is in the intersection
-    return torch.tensor([0.0, 0.0])
+    agent_layer = world[agent_id]
+    agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
+    if intersect_matrix[1, agent_position[0], agent_position[1]]:
+        return torch.tensor([1.0, 1.0])
+    else:
+        return torch.tensor([0.0, 0.0])
 
 def check_is_ambulance_in_intersection(world, agent_id, agent_type, intersect_matrix, agents):
-    # TODO: checks if there is ambumance in the agent's ego intersection.
-    return torch.tensor([0.0, 0.0])
+    agent_layer = world[agent_id]
+    agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
+    if not intersect_matrix[1, agent_position[0], agent_position[1]]:
+        return torch.tensor([0.0, 0.0])
+    else:
+        local_intersection = intersect_matrix[1] == intersect_matrix[1, agent_position[0], agent_position[1]]
+        intersection_positions = (local_intersection).nonzero()
+        xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
+        ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
+        partial_world = world[BASIC_LAYER:, ymin:ymax+1, xmin:xmax+1]
+        amb = torch.tensor([0.0, 0.0])
+        for i, agent in enumerate(agents):
+            if agent.type == "Pedestrian":
+                continue
+            ambulance_label = agent.concepts["ambulance"] == 1.0
+            if not ambulance_label:
+                continue
+            # Create mask for integer values (except 0)
+            int_mask = partial_world[i] == TYPE_MAP["Car"]
+            if int_mask.any():
+                amb = torch.tensor([1.0, 1.0])
+
+        return amb
 
 def is_car(world, agent_id, agent_type, intersect_matrix, agents):
     if agent_type == "Car":
@@ -34,10 +59,10 @@ def is_car(world, agent_id, agent_type, intersect_matrix, agents):
 def intersection_empty_ped(world, agent_id, agent_type, intersect_matrix, agents):
     agent_layer = world[agent_id]
     agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
-    if not intersect_matrix[agent_position[0], agent_position[1]]:
+    if not intersect_matrix[0, agent_position[0], agent_position[1]]:
         return torch.tensor([1.0, 1.0])
     else:
-        local_intersection = intersect_matrix == intersect_matrix[agent_position[0], agent_position[1]]
+        local_intersection = intersect_matrix[0] == intersect_matrix[0, agent_position[0], agent_position[1]]
         intersection_positions = (local_intersection).nonzero()
         xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
         ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
@@ -73,10 +98,10 @@ def intersection_empty_ped(world, agent_id, agent_type, intersect_matrix, agents
 def intersection_empty_cars(world, agent_id, agent_type, intersect_matrix, agents):
     agent_layer = world[agent_id]
     agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
-    if not intersect_matrix[agent_position[0], agent_position[1]]:
+    if not intersect_matrix[0, agent_position[0], agent_position[1]]:
         return torch.tensor([1.0, 1.0])
     else:
-        local_intersection = intersect_matrix == intersect_matrix[agent_position[0], agent_position[1]]
+        local_intersection = intersect_matrix[0] == intersect_matrix[0, agent_position[0], agent_position[1]]
         intersection_positions = (local_intersection).nonzero()
         xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
         ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
@@ -127,10 +152,10 @@ def previous_cars(world, agent_id, agent_type, intersect_matrix, agents):
         return torch.tensor([0.0, 0.0])
     agent_layer = world[agent_id]
     agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
-    if not intersect_matrix[agent_position[0], agent_position[1]]:
+    if not intersect_matrix[0, agent_position[0], agent_position[1]]:
         return torch.tensor([0.0, 0.0])
     else:
-        local_intersection = intersect_matrix == intersect_matrix[agent_position[0], agent_position[1]]
+        local_intersection = intersect_matrix[0] == intersect_matrix[0, agent_position[0], agent_position[1]]
         intersection_positions = (local_intersection).nonzero()
         xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
         ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])

@@ -133,11 +133,12 @@ class City:
                 if block_id != other_block_id:
                     for corner in block_corners:
                         for other_corner in other_block_corners:
-                            if np.linalg.norm(np.array(corner) - np.array(other_corner)) == intersection_line_len:
+                            corner_dis = np.linalg.norm(np.array(corner) - np.array(other_corner))
+                            if corner_dis == intersection_line_len:
                                 rr, cc = line(corner[0], corner[1], other_corner[0], other_corner[1])
                                 # first layer is for check "At intersection, they are lines"
                                 intersection_matrix[0, rr, cc] = True
-                            elif intersection_line_len < np.linalg.norm(np.array(corner) - np.array(other_corner)) < 2 * intersection_line_len:
+                            elif corner_dis > 1.4*intersection_line_len and corner_dis < 1.5*intersection_line_len:
                                 # second layer is for check "In intersection, they are blocks"
                                 rr, cc = line(corner[0], corner[1], other_corner[0], other_corner[1])
                                 # Gather the vertices of the polygon
@@ -150,7 +151,8 @@ class City:
         assert num_line == NUM_INTERSECTIONS_LINES, "Number of intersection lines is not {}".format(NUM_INTERSECTIONS_LINES)
         labeled_matrix_block, num_block = label(intersection_matrix[1])
         assert num_block == NUM_INTERSECTIONS_BLOCKS, "Number of intersection blocks is not {}".format(NUM_INTERSECTIONS_BLOCKS)
-        self.intersection_matrix = torch.tensor([labeled_matrix_line, labeled_matrix_block])
+        intersection_matrix = np.array([labeled_matrix_line, labeled_matrix_block])
+        self.intersection_matrix = torch.tensor(intersection_matrix)
         # exclusion_radius = 2*AT_INTERSECTION_E+1
         # self.intersection_matrix = F.max_pool2d(intersection_matrix[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2)
         # self.intersection_matrix = self.intersection_matrix.squeeze(0).squeeze(0)

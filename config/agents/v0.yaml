@@ -120,7 +120,7 @@ agents:
   size: 1
   gplanner: A*vg
   concepts:
-    ambulance: 1.0
+    ambulance: 0.0
 
 - type: Car
   id: 2
@@ -141,7 +141,7 @@ agents:
   size: 1
   gplanner: A*vg
   concepts:
-    ambulance: 0.0
+    ambulance: 1.0
     
 # - type: Car
 #   id: 5
