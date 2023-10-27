@@ -78,7 +78,7 @@ class Car(Agent):
         self.midline_matrix = (world_state_matrix[STREET_ID] == Traffic_STREET+MID_LINE_CODE_PLUS)
         self.global_planner = GPlanner_mapper[self.global_planner_type](self.movable_region, self.midline_matrix, CAR_STREET_OFFSET)
         # get global traj on the occupacy map
-        self.global_traj = self.global_planner.plan(self.start, self.goal, 3)
+        self.global_traj = self.global_planner.plan(self.start, self.goal, 2)
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
     def get_start(self, world_state_matrix):
@@ -170,7 +170,7 @@ class Car(Agent):
             
             # Fetch the corresponding location
             self.goal = torch.tensor(goal_point_list[random_index])
-            self.global_traj = self.global_planner.plan(self.start, self.goal, 3)
+            self.global_traj = self.global_planner.plan(self.start, self.goal, 2)
             logger.info("Generating new goal and gloabl plans for {}_{} done!".format(self.type, self.id))
             self.reach_goal = False
             # delete past traj

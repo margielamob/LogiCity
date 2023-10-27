@@ -71,3 +71,61 @@ def find_midroad_segments(midline_matrix):
                     start_row = None
 
     return midroad_segments
+
+def interpolate_car_path(movable_map, path_on_graph, max_step):
+    interpolated = []
+    for i in range(len(path_on_graph) - 1):
+        current_point = path_on_graph[i]
+        next_point = path_on_graph[i+1]
+
+        while current_point != next_point:
+
+            # Determine the difference in X and Y
+            dx = next_point[0] - current_point[0]
+            dy = next_point[1] - current_point[1]
+
+            if dx != 0 and dy != 0:
+                # Move to the intersection if both dx and dy are non-zero
+                assert abs(dx) == abs(dy)
+                if movable_map[current_point[0], next_point[1]]:
+                    intersect = (current_point[0], next_point[1])
+                else:
+                    movable_map[next_point[0], current_point[1]]
+                    intersect = (next_point[0], current_point[1])
+                # First move to intersect:
+                while current_point != intersect:
+                    dx = intersect[0] - current_point[0]
+                    dy = intersect[1] - current_point[1]
+                    if abs(dx) >= max_step:
+                        step = max_step * int(dx/abs(dx))
+                        current_point = (current_point[0] + step, current_point[1])
+                    elif abs(dy) >= max_step:
+                        step = max_step * int(dy/abs(dy))
+                        current_point = (current_point[0], current_point[1] + step)
+                    else:
+                        if dx != 0:
+                            step = int(dx)
+                            current_point = (current_point[0] + step, current_point[1])
+                        elif dy != 0:
+                            step = int(dy)
+                            current_point = (current_point[0], current_point[1] + step)
+                    interpolated.append(torch.tensor(current_point))
+            else:
+                # If the vehicle doesn't need to turn, just move straight
+                if abs(dx) >= max_step:
+                    step = max_step * int(dx/abs(dx))
+                    current_point = (current_point[0] + step, current_point[1])
+                elif abs(dy) >= max_step:
+                    step = max_step * int(dy/abs(dy))
+                    current_point = (current_point[0], current_point[1] + step)
+                else:
+                    if dx != 0:
+                        step = int(dx)
+                        current_point = (current_point[0] + step, current_point[1])
+                    elif dy != 0:
+                        step = int(dy)
+                        current_point = (current_point[0], current_point[1] + step)
+                interpolated.append(torch.tensor(current_point))
+
+    interpolated.append(torch.tensor(path_on_graph[-1]))  # Add the last point
+    return interpolated

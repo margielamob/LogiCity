@@ -67,6 +67,12 @@ CAR_GOAL_START = ["Gas Station", "Garage", "Store"]
 CAR_GOAL_START_INCLUDE_KERNEL = (WALKING_STREET_WID+1)*2+1
 CAR_GOAL_START_EXCLUDE_KERNEL = WALKING_STREET_WID + TRAFFIC_STREET_WID//2 + 1
 
+# Bus Routes, got these from midline segments
+ROAD_GRAPH_NODES = '/home/airlabbw/ANSR/sim/LogiCity/core/road_graph.txt'
+BUS_ROUTES = {
+    "61A": [147, 146, 151, 150, 155, 154, 87, 86, 91, 90, 95, 94, 213, 212, 209, 208, 59, 58, 225, 224, 37, 36, 33, 32, 29, 28, 25, 24, 147]
+}
+
 # Rules
 INTERSECTION_PRIORITY = ['Left', 'Bottom', 'Right', 'Top']
 AT_INTERSECTION_OFFSET = 1    

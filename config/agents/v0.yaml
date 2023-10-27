@@ -152,13 +152,15 @@ agents:
     type: Car
     ambulance: 0.0
 
-# - class: Bus
-#   id: 5
-#   size: 1
-#   gplanner: A*vg
-#   concepts:
-#     type: Car
-#     ambulance: 0.0
+- class: Bus
+  id: 5
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    ambulance: 0.0
+    no.: 61A # no. is used to define the bus routes 
+
 # - type: Car
 #   id: 5
 #   size: 1

@@ -1,7 +1,9 @@
+import os
 import torch
+import numpy as np
 from math import *
 import networkx as nx
-from utils.find import find_midroad_segments
+from utils.find import find_midroad_segments, interpolate_car_path
 from core.config import *
 
 def manhattan_distance(u, v):
@@ -57,6 +59,9 @@ class ASTAR_G:
                 self.end_lists.append(right_e.unsqueeze(0))
         
         # Connect each end point to other start points (this only happens in intersections)
+        # save road graph nodes for future use
+        if not os.path.isfile(ROAD_GRAPH_NODES):
+            np.savetxt(ROAD_GRAPH_NODES, np.array(list(self.G.nodes)))
         for end_point in self.end_lists:
             distances = torch.norm(torch.cat(self.start_lists, dim=0).float() - end_point.float(), dim=1)
             near_starts = torch.cat(self.start_lists, dim=0)[distances < max(2*WALKING_STREET_WID+TRAFFIC_STREET_WID, sqrt(2)*(WALKING_STREET_WID+TRAFFIC_STREET_WID))+3]
@@ -114,69 +119,9 @@ class ASTAR_G:
         self.G.add_edge(tuple(intersect.tolist()), tuple(end.tolist()))
 
         path_on_graph = nx.shortest_path(self.G, tuple(start.tolist()), tuple(end.tolist()), method='dijkstra')
-        interpolated = self.interpolate(path_on_graph, max_step)
+        interpolated = interpolate_car_path(self.movable_map, path_on_graph, max_step)
         # check
         for i in interpolated:
             assert self.movable_map[i[0], i[1]]
-
-        return interpolated
-
-    def interpolate(self, path_on_graph, max_step):
-        interpolated = []
-
-        for i in range(len(path_on_graph) - 1):
-            current_point = path_on_graph[i]
-            next_point = path_on_graph[i+1]
-
-            while current_point != next_point:
-
-                # Determine the difference in X and Y
-                dx = next_point[0] - current_point[0]
-                dy = next_point[1] - current_point[1]
-
-                if dx != 0 and dy != 0:
-                    # Move to the intersection if both dx and dy are non-zero
-                    assert abs(dx) == abs(dy)
-                    if self.movable_map[current_point[0], next_point[1]]:
-                        intersect = (current_point[0], next_point[1])
-                    else:
-                        assert self.movable_map[next_point[0], current_point[1]]
-                        intersect = (next_point[0], current_point[1])
-                    # First move to intersect:
-                    while current_point != intersect:
-                        dx = intersect[0] - current_point[0]
-                        dy = intersect[1] - current_point[1]
-                        if abs(dx) >= max_step:
-                            step = max_step * int(dx/abs(dx))
-                            current_point = (current_point[0] + step, current_point[1])
-                        elif abs(dy) >= max_step:
-                            step = max_step * int(dy/abs(dy))
-                            current_point = (current_point[0], current_point[1] + step)
-                        else:
-                            if dx != 0:
-                                step = int(dx)
-                                current_point = (current_point[0] + step, current_point[1])
-                            elif dy != 0:
-                                step = int(dy)
-                                current_point = (current_point[0], current_point[1] + step)
-                        interpolated.append(torch.tensor(current_point))
-                else:
-                    # If the vehicle doesn't need to turn, just move straight
-                    if abs(dx) >= max_step:
-                        step = max_step * int(dx/abs(dx))
-                        current_point = (current_point[0] + step, current_point[1])
-                    elif abs(dy) >= max_step:
-                        step = max_step * int(dy/abs(dy))
-                        current_point = (current_point[0], current_point[1] + step)
-                    else:
-                        if dx != 0:
-                            step = int(dx)
-                            current_point = (current_point[0] + step, current_point[1])
-                        elif dy != 0:
-                            step = int(dy)
-                            current_point = (current_point[0], current_point[1] + step)
-                    interpolated.append(torch.tensor(current_point))
-
-        interpolated.append(torch.tensor(path_on_graph[-1]))  # Add the last point
 
         return interpolated
