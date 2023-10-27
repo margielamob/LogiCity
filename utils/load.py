@@ -73,17 +73,16 @@ class CityLoader:
         # Add agents to the city
         logger.info("Adding {} agents".format(len(city_config["agents"])))
         for agents_data in tqdm(city_config["agents"]):
-            agent = Agent_mapper[agents_data["type"]](
-                type=agents_data["type"],
+            agent = Agent_mapper[agents_data["class"]](
                 size=agents_data["size"],
                 id=agents_data["id"],
                 global_planner=agents_data['gplanner'],
-                concepts=agents_data['concepts'] if 'concepts' in agents_data else None,
+                concepts=agents_data['concepts'],
                 world_state_matrix=city.city_grid,
                 debug=debug
             )
             city.add_agent(agent)
-            agent_name = "{}_{}".format(agents_data["type"], agent.layer_id)
+            agent_name = "{}_{}".format(agent.type, agent.layer_id)
             cached_observation["Static Info"]["Agents"][agent_name] = {
                 "id": agent.layer_id,
                 "type": agent.type,

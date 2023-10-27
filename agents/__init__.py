@@ -4,5 +4,5 @@ from .car import Car
 
 Agent_mapper = {
     'Pedestrian': Pedestrian,
-    'Car': Car
+    'Private_car': Car
 }

@@ -1,32 +1,37 @@
+# class defines the "python class" for the agent, affecting global planning, concepts define local decision rules
 agents:
-- type: Pedestrian
+- class: Pedestrian
   id: 1
   size: 1
   gplanner: A*
   concepts:
+    type: Pedestrian
     mayor: 1.0
 
-- type: Pedestrian
+- class: Pedestrian
   id: 2
   size: 1
   gplanner: A*
   concepts:
-    mayor: 0.0
+    type: Pedestrian
+    mayor: 1.0
 
-- type: Pedestrian
+- class: Pedestrian
   id: 3
   size: 1
   gplanner: A*
   concepts:
-    mayor: 0.0
+    type: Pedestrian
+    mayor: 1.0
 
-- type: Pedestrian
+- class: Pedestrian
   id: 4
   size: 1
   lplanner: LNN
   gplanner: A*
   concepts:
-    mayor: 0.0
+    type: Pedestrian
+    mayor: 1.0
 
 # - type: Pedestrian
 #   id: 5
@@ -115,33 +120,37 @@ agents:
 #   size: 1
 #   gplanner: A*
 
-- type: Car
+- class: Private_car
   id: 1
   size: 1
   gplanner: A*vg
   concepts:
-    ambulance: 0.0
+    type: Car
+    ambulance: 1.0
 
-- type: Car
+- class: Private_car
   id: 2
   size: 1
   gplanner: A*vg
   concepts:
+    type: Car
     ambulance: 0.0
 
-- type: Car
+- class: Private_car
   id: 3
   size: 1
   gplanner: A*vg
   concepts:
+    type: Car
     ambulance: 0.0
 
-- type: Car
+- class: Private_car
   id: 4
   size: 1
   gplanner: A*vg
   concepts:
-    ambulance: 1.0
+    type: Car
+    ambulance: 0.0
     
 # - type: Car
 #   id: 5
