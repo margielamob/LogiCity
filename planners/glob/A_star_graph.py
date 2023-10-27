@@ -103,7 +103,7 @@ class ASTAR_G:
             ValueError('Not a valid intersection')
 
 
-    def plan(self, start, end):
+    def plan(self, start, end, max_step):
 
         # Find intersections of start and end with their nearest road segments.
         intersect, close_goal = self.find_nearest_node(start, origin_list = 'g')
@@ -114,14 +114,14 @@ class ASTAR_G:
         self.G.add_edge(tuple(intersect.tolist()), tuple(end.tolist()))
 
         path_on_graph = nx.shortest_path(self.G, tuple(start.tolist()), tuple(end.tolist()), method='dijkstra')
-        interpolated = self.interpolate(path_on_graph)
+        interpolated = self.interpolate(path_on_graph, max_step)
         # check
         for i in interpolated:
             assert self.movable_map[i[0], i[1]]
 
         return interpolated
 
-    def interpolate(self, path_on_graph):
+    def interpolate(self, path_on_graph, max_step):
         interpolated = []
 
         for i in range(len(path_on_graph) - 1):
@@ -146,11 +146,11 @@ class ASTAR_G:
                     while current_point != intersect:
                         dx = intersect[0] - current_point[0]
                         dy = intersect[1] - current_point[1]
-                        if abs(dx) >= 2:
-                            step = 2 * int(dx/abs(dx))
+                        if abs(dx) >= max_step:
+                            step = max_step * int(dx/abs(dx))
                             current_point = (current_point[0] + step, current_point[1])
-                        elif abs(dy) >= 2:
-                            step = 2 * int(dy/abs(dy))
+                        elif abs(dy) >= max_step:
+                            step = max_step * int(dy/abs(dy))
                             current_point = (current_point[0], current_point[1] + step)
                         else:
                             if dx != 0:
@@ -162,11 +162,11 @@ class ASTAR_G:
                         interpolated.append(torch.tensor(current_point))
                 else:
                     # If the vehicle doesn't need to turn, just move straight
-                    if abs(dx) >= 2:
-                        step = 2 * int(dx/abs(dx))
+                    if abs(dx) >= max_step:
+                        step = max_step * int(dx/abs(dx))
                         current_point = (current_point[0] + step, current_point[1])
-                    elif abs(dy) >= 2:
-                        step = 2 * int(dy/abs(dy))
+                    elif abs(dy) >= max_step:
+                        step = max_step * int(dy/abs(dy))
                         current_point = (current_point[0], current_point[1] + step)
                     else:
                         if dx != 0:

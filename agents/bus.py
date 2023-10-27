@@ -25,16 +25,20 @@ class Bus(Car):
     def __init__(self, size, id, world_state_matrix, global_planner, concepts, debug=False):
         super().__init__(size, id, world_state_matrix, global_planner, concepts, debug=debug)
         # Actions: ["left_1", "right_1", "up_1", "down_1", "left_3", "right_3", "up_3", "down_3", "stop"]
-        self.action_space = torch.tensor(range(9))
+        self.action_space = torch.tensor(range(11))
         self.action_to_move = {
             self.action_space[0].item(): torch.tensor((0, -1)),
             self.action_space[1].item(): torch.tensor((0, 1)),
             self.action_space[2].item(): torch.tensor((-1, 0)),
             self.action_space[3].item(): torch.tensor((1, 0)),
-            self.action_space[4].item(): torch.tensor((0, -3)),
-            self.action_space[5].item(): torch.tensor((0, 3)),
-            self.action_space[6].item(): torch.tensor((-3, 0)),
-            self.action_space[7].item(): torch.tensor((3, 0))
+            self.action_space[4].item(): torch.tensor((0, -2)),
+            self.action_space[5].item(): torch.tensor((0, 2)),
+            self.action_space[6].item(): torch.tensor((-2, 0)),
+            self.action_space[7].item(): torch.tensor((2, 0)),
+            self.action_space[8].item(): torch.tensor((0, -3)),
+            self.action_space[9].item(): torch.tensor((0, 3)),
+            self.action_space[10].item(): torch.tensor((-3, 0)),
+            self.action_space[11].item(): torch.tensor((3, 0))
         }
         self.move_to_action = {
             tuple(self.action_to_move[k].tolist()): k for k in self.action_to_move

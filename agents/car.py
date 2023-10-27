@@ -27,8 +27,8 @@ class Car(Agent):
         self.goal_point_list = None
         self.global_planner_type = global_planner
         super().__init__(size, id, world_state_matrix, concepts, debug=debug)
-        # Actions: ["left_1", "right_1", "up_1", "down_1", "left_2", "right_2", "up_2", "down_2", "stop"]
-        self.action_space = torch.tensor(range(9))
+        # Actions: ["left_1", "right_1", "up_1", "down_1", "left_2", "right_2", "up_2", "down_2", "left_3", "right_3", "up_3", "down_3", "stop"]
+        self.action_space = torch.tensor(range(13))
         self.action_to_move = {
             self.action_space[0].item(): torch.tensor((0, -1)),
             self.action_space[1].item(): torch.tensor((0, 1)),
@@ -37,7 +37,11 @@ class Car(Agent):
             self.action_space[4].item(): torch.tensor((0, -2)),
             self.action_space[5].item(): torch.tensor((0, 2)),
             self.action_space[6].item(): torch.tensor((-2, 0)),
-            self.action_space[7].item(): torch.tensor((2, 0))
+            self.action_space[7].item(): torch.tensor((2, 0)),
+            self.action_space[8].item(): torch.tensor((0, -3)),
+            self.action_space[9].item(): torch.tensor((0, 3)),
+            self.action_space[10].item(): torch.tensor((-3, 0)),
+            self.action_space[11].item(): torch.tensor((3, 0))
         }
         self.move_to_action = {
             tuple(self.action_to_move[k].tolist()): k for k in self.action_to_move
@@ -52,7 +56,11 @@ class Car(Agent):
             5: "Right_2", 
             6: "Up_2", 
             7: "Down_2",
-            8: "Stop"
+            8: "Left_3", 
+            9: "Right_3", 
+            10: "Up_3", 
+            11: "Down_3",
+            12: "Stop"
             }
 
     def init(self, world_state_matrix, debug=False):
@@ -70,7 +78,7 @@ class Car(Agent):
         self.midline_matrix = (world_state_matrix[STREET_ID] == Traffic_STREET+MID_LINE_CODE_PLUS)
         self.global_planner = GPlanner_mapper[self.global_planner_type](self.movable_region, self.midline_matrix, CAR_STREET_OFFSET)
         # get global traj on the occupacy map
-        self.global_traj = self.global_planner.plan(self.start, self.goal)
+        self.global_traj = self.global_planner.plan(self.start, self.goal, 3)
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
     def get_start(self, world_state_matrix):
@@ -162,7 +170,7 @@ class Car(Agent):
             
             # Fetch the corresponding location
             self.goal = torch.tensor(goal_point_list[random_index])
-            self.global_traj = self.global_planner.plan(self.start, self.goal)
+            self.global_traj = self.global_planner.plan(self.start, self.goal, 3)
             logger.info("Generating new goal and gloabl plans for {}_{} done!".format(self.type, self.id))
             self.reach_goal = False
             # delete past traj
