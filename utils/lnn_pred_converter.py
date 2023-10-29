@@ -186,22 +186,45 @@ def is_pedestrian(world, agent_id, agent_type, intersect_matrix, agents):
 def is_ambulance(world, agent_id, agent_type, intersect_matrix, agents):
     if agent_type == "Car":
         # note that agent_id is the layer_id, not the id in agents
-        if agents[agent_id-BASIC_LAYER].concepts["ambulance"] == 1.0:
-            return torch.tensor([1.0, 1.0])
-        else:
-            return torch.tensor([0.0, 0.0])
-    else:
-        return torch.tensor([0.0, 0.0])
+        if "ambulance" in agents[agent_id-BASIC_LAYER].concepts.keys():
+            if agents[agent_id-BASIC_LAYER].concepts["ambulance"] == 1.0:
+                return torch.tensor([1.0, 1.0])
+    return torch.tensor([0.0, 0.0])
+
+def is_bus(world, agent_id, agent_type, intersect_matrix, agents):
+    if agent_type == "Car":
+        # note that agent_id is the layer_id, not the id in agents
+        if "bus" in agents[agent_id-BASIC_LAYER].concepts.keys():
+            if agents[agent_id-BASIC_LAYER].concepts["bus"] == 1.0:
+                return torch.tensor([1.0, 1.0])
+    return torch.tensor([0.0, 0.0])
+
+def is_many_ped_around(world, agent_id, agent_type, intersect_matrix, agents):
+    if agent_type == "Car":
+        # note that agent_id is the layer_id, not the id in agents
+        if "bus" in agents[agent_id-BASIC_LAYER].concepts.keys():
+            if agents[agent_id-BASIC_LAYER].concepts["bus"] == 1.0:
+                ped_layers = []
+                for agent in agents:
+                    if agent_type == "Pedestrian":
+                        # note that agent_id is the layer_id, not the id in agents
+                            ped_layers.append(world[agent.layer_id].unsqueeze(0))
+                ped_world = torch.cat(ped_layers, dim=0)
+                ego_center = (world[agent_id] == TYPE_MAP[agent_type]).nonzero()[0].tolist()
+                partial_world = ped_world[:, ego_center[0]-BUS_SEEK_RANGE:ego_center[0]+BUS_SEEK_RANGE+1, ego_center[1]-BUS_SEEK_RANGE:ego_center[1]+BUS_SEEK_RANGE+1]
+                # Create mask for integer values (except 0)
+                int_mask = partial_world == TYPE_MAP["Pedestrian"]
+                if int_mask.sum() > BUS_PASSENGER_NUM:
+                    return torch.tensor([1.0, 1.0])
+    return torch.tensor([0.0, 0.0])
 
 def is_mayor(world, agent_id, agent_type, intersect_matrix, agents):
     if agent_type == "Pedestrian":
         # note that agent_id is the layer_id, not the id in agents
-        if agents[agent_id-BASIC_LAYER].concepts["mayor"] == 1.0:
-            return torch.tensor([1.0, 1.0])
-        else:
-            return torch.tensor([0.0, 0.0])
-    else:
-        return torch.tensor([0.0, 0.0])
+        if "mayor" in agents[agent_id-BASIC_LAYER].concepts.keys():
+            if agents[agent_id-BASIC_LAYER].concepts["mayor"] == 1.0:
+                return torch.tensor([1.0, 1.0])
+    return torch.tensor([0.0, 0.0])
 
 def is_mayor_around(world, agent_id, agent_type, intersect_matrix, agents):
     if agent_type == "Car":
@@ -209,10 +232,11 @@ def is_mayor_around(world, agent_id, agent_type, intersect_matrix, agents):
     else:
         mayor_layers = []
         for agent in agents:
-            if agent.type == "Car":
-                continue
-            if agent.concepts["mayor"]==1.0:
-                mayor_layers.append(world[agent.layer_id].unsqueeze(0))
+            if agent_type == "Pedestrian":
+                # note that agent_id is the layer_id, not the id in agents
+                if "mayor" in agent.concepts.keys():
+                    if agent.concepts["mayor"] == 1.0:
+                        mayor_layers.append(world[agent.layer_id].unsqueeze(0))
         mayor_world = torch.cat(mayor_layers, dim=0)
         ego_center = (world[agent_id] == TYPE_MAP[agent_type]).nonzero()[0].tolist()
         partial_world = mayor_world[:, ego_center[0]-MAYOR_AFFECT_RANGE:ego_center[0]+MAYOR_AFFECT_RANGE+1, ego_center[1]-MAYOR_AFFECT_RANGE:ego_center[1]+MAYOR_AFFECT_RANGE+1]

@@ -14,7 +14,6 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
-    mayor: 1.0
 
 - class: Pedestrian
   id: 3
@@ -22,7 +21,6 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
-    mayor: 0.0
 
 - class: Pedestrian
   id: 4
@@ -31,59 +29,58 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
-    mayor: 0.0
 
-- class: Pedestrian
-  id: 5
-  size: 1
-  gplanner: A*
-  concepts:
-    type: Pedestrian
-    mayor: 0.0
+# - class: Pedestrian
+#   id: 5
+#   size: 1
+#   gplanner: A*
+#   concepts:
+#     type: Pedestrian
+#     mayor: 0.0
 
-- class: Pedestrian
-  id: 6
-  size: 1
-  lplanner: LNN
-  gplanner: A*
-  concepts:
-    type: Pedestrian
-    mayor: 0.0
+# - class: Pedestrian
+#   id: 6
+#   size: 1
+#   lplanner: LNN
+#   gplanner: A*
+#   concepts:
+#     type: Pedestrian
+#     mayor: 0.0
 
-- class: Pedestrian
-  id: 7
-  size: 1
-  gplanner: A*
-  lplanner: LNN
-  concepts:
-    type: Pedestrian
-    mayor: 0.0
+# - class: Pedestrian
+#   id: 7
+#   size: 1
+#   gplanner: A*
+#   lplanner: LNN
+#   concepts:
+#     type: Pedestrian
+#     mayor: 0.0
 
-- class: Pedestrian
-  id: 8
-  size: 1
-  lplanner: LNN
-  gplanner: A*
-  concepts:
-    type: Pedestrian
-    mayor: 0.0
+# - class: Pedestrian
+#   id: 8
+#   size: 1
+#   lplanner: LNN
+#   gplanner: A*
+#   concepts:
+#     type: Pedestrian
+#     mayor: 0.0
 
-- class: Pedestrian
-  id: 9
-  size: 1
-  gplanner: A*
-  concepts:
-    type: Pedestrian
-    mayor: 0.0
+# - class: Pedestrian
+#   id: 9
+#   size: 1
+#   gplanner: A*
+#   concepts:
+#     type: Pedestrian
+#     mayor: 0.0
 
-- class: Pedestrian
-  id: 10
-  size: 1
-  lplanner: LNN
-  gplanner: A*
-  concepts:
-    type: Pedestrian
-    mayor: 0.0
+# - class: Pedestrian
+#   id: 10
+#   size: 1
+#   lplanner: LNN
+#   gplanner: A*
+#   concepts:
+#     type: Pedestrian
+#     mayor: 0.0
     
 # - type: Pedestrian
 #   id: 7
@@ -184,69 +181,54 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
-    ambulance: 0.0
 
-- class: Private_car
+- class: Bus
   id: 4
   size: 1
   gplanner: A*vg
   concepts:
     type: Car
-    ambulance: 0.0
-
-- class: Private_car
-  id: 5
-  size: 1
-  gplanner: A*vg
-  concepts:
-    type: Car
-    ambulance: 0.0
-
-- class: Private_car
-  id: 6
-  size: 1
-  gplanner: A*vg
-  concepts:
-    type: Car
-    ambulance: 0.0
-
-- class: Private_car
-  id: 7
-  size: 1
-  gplanner: A*vg
-  concepts:
-    type: Car
-    ambulance: 0.0
-
-- class: Private_car
-  id: 8
-  size: 1
-  gplanner: A*vg
-  concepts:
-    type: Car
-    ambulance: 0.0
-
-- class: Private_car
-  id: 9
-  size: 1
-  gplanner: A*vg
-  concepts:
-    type: Car
-    ambulance: 0.0
-
-- class: Private_car
-  id: 10
-  size: 1
-  gplanner: A*vg
-  concepts:
-    type: Car
-    ambulance: 0.0
-
-- class: Bus
-  id: 11
-  size: 1
-  gplanner: A*vg
-  concepts:
-    type: Car
-    ambulance: 0.0
+    bus: 0.0
     no.: 61A # no. is used to define the bus routes 
+
+# - class: Private_car
+#   id: 5
+#   size: 1
+#   gplanner: A*vg
+#   concepts:
+#     type: Car
+
+# - class: Private_car
+#   id: 6
+#   size: 1
+#   gplanner: A*vg
+#   concepts:
+#     type: Car
+
+# - class: Private_car
+#   id: 7
+#   size: 1
+#   gplanner: A*vg
+#   concepts:
+#     type: Car
+
+# - class: Private_car
+#   id: 8
+#   size: 1
+#   gplanner: A*vg
+#   concepts:
+#     type: Car
+
+# - class: Private_car
+#   id: 9
+#   size: 1
+#   gplanner: A*vg
+#   concepts:
+#     type: Car
+
+# - class: Private_car
+#   id: 10
+#   size: 1
+#   gplanner: A*vg
+#   concepts:
+#     type: Car
