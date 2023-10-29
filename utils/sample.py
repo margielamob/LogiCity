@@ -79,13 +79,28 @@ def sample_determine_start_goal(agent_type, id):
     c4_s_y = c2_g_y
     c4_g_x = c3_s_x
     c4_g_y = c3_s_y
-
+    # to debug intersection rules
+    # start_goal_dict = {
+    #     'Pedestrian': {
+    #         1: (torch.tensor([p1_s_x, p1_s_y]), torch.tensor([p1_g_x, p1_g_y])),
+    #         2: (torch.tensor([p1_g_x, p1_g_y]), torch.tensor([p1_s_y, p1_s_x])),
+    #         3: (torch.tensor([p1_g_y, p1_g_x]), torch.tensor([p1_s_x, p1_s_y])),
+    #         4: (torch.tensor([p1_s_y, p1_s_x]), torch.tensor([p1_g_y, p1_g_x]))
+    #     },
+    #     'Car': {
+    #         1: (torch.tensor([c1_s_x, c1_s_y]), torch.tensor([c1_g_x, c1_g_y])),
+    #         2: (torch.tensor([c2_s_x, c2_s_y]), torch.tensor([c2_g_x-10, c2_g_y])),
+    #         3: (torch.tensor([c3_s_x, c3_s_y]), torch.tensor([c3_g_x, c3_g_y])),
+    #         4: (torch.tensor([c4_s_x, c4_s_y]), torch.tensor([c4_g_x, c4_g_y]))
+    #     }
+    # }
+    # to debug bus stop and reckless driver rules
     start_goal_dict = {
         'Pedestrian': {
             1: (torch.tensor([p1_s_x, p1_s_y]), torch.tensor([p1_g_x, p1_g_y])),
-            2: (torch.tensor([p1_g_x, p1_g_y]), torch.tensor([p1_s_y, p1_s_x])),
-            3: (torch.tensor([p1_g_y, p1_g_x]), torch.tensor([p1_s_x, p1_s_y])),
-            4: (torch.tensor([p1_s_y, p1_s_x]), torch.tensor([p1_g_y, p1_g_x]))
+            2: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100])),
+            3: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100])),
+            4: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100]))
         },
         'Car': {
             1: (torch.tensor([c1_s_x, c1_s_y]), torch.tensor([c1_g_x, c1_g_y])),

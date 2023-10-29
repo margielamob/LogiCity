@@ -11,6 +11,14 @@ predicates:
       arity: 1
       method: utils.lnn_pred_converter.is_ambulance
       description: Checks if the agent is a car and has concept "ambulance".
+  - IsBus:
+      arity: 1
+      method: utils.lnn_pred_converter.is_bus
+      description: Checks if the agent is a car and has concept "Bus".
+  - IsManyPedAround:
+      arity: 1
+      method: utils.lnn_pred_converter.is_many_ped_around
+      description: Checks if there are many pedestrains around the agent.
   - IsInIntersection:
       arity: 1
       method: utils.lnn_pred_converter.check_is_in_intersection
@@ -49,8 +57,8 @@ predicates:
       description: Stop action.
 
 rules:
-  - Intersect_Stop:
-      formula: Implies(Or(And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x))), And(IsPedestrian(x), MayorAround(x), Not(IsMayor(x))), And(Not(IsAmbulance(x)), IsInIntersection(x), AmbulanceIntersection(x))), Stop(x))
+  - Stop:
+      formula: Implies(Or(And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x))), And(IsPedestrian(x), MayorAround(x), Not(IsMayor(x))), And(Not(IsAmbulance(x)), IsInIntersection(x), AmbulanceIntersection(x)), And(IsBus(x), IsManyPedAround(x))), Stop(x))
       description: Or version of the following stop rule.
 #   - Cars_Stop1:
 #       formula: Implies(And(IsCar(x), IsAtIntersection(x), Not(IsAmbulance(x)), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), Car_Stop1(x))
@@ -58,6 +66,9 @@ rules:
 #   - Cars_Stop2:
 #       formula: Implies(And(IsCar(x), IsAtIntersection(x), Not(IsAmbulance(x)), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), Car_Stop2(x))
 #       description: cars at intersection, intersection empty, previous car, stop, ambulance not stop
+#   - Cars_Stop3:
+#       formula: Implies(And(IsBus(x), IsManyPedAround(x)), Car_Stop3(x))
+#       description: buses will stop if the surrounding pedestrians is more than 3.
 #   - Pedestrians_Stop1:
 #       formula: Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x))), Pedestrian_Stop1(x))
 #       description: pedestrians at intersection, not intersection empty with cars, stop
