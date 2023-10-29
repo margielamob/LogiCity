@@ -70,7 +70,7 @@ CAR_GOAL_START_EXCLUDE_KERNEL = WALKING_STREET_WID + TRAFFIC_STREET_WID//2 + 1
 # Bus Routes, got these from midline segments
 ROAD_GRAPH_NODES = '/home/airlabbw/ANSR/sim/LogiCity/core/road_graph.txt'
 BUS_ROUTES = {
-    "61A": [147, 146, 151, 150, 155, 154, 87, 86, 91, 90, 95, 94, 213, 212, 209, 208, 59, 58, 225, 224, 37, 36, 33, 32, 29, 28, 25, 24, 147]
+    "61A": [24, 25, 28, 29, 32, 33, 204, 205, 208, 209, 212, 213, 94, 95, 90, 91, 176, 177, 106, 107, 158, 159, 154, 155, 150, 151, 146, 147, 24]
 }
 
 # Rules

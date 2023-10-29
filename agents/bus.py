@@ -27,6 +27,7 @@ class Bus(Car):
         CROSSING_STREET = TYPE_MAP['Overlap']
         self.movable_region = (world_state_matrix[STREET_ID] == Traffic_STREET) | (world_state_matrix[STREET_ID] == CROSSING_STREET)
         self.route2waypoints(BUS_ROUTES[self.concepts["no."]], max_step=3)
+        self.way_points = self.global_traj.copy()
         self.start = self.global_traj[0].clone()
         self.pos = self.start.clone()
         self.goal = self.global_traj[-1].clone()
@@ -42,13 +43,22 @@ class Bus(Car):
             self.global_traj.extend(path[:-1])
 
     def get_next_action(self, world_state_matrix, local_action_dist):
-        # for now, just reckless take the global traj
-        # reached goal
+        # buses never reaches the goal
         return self.get_action(local_action_dist), world_state_matrix[self.layer_id]
+
+    def get_global_action(self):
+        if len(self.way_points) == 0:
+            assert torch.all(self.pos == self.goal)
+            self.way_points = self.global_traj.copy()
+        next_pos = self.way_points[0]
+        self.way_points.pop(0)
+        del_pos = tuple((next_pos - self.pos).tolist())
+        return self.move_to_action.get(del_pos, self.action_space[-1].item())
 
     def move(self, action, ped_layer):
         curr_pos = torch.nonzero((ped_layer==TYPE_MAP[self.type]).float())[0]
         assert torch.all(self.pos == curr_pos)
+        ped_layer[self.pos[0], self.pos[1]] = TYPE_MAP[self.type]+AGENT_GLOBAL_PATH_PLUS
         next_pos = self.pos.clone()
         # bus do not becomes walked grid
         next_pos += self.action_to_move.get(action, torch.tensor((0, 0)))
