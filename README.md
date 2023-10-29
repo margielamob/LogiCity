@@ -2,11 +2,7 @@
 
 Main Developer: Bowen Li, bowenli2@cs.cmu.edu
 
-Collaborator: Haohong Lin
-
 <img src="figs/81.png" alt="81" style="zoom:30%;" />
-
-
 
 ## Intro
 
@@ -20,15 +16,11 @@ In the end, we hope LogiCity can be used for evaluating cross-community downstre
 
 This research project and code repo are **ongoing**, please **DO NOT** share with anyone without permission from Bowen.
 
-
-
 ## Dependencies
 
 ```shell
 pip install -r requirements.txt
 ```
-
-
 
 ## Running
 
@@ -42,8 +34,6 @@ Some important arguments:
 
 `--debug`: if True, the start and goal point of each agent will be pre-defined in `./utils/sample.py`, function `sample_determine_start_goal()`
 
-
-
 ## Visualization
 
 - Plain color
@@ -53,25 +43,17 @@ Some important arguments:
   ```python3
   python3 tools/img2video.py
   ```
-
 - Render some carton-style city / UAV field of view
 
   (On going..., may need some coding on `pkl2city.py` and `pkl2city_uav.py`)
-
-
-
-
 
 ## Branches
 
 Let Bowen know if you opened a new branch.
 
-- Master 
+- Master
 
   is the main and protected branch, please make sure you pull a request before modifying anything on this branch.
-
 - concept
 
   is the dev branch for Bowen.
-
-  
