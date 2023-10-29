@@ -30,134 +30,133 @@ agents:
   concepts:
     type: Pedestrian
 
-# - class: Pedestrian
-#   id: 5
-#   size: 1
-#   gplanner: A*
-#   concepts:
-#     type: Pedestrian
-#     mayor: 0.0
+- class: Pedestrian
+  id: 5
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+    mayor: 1.0
 
-# - class: Pedestrian
-#   id: 6
-#   size: 1
-#   lplanner: LNN
-#   gplanner: A*
-#   concepts:
-#     type: Pedestrian
-#     mayor: 0.0
+- class: Pedestrian
+  id: 6
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
-# - class: Pedestrian
-#   id: 7
-#   size: 1
-#   gplanner: A*
-#   lplanner: LNN
-#   concepts:
-#     type: Pedestrian
-#     mayor: 0.0
+- class: Pedestrian
+  id: 7
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
-# - class: Pedestrian
-#   id: 8
-#   size: 1
-#   lplanner: LNN
-#   gplanner: A*
-#   concepts:
-#     type: Pedestrian
-#     mayor: 0.0
+- class: Pedestrian
+  id: 8
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
-# - class: Pedestrian
-#   id: 9
-#   size: 1
-#   gplanner: A*
-#   concepts:
-#     type: Pedestrian
-#     mayor: 0.0
+- class: Pedestrian
+  id: 9
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
-# - class: Pedestrian
-#   id: 10
-#   size: 1
-#   lplanner: LNN
-#   gplanner: A*
-#   concepts:
-#     type: Pedestrian
-#     mayor: 0.0
+- class: Pedestrian
+  id: 10
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 11
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 12
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 13
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 14
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 15
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
     
-# - type: Pedestrian
-#   id: 7
-#   size: 1
-#   gplanner: A*
 
-# - type: Pedestrian
-#   id: 8
-#   size: 1
-#   gplanner: A*
+- class: Pedestrian
+  id: 16
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
-# - type: Pedestrian
-#   id: 9
-#   size: 1
-#   lplanner: LNN
-#   gplanner: A*
+- class: Pedestrian
+  id: 17
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
-# - type: Pedestrian
-#   id: 10
-#   size: 1
-#   gplanner: A*
+- class: Pedestrian
+  id: 18
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
-# - type: Pedestrian
-#   id: 11
-#   size: 1
-#   gplanner: A*
+- class: Pedestrian
+  id: 19
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
-# - type: Pedestrian
-#   id: 12
-#   size: 1
-#   gplanner: A*
+- class: Pedestrian
+  id: 20
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
-# - type: Pedestrian
-#   id: 13
-#   size: 1
-#   gplanner: A*
+- class: Pedestrian
+  id: 21
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
-# - type: Pedestrian
-#   id: 14
-#   size: 1
-#   lplanner: LNN
-#   gplanner: A*
-
-# - type: Pedestrian
-#   id: 15
-#   size: 1
-#   gplanner: A*
-
-# - type: Pedestrian
-#   id: 16
-#   size: 1
-#   gplanner: A*
-
-# - type: Pedestrian
-#   id: 17
-#   size: 1
-#   gplanner: A*
-# - type: Pedestrian
-#   id: 8
-#   size: 1
-#   gplanner: A*
-
-# - type: Pedestrian
-#   id: 18
-#   size: 1
-#   lplanner: LNN
-#   gplanner: A*
-
-# - type: Pedestrian
-#   id: 19
-#   size: 1
-#   gplanner: A*
-
-# - type: Pedestrian
-#   id: 20
-#   size: 1
-#   gplanner: A*
+- class: Pedestrian
+  id: 22
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
 - class: Private_car
   id: 1
@@ -188,47 +187,47 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
-    bus: 0.0
+    bus: 1.0
     no.: 61A # no. is used to define the bus routes 
 
-# - class: Private_car
-#   id: 5
-#   size: 1
-#   gplanner: A*vg
-#   concepts:
-#     type: Car
+- class: Private_car
+  id: 5
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
 
-# - class: Private_car
-#   id: 6
-#   size: 1
-#   gplanner: A*vg
-#   concepts:
-#     type: Car
+- class: Private_car
+  id: 6
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
 
-# - class: Private_car
-#   id: 7
-#   size: 1
-#   gplanner: A*vg
-#   concepts:
-#     type: Car
+- class: Private_car
+  id: 7
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
 
-# - class: Private_car
-#   id: 8
-#   size: 1
-#   gplanner: A*vg
-#   concepts:
-#     type: Car
+- class: Private_car
+  id: 8
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
 
-# - class: Private_car
-#   id: 9
-#   size: 1
-#   gplanner: A*vg
-#   concepts:
-#     type: Car
+- class: Private_car
+  id: 9
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
 
-# - class: Private_car
-#   id: 10
-#   size: 1
-#   gplanner: A*vg
-#   concepts:
-#     type: Car
+- class: Private_car
+  id: 10
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
