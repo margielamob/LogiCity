@@ -4,7 +4,7 @@ Main Developer: Bowen Li, bowenli2@cs.cmu.edu
 
 Collaborator: Haohong Lin
 
-<img src="figs/81.png" alt="81" style="zoom:50%;" />
+<img src="figs/81.png" alt="81" style="zoom:30%;" />
 
 
 
