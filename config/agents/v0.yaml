@@ -1,43 +1,90 @@
+# class defines the "python class" for the agent, affecting global planning, concepts define local decision rules
 agents:
-- type: Pedestrian
+- class: Pedestrian
   id: 1
   size: 1
   gplanner: A*
   concepts:
+    type: Pedestrian
     mayor: 1.0
 
-- type: Pedestrian
+- class: Pedestrian
   id: 2
   size: 1
   gplanner: A*
   concepts:
-    mayor: 0.0
+    type: Pedestrian
+    mayor: 1.0
 
-- type: Pedestrian
+- class: Pedestrian
   id: 3
   size: 1
   gplanner: A*
   concepts:
+    type: Pedestrian
     mayor: 0.0
 
-- type: Pedestrian
+- class: Pedestrian
   id: 4
   size: 1
   lplanner: LNN
   gplanner: A*
   concepts:
+    type: Pedestrian
     mayor: 0.0
 
-# - type: Pedestrian
-#   id: 5
-#   size: 1
-#   gplanner: A*
+- class: Pedestrian
+  id: 5
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+    mayor: 0.0
 
-# - type: Pedestrian
-#   id: 6
-#   size: 1
-#   gplanner: A*
+- class: Pedestrian
+  id: 6
+  size: 1
+  lplanner: LNN
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+    mayor: 0.0
 
+- class: Pedestrian
+  id: 7
+  size: 1
+  gplanner: A*
+  lplanner: LNN
+  concepts:
+    type: Pedestrian
+    mayor: 0.0
+
+- class: Pedestrian
+  id: 8
+  size: 1
+  lplanner: LNN
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+    mayor: 0.0
+
+- class: Pedestrian
+  id: 9
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+    mayor: 0.0
+
+- class: Pedestrian
+  id: 10
+  size: 1
+  lplanner: LNN
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+    mayor: 0.0
+    
 # - type: Pedestrian
 #   id: 7
 #   size: 1
@@ -115,70 +162,91 @@ agents:
 #   size: 1
 #   gplanner: A*
 
-- type: Car
+- class: Private_car
   id: 1
   size: 1
   gplanner: A*vg
   concepts:
-    ambulance: 0.0
+    type: Car
+    ambulance: 1.0
 
-- type: Car
+- class: Private_car
   id: 2
   size: 1
   gplanner: A*vg
   concepts:
-    ambulance: 0.0
+    type: Car
+    ambulance: 1.0
 
-- type: Car
+- class: Private_car
   id: 3
   size: 1
   gplanner: A*vg
   concepts:
+    type: Car
     ambulance: 0.0
 
-- type: Car
+- class: Private_car
   id: 4
   size: 1
   gplanner: A*vg
   concepts:
-    ambulance: 1.0
-    
-# - type: Car
-#   id: 5
-#   size: 1
-#   gplanner: A*vg
+    type: Car
+    ambulance: 0.0
 
-# - type: Car
-#   id: 6
-#   size: 1
-#   gplanner: A*vg
+- class: Private_car
+  id: 5
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    ambulance: 0.0
 
-# - type: Car
-#   id: 7
-#   size: 1
-#   gplanner: A*vg
+- class: Private_car
+  id: 6
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    ambulance: 0.0
 
-# - type: Car
-#   id: 8
-#   size: 1
-#   gplanner: A*vg
+- class: Private_car
+  id: 7
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    ambulance: 0.0
 
-# - type: Car
-#   id: 9
-#   size: 1
-#   gplanner: A*vg
+- class: Private_car
+  id: 8
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    ambulance: 0.0
 
-# - type: Car
-#   id: 10
-#   size: 1
-#   gplanner: A*vg
+- class: Private_car
+  id: 9
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    ambulance: 0.0
 
-# - type: Car
-#   id: 11
-#   size: 1
-#   gplanner: A*vg
+- class: Private_car
+  id: 10
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    ambulance: 0.0
 
-# - type: Car
-#   id: 12
-#   size: 1
-#   gplanner: A*vg
+- class: Bus
+  id: 11
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    ambulance: 0.0
+    no.: 61A # no. is used to define the bus routes 

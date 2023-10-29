@@ -3,9 +3,10 @@ from torch.distributions import Categorical
 from core.config import *
 
 class Agent:
-    def __init__(self, type, size, id, world_state_matrix, concepts=None, debug=False):
+    def __init__(self, size, id, world_state_matrix, concepts, debug=False):
         self.size = size
-        self.type = type
+        self.concepts = concepts
+        self.type = concepts["type"]
         self.id = id
         # -1 is always the stop action
         # Actions: ["left", "right", "up", "down", "stop"]
@@ -25,11 +26,6 @@ class Agent:
         self.reach_goal = False
         self.reach_goal_buffer = 0
         self.debug = debug
-        # concepts
-        if concepts == None:
-            self.concepts = {}
-        else:
-            self.concepts = concepts
         self.init(world_state_matrix, debug)
 
     def init(self, world_state_matrix, debug=False):
