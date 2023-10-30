@@ -339,14 +339,14 @@ def main():
             icon_dict[key] = resized_img
 
     with open("log/debug.pkl", "rb") as f:
-        data = pkl.load(f)
-        static_map = gridmap2img_static(data[0], icon_dict)
+        data = pkl.load(f)["Time_Obs"]
+        static_map = gridmap2img_static(data[1]["World"], icon_dict)
         dense_uav_waypoints = calculate_trajectory(way_points, total_frames=(len(data.keys())-1)*10)
         cv2.imwrite("vis_city/static_layout.png", static_map)
         last_icons = None
         for key in tqdm(data.keys()):
-            grid = data[key]
-            grid_ = data[key+1]
+            grid = data[key]["World"].numpy()
+            grid_ = data[key+1]["World"].numpy()
             img, last_icons = gridmap2img_agents(grid, grid_, icon_dict, static_map, last_icons)
             cropped_img, visual_img = uav_fov(img, dense_uav_waypoints[10*key], icon_dict["UAV"])
             cv2.imwrite("vis_city_uav/{}.png".format(key), visual_img)
