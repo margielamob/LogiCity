@@ -33,7 +33,7 @@ class City:
     def update(self):
         current_obs = {}
         # state at time t
-        current_obs["World"] = self.city_grid
+        current_obs["World"] = self.city_grid.clone()
         current_obs["Agent_actions"] = []
 
         new_matrix = torch.zeros_like(self.city_grid)
