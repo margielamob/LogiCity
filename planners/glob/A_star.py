@@ -44,7 +44,7 @@ def astar(movable_map, start, end):
             while current_node:
                 path.append(current_node.position)
                 current_node = current_node.parent
-            return path[::-1]  # Return reversed path
+            return torch.stack(path[::-1], dim=0)  # Return reversed path
 
         children = []
         for new_position in [torch.tensor((0, -1)), torch.tensor((0, 1)), torch.tensor((-1, 0)), torch.tensor((1, 0))]:

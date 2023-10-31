@@ -100,22 +100,21 @@ class LNNPlanner:
             agent_type = agent.type
             agent_name = "{}_{}".format(agent_type, agent_id)
             action_mapping = agent.action_mapping
-            action_dist = agent.action_dist
-            for keys in action_mapping.keys():
-                # several predicates contribute to the same action
-                if "{}_{}1".format(agent_type, action_mapping[keys]) in self.predicates.keys():
-                    action_dist[keys] = self.convert("{}_{}".format(agent_type, action_mapping[keys]), agent_name)
-                # only one predicate contributes to the action
-                elif action_mapping[keys] in self.predicates.keys():
-                    action_dist[keys] = self.convert(action_mapping[keys], agent_name)
+            action_dist = torch.zeros_like(agent.action_dist)
+            for key in self.predicates.keys():
+                action = []
+                for action_id, action_name in action_mapping.items():
+                    if key in action_name:
+                        action.append(action_id)
+                if len(action)>0:
+                    for a in action:
+                        action_dist[a] = self.convert(key, agent_name)
             agents_actions[agent_name] = action_dist
         return agents_actions
 
     def convert(self, key_name, agent_name):
         pred_list = []
-        for key in self.predicates.keys():
-            if key_name in key:
-                pred_list.append(self.predicates[key]["instance"].get_data(agent_name))
+        pred_list.append(self.predicates[key_name]["instance"].get_data(agent_name))
         LU_bound = torch.cat(pred_list, dim=0)
 
         value = torch.avg_pool1d(LU_bound, kernel_size=2)
@@ -129,7 +128,7 @@ class LNNPlanner:
             agent_name = "{}_{}".format(agent.type, agent.layer_id)
             agent_grounding = []
             for pred in logic_groundings.keys():
-                if pred == 'Stop':
+                if pred == 'Stop' or pred == "Normal":
                     continue
                 agent_grounding.append(self.predicates[pred]["instance"].get_data(agent_name))
             all_grounding.append(torch.cat(agent_grounding, dim=0))

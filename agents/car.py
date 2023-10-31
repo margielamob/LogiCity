@@ -44,7 +44,7 @@ class Car(Agent):
             self.action_space[11].item(): torch.tensor((3, 0))
         }
         self.move_to_action = {
-            tuple(self.action_to_move[k].tolist()): k for k in self.action_to_move
+            self.action_to_move[k]: k for k in self.action_to_move
         }
         self.action_dist = torch.zeros_like(self.action_space).float()
         self.action_mapping = {

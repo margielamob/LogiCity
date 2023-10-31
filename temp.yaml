@@ -1,0 +1,3 @@
+Or(And(IsCar(x), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), And(IsCar(x), IsAtIntersection(x), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x))))
+
+Or(Not(IsAtIntersection(x)), And(IntersectionCarsEmpty(x), Not(IsCar(x))), And(Not(IsCar(x)), Not(IsPedestrian(x))), And(IntersectionEmpty(x), IntersectionCarsEmpty(x), Not(PreviousCars(x))))

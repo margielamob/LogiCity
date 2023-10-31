@@ -33,7 +33,7 @@ class Pedestrian(Agent):
             self.action_space[3].item(): torch.tensor((1, 0))
         }
         self.move_to_action = {
-            tuple(self.action_to_move[k].tolist()): k for k in self.action_to_move
+            self.action_to_move[k]: k for k in self.action_to_move
         }
 
     def init(self, world_state_matrix, debug=False):
