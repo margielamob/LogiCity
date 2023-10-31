@@ -23,15 +23,28 @@ predicates:
       arity: 1
       method: utils.lnn_pred_converter.previous_cars
       description: Checks if the previous cars exist.
-  - Stop:
+#   - Stop:
+#       arity: 1
+#       method: None
+#       description: Stop action.
+  - Normal:
       arity: 1
       method: None
-      description: Stop action.
+      description: Normal action.
 
 rules:
-  - Intersect_Stop:
-      formula: Implies(Or(And(IsCar(x), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), And(IsCar(x), IsAtIntersection(x), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x)))), Stop(x))
+#   - Stop:
+#       formula: Implies(Or(And(IsCar(x), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), And(IsCar(x), IsAtIntersection(x), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x)))), Stop(x))
+#       description: Or version of the following stop rule.
+#   - Normal:
+#       formula: Implies(Not(Or(And(IsCar(x), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), And(IsCar(x), IsAtIntersection(x), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x))))), Normal(x))
+#       description: If not stop, not bus, not (tiro, many pedestrains around), move normally.
+  - Stop:
+      formula: Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x))), Stop(x))
       description: Or version of the following stop rule.
+  - Normal:
+      formula: Implies(Not(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x)))), Normal(x))
+      description: If not stop, not bus, not (tiro, many pedestrains around), move normally.
 #   - Cars_Stop1:
 #       formula: Implies(And(IsCar(x), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), Car_Stop1(x))
 #       description: cars at intersection, not intersection empty, stop

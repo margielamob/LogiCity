@@ -189,6 +189,14 @@ def is_ambulance(world, agent_id, agent_type, intersect_matrix, agents):
                 return torch.tensor([1.0, 1.0])
     return torch.tensor([0.0, 0.0])
 
+def is_tiro(world, agent_id, agent_type, intersect_matrix, agents):
+    if agent_type == "Car":
+        # note that agent_id is the layer_id, not the id in agents
+        if "tiro" in agents[agent_id-BASIC_LAYER].concepts.keys():
+            if agents[agent_id-BASIC_LAYER].concepts["tiro"] == 1.0:
+                return torch.tensor([1.0, 1.0])
+    return torch.tensor([0.0, 0.0])
+
 def is_bus(world, agent_id, agent_type, intersect_matrix, agents):
     if agent_type == "Car":
         # note that agent_id is the layer_id, not the id in agents
