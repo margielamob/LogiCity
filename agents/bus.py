@@ -26,7 +26,7 @@ class Bus(Car):
         Traffic_STREET = TYPE_MAP['Traffic Street']
         CROSSING_STREET = TYPE_MAP['Overlap']
         self.movable_region = (world_state_matrix[STREET_ID] == Traffic_STREET) | (world_state_matrix[STREET_ID] == CROSSING_STREET)
-        self.route2waypoints(BUS_ROUTES[self.concepts["no."]], max_step=3)
+        self.route2waypoints(BUS_ROUTES[self.concepts["no."]], max_step=1)
         self.way_points = self.global_traj.copy()
         self.start = self.global_traj[0].clone()
         self.pos = self.start.clone()

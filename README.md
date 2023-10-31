@@ -2,7 +2,7 @@
 
 Main Developer: Bowen Li, bowenli2@cs.cmu.edu
 
-<img src="figs/81.png" alt="81" style="zoom:30%;" />
+<img src="imgs/81.png" alt="81" style="zoom:30%;" />
 
 ## Intro
 
