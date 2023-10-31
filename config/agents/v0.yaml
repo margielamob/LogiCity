@@ -181,8 +181,16 @@ agents:
   concepts:
     type: Car
 
-- class: Bus
+- class: Private_car
   id: 4
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    careful: 1.0
+
+- class: Bus
+  id: 5
   size: 1
   gplanner: A*vg
   concepts:

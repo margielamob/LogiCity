@@ -48,18 +48,18 @@ class Car(Agent):
         }
         self.action_dist = torch.zeros_like(self.action_space).float()
         self.action_mapping = {
-            0: "Left_1", 
-            1: "Right_1", 
-            2: "Up_1", 
-            3: "Down_1", 
-            4: "Left_2", 
-            5: "Right_2", 
-            6: "Up_2", 
-            7: "Down_2",
-            8: "Left_3", 
-            9: "Right_3", 
-            10: "Up_3", 
-            11: "Down_3",
+            0: "Left_Slow", 
+            1: "Right_Slow", 
+            2: "Up_Slow", 
+            3: "Down_Slow", 
+            4: "Left_Normal", 
+            5: "Right_Normal", 
+            6: "Up_Normal", 
+            7: "Down_Normal",
+            8: "Left_Fast", 
+            9: "Right_Fast", 
+            10: "Up_Fast", 
+            11: "Down_Fast",
             12: "Stop"
             }
 
