@@ -34,12 +34,12 @@ class City:
         current_obs = {}
         # state at time t
         current_obs["World"] = self.city_grid
-        current_obs["Agent_actions"] = {}
+        current_obs["Agent_actions"] = []
 
         new_matrix = torch.zeros_like(self.city_grid)
         # first do local planning based on city rules
         agent_action_dist = self.local_planner.plan(self.city_grid, self.intersection_matrix, self.agents)
-        pred_grounds = self.local_planner.get_current_lnn_state(self.logic_grounds)
+        pred_grounds = self.local_planner.get_current_lnn_state(self.logic_grounds, self.agents)
         current_obs["LNN_state"] = pred_grounds
         # Then do global action taking acording to the local planning results
         for agent in self.agents:
@@ -52,7 +52,7 @@ class City:
             local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, local_action_dist)
             # save the current action in the action
             empty_action[local_action] = 1.0
-            current_obs["Agent_actions"][agent_name] = empty_action
+            current_obs["Agent_actions"].append(empty_action)
             if agent.reach_goal:
                 continue
             next_layer = agent.move(local_action, new_matrix[agent.layer_id])
