@@ -51,7 +51,7 @@ canvas_width = image1.shape[1] + image2.shape[1] + 50 + 16  # sum of widths + in
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 video_writer = cv2.VideoWriter(output_video, fourcc, frame_rate, (canvas_width, canvas_height))
 
-for key in tqdm(range(1000)):  # Assuming each key has two images
+for key in tqdm(range(1, 999)):  # Assuming each key has two images
     image1 = cv2.imread(os.path.join(image_folder, "{}.png".format(key)))
     image2 = cv2.imread(os.path.join(image_folder, "{}_uav.png".format(key)))
 
