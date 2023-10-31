@@ -220,16 +220,21 @@ def main():
             resized_img = resize_with_aspect_ratio(raw_img, ICON_SIZE_DICT[key])
             icon_dict[key] = resized_img
 
-    with open("log/debug.pkl", "rb") as f:
-        data = pkl.load(f)
-        static_map = gridmap2img_static(data[0], icon_dict)
+    with open("log/train_10k.pkl", "rb") as f:
+        data = pkl.load(f)["Time_Obs"]
+        print(data.keys())
+        static_map = gridmap2img_static(data[1]["World"].numpy(), icon_dict)
         cv2.imwrite("vis_city/static_layout.png", static_map)
         last_icons = None
         for key in tqdm(data.keys()):
-            grid = data[key]
-            grid_ = data[key+1]
-            img, last_icons = gridmap2img_agents(grid, grid_, icon_dict, static_map, last_icons)
-            cv2.imwrite("vis_city/{}.png".format(key), img)
+            try:
+                grid = data[key]["World"].numpy()
+                grid_ = data[key+1]["World"].numpy()
+                img, last_icons = gridmap2img_agents(grid, grid_, icon_dict, static_map, last_icons)
+                cv2.imwrite("vis_city/{}.png".format(key), img)
+            except:
+                print("Finished")
+                break
         cv2.destroyAllWindows()
     return
 
