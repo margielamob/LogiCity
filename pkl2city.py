@@ -220,7 +220,7 @@ def main():
             resized_img = resize_with_aspect_ratio(raw_img, ICON_SIZE_DICT[key])
             icon_dict[key] = resized_img
 
-    with open("log/train_10k.pkl", "rb") as f:
+    with open("log/train_1k_easy.pkl", "rb") as f:
         data = pkl.load(f)["Time_Obs"]
         print(data.keys())
         static_map = gridmap2img_static(data[1]["World"].numpy(), icon_dict)
