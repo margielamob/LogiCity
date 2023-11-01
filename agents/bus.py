@@ -40,7 +40,7 @@ class Bus(Car):
             goal = tuple(road_nodes[route_list[i+1]].astype(int))
             path = interpolate_car_path(self.movable_region, [start, goal], max_step)
             self.global_traj.extend(path[:-1])
-        self.global_traj = torch.stack(self.global_traj[:-1], dim=0)
+        self.global_traj = torch.stack(self.global_traj, dim=0)
 
     def get_next_action(self, world_state_matrix, local_action_dist):
         # buses never reaches the goal
@@ -52,7 +52,7 @@ class Bus(Car):
         ped_layer[self.pos[0], self.pos[1]] = TYPE_MAP[self.type]+AGENT_GLOBAL_PATH_PLUS
         next_pos = self.pos.clone()
         # bus do not becomes walked grid
-        next_pos += self.action_to_move.get(action, torch.tensor((0, 0)))
+        next_pos += self.action_to_move.get(action.item(), torch.tensor((0, 0)))
         self.pos = next_pos.clone()
         # Update Agent Map
         ped_layer[self.start[0], self.start[1]] = TYPE_MAP[self.type] + AGENT_START_PLUS

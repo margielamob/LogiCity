@@ -48,8 +48,19 @@ class Agent:
         pass
 
     def get_action(self, local_action_dist):
-        global_action = self.get_global_action()
-        final_action_dist = torch.logical_and(local_action_dist, global_action).float()
+        if len(local_action_dist.nonzero()) == 1:
+            # local planner is very strict, only one action is possible
+            final_action_dist = local_action_dist
+        else:
+            global_action = self.get_global_action()
+            if len(global_action.nonzero()) == 1:
+            # local planner gives multiple actions, but global planner is very strict
+                final_action_dist = global_action
+            else:
+                # local planner gives multiple actions, use global planner to filter
+                final_action_dist = torch.logical_and(local_action_dist, global_action).float()
+        # now only one action is possible
+        assert len(final_action_dist.nonzero()) == 1
         # sample from the local planner
         normalized_action_dist = final_action_dist / final_action_dist.sum()
         dist = Categorical(normalized_action_dist)
@@ -79,7 +90,10 @@ class Agent:
         del_pos = self.global_traj[next_pos] - self.pos
         for move in self.move_to_action.keys():
             if torch.dot(del_pos.squeeze(), move) > 0:
-                global_action_dist[self.move_to_action[move]] = 1.0
-        if not torch.any(global_action_dist):
-            global_action_dist[-1] = 1.0
+                next_point = self.pos + move
+                step = torch.max(torch.abs(move)).item()
+                if len(torch.all((self.global_traj[next_pos:next_pos+step] == next_point), dim=1).nonzero()) > 0:
+                    global_action_dist[self.move_to_action[move]] = 1.0
+        assert not torch.all(del_pos==0)
+        assert not torch.all(global_action_dist==0)
         return global_action_dist

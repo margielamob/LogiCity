@@ -128,5 +128,4 @@ def interpolate_car_path(movable_map, path_on_graph, max_step):
                         current_point = (current_point[0], current_point[1] + step)
                 interpolated.append(torch.tensor(current_point))
 
-    interpolated.append(torch.tensor(path_on_graph[-1]))  # Add the last point
     return torch.stack(interpolated, dim=0)
