@@ -123,9 +123,14 @@ class LNNPlanner:
         value = torch.clip(value.sum(), 0.0, 1.0)
         return value
 
-    def get_current_lnn_state(self, logic_groundings):
+    def get_current_lnn_state(self, logic_groundings, agents):
         all_grounding = []
-        for pred in logic_groundings.keys():
-            for agent_name in logic_groundings[pred]:
-                all_grounding.append(self.predicates[pred]["instance"].get_data(agent_name))
-        return torch.cat(all_grounding, dim=0)
+        for agent in agents:
+            agent_name = "{}_{}".format(agent.type, agent.layer_id)
+            agent_grounding = []
+            for pred in logic_groundings.keys():
+                if pred == 'Stop':
+                    continue
+                agent_grounding.append(self.predicates[pred]["instance"].get_data(agent_name))
+            all_grounding.append(torch.cat(agent_grounding, dim=0))
+        return torch.stack(all_grounding, dim=0)
