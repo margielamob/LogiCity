@@ -30,6 +30,50 @@ agents:
   concepts:
     type: Pedestrian
 
+- class: Pedestrian
+  id: 5
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 6
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 7
+  size: 1
+  lplanner: LNN
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 8
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 9
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 10
+  size: 1
+  lplanner: LNN
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+    
 # - class: Pedestrian
 #   id: 5
 #   size: 1
@@ -186,7 +230,6 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
-    ambulance: 1.0
 
 - class: Private_car
   id: 3

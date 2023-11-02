@@ -222,6 +222,20 @@ def is_many_ped_around(world, agent_id, agent_type, intersect_matrix, agents):
                 int_mask = partial_world == TYPE_MAP["Pedestrian"]
                 if int_mask.sum() >= BUS_PASSENGER_NUM:
                     return torch.tensor([1.0, 1.0])
+        elif "tiro" in agents[agent_id-BASIC_LAYER].concepts.keys():
+            if agents[agent_id-BASIC_LAYER].concepts["tiro"] == 1.0:
+                ped_layers = []
+                for agent in agents:
+                    if agent.concepts["type"] == "Pedestrian":
+                        # note that agent_id is the layer_id, not the id in agents
+                            ped_layers.append(world[agent.layer_id].unsqueeze(0))
+                ped_world = torch.cat(ped_layers, dim=0)
+                ego_center = (world[agent_id] == TYPE_MAP[agent_type]).nonzero()[0].tolist()
+                partial_world = ped_world[:, ego_center[0]-TIRO_SEEK_RANGE:ego_center[0]+TIRO_SEEK_RANGE+1, ego_center[1]-TIRO_SEEK_RANGE:ego_center[1]+TIRO_SEEK_RANGE+1]
+                # Create mask for integer values (except 0)
+                int_mask = partial_world == TYPE_MAP["Pedestrian"]
+                if int_mask.sum() >= TIRO_PED_NUM:
+                    return torch.tensor([1.0, 1.0])            
     return torch.tensor([0.0, 0.0])
 
 def is_mayor(world, agent_id, agent_type, intersect_matrix, agents):
