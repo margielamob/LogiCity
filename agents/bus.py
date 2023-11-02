@@ -2,6 +2,7 @@ from .car import Car
 import torch
 import numpy as np
 from utils.find import interpolate_car_path
+from planners import GPlanner_mapper
 from core.config import *
 import logging
 # import cv2
@@ -26,11 +27,13 @@ class Bus(Car):
         Traffic_STREET = TYPE_MAP['Traffic Street']
         CROSSING_STREET = TYPE_MAP['Overlap']
         self.movable_region = (world_state_matrix[STREET_ID] == Traffic_STREET) | (world_state_matrix[STREET_ID] == CROSSING_STREET)
-        self.route2waypoints(BUS_ROUTES[self.concepts["no."]], max_step=3)
-        self.way_points = self.global_traj.copy()
+        self.route2waypoints(BUS_ROUTES[self.concepts["no."]], max_step=1)
         self.start = self.global_traj[0].clone()
         self.pos = self.start.clone()
         self.goal = self.global_traj[-1].clone()
+        self.midline_matrix = (world_state_matrix[STREET_ID] == Traffic_STREET+MID_LINE_CODE_PLUS)
+        self.global_planner = GPlanner_mapper[self.global_planner_type](self.movable_region, self.midline_matrix, CAR_STREET_OFFSET)
+        self.intersection_points = torch.cat([torch.cat(self.global_planner.start_lists, dim=0), torch.cat(self.global_planner.end_lists, dim=0)], dim=0)
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
     def route2waypoints(self, route_list, max_step):
@@ -41,19 +44,11 @@ class Bus(Car):
             goal = tuple(road_nodes[route_list[i+1]].astype(int))
             path = interpolate_car_path(self.movable_region, [start, goal], max_step)
             self.global_traj.extend(path[:-1])
+        self.global_traj = torch.stack(self.global_traj, dim=0)
 
     def get_next_action(self, world_state_matrix, local_action_dist):
         # buses never reaches the goal
         return self.get_action(local_action_dist), world_state_matrix[self.layer_id]
-
-    def get_global_action(self):
-        if len(self.way_points) == 0:
-            assert torch.all(self.pos == self.goal)
-            self.way_points = self.global_traj.copy()
-        next_pos = self.way_points[0]
-        self.way_points.pop(0)
-        del_pos = tuple((next_pos - self.pos).tolist())
-        return self.move_to_action.get(del_pos, self.action_space[-1].item())
 
     def move(self, action, ped_layer):
         curr_pos = torch.nonzero((ped_layer==TYPE_MAP[self.type]).float())[0]
@@ -61,7 +56,7 @@ class Bus(Car):
         ped_layer[self.pos[0], self.pos[1]] = TYPE_MAP[self.type]+AGENT_GLOBAL_PATH_PLUS
         next_pos = self.pos.clone()
         # bus do not becomes walked grid
-        next_pos += self.action_to_move.get(action, torch.tensor((0, 0)))
+        next_pos += self.action_to_move.get(action.item(), torch.tensor((0, 0)))
         self.pos = next_pos.clone()
         # Update Agent Map
         ped_layer[self.start[0], self.start[1]] = TYPE_MAP[self.type] + AGENT_START_PLUS

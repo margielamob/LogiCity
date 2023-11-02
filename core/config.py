@@ -80,3 +80,5 @@ AT_INTERSECTION_OFFSET = 1
 MAYOR_AFFECT_RANGE = 5
 BUS_SEEK_RANGE = 6 # the first and second cloeset walking street grids
 BUS_PASSENGER_NUM = 3
+TIRO_SEEK_RANGE = 8 # the first and second cloeset walking street grids
+TIRO_PED_NUM = 3

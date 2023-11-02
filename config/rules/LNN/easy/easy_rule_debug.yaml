@@ -3,10 +3,6 @@ predicates:
       arity: 1
       method: utils.lnn_pred_converter.check_is_at_intersection
       description: Checks if the agent is at an intersection.
-  - IsCar:
-      arity: 1
-      method: utils.lnn_pred_converter.is_car
-      description: Checks if the agent is a car.
   - IsPedestrian:
       arity: 1
       method: utils.lnn_pred_converter.is_pedestrian
@@ -15,23 +11,31 @@ predicates:
       arity: 1
       method: utils.lnn_pred_converter.intersection_empty_ped
       description: Checks if the intersection is not empty.
-  - IntersectionCarsEmpty:
-      arity: 1
-      method: utils.lnn_pred_converter.intersection_empty_cars
-      description: Checks if the intersection is not empty with cars.
-  - PreviousCars:
-      arity: 1
-      method: utils.lnn_pred_converter.previous_cars
-      description: Checks if the previous cars exist.
   - Stop:
       arity: 1
       method: None
       description: Stop action.
+  - Normal:
+      arity: 1
+      method: None
+      description: Normal action.
 
 rules:
-  - Intersect_Stop:
-      formula: Implies(Or(And(IsCar(x), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), And(IsCar(x), IsAtIntersection(x), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x)))), Stop(x))
+  - Global:
+      formula: And(Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x))), Stop(x)), Implies(Not(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x)))), Normal(x)))
       description: Or version of the following stop rule.
+#   - Global:
+#       formula: And(Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x))), Stop(x)), Implies(Not(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x)))), Normal(x)))
+#       description: Or version of the following stop rule.
+#   - Global:
+#       formula: And(Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x))), Stop(x)), Implies(Or(Not(IsPedestrian(x)), Not(IsAtIntersection(x)), IntersectionEmpty(x)), Normal(x)))
+#       description: Or version of the following stop rule.
+#   - Stop:
+#       formula: Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x))), Stop(x))
+#       description: Or version of the following stop rule.
+#   - Normal:
+#       formula: Implies(Not(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x)))), Normal(x))
+#       description: If not stop, not bus, not (tiro, many pedestrains around), move normally.
 #   - Cars_Stop1:
 #       formula: Implies(And(IsCar(x), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), Car_Stop1(x))
 #       description: cars at intersection, not intersection empty, stop

@@ -11,10 +11,10 @@ def main(pkl_path, out_path):
         cached_observation = pkl.load(f)
 
     symbolic_observation = {}
-    for agent_id in tqdm(range(len(cached_observation["Time_Obs"][0]["Agent_actions"]))):
+    for agent_id in tqdm(range(len(cached_observation["Time_Obs"][1]["Agent_actions"]))):
         Xs = []
         Ys = []
-        for t in tqdm(range(len(cached_observation["Time_Obs"]))):
+        for t in tqdm(range(1, len(cached_observation["Time_Obs"])+1)):
             preds = cached_observation["Time_Obs"][t]["LNN_state"][agent_id]
             acts = cached_observation["Time_Obs"][t]["Agent_actions"][agent_id]
             Xs.append(preds)
@@ -29,6 +29,6 @@ def main(pkl_path, out_path):
 
 
 if __name__ == '__main__':
-    pkl_path = "log/train_10k.pkl"
-    out_path = "log/train_10k_symbolic.pkl"
+    pkl_path = "log/train_100.pkl"
+    out_path = "log/train_100_symbolic.pkl"
     main(pkl_path, out_path)

@@ -74,6 +74,7 @@ def find_midroad_segments(midline_matrix):
 
 def interpolate_car_path(movable_map, path_on_graph, max_step):
     interpolated = []
+    interpolated.append(torch.tensor(path_on_graph[0]))
     for i in range(len(path_on_graph) - 1):
         current_point = path_on_graph[i]
         next_point = path_on_graph[i+1]
@@ -127,5 +128,4 @@ def interpolate_car_path(movable_map, path_on_graph, max_step):
                         current_point = (current_point[0], current_point[1] + step)
                 interpolated.append(torch.tensor(current_point))
 
-    interpolated.append(torch.tensor(path_on_graph[-1]))  # Add the last point
-    return interpolated
+    return torch.stack(interpolated, dim=0)

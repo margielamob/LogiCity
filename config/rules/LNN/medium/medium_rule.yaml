@@ -15,6 +15,10 @@ predicates:
       arity: 1
       method: utils.lnn_pred_converter.is_bus
       description: Checks if the agent is a car and has concept "Bus".
+  - IsTiro:
+      arity: 1
+      method: utils.lnn_pred_converter.is_tiro
+      description: Checks if the agent is a car and has concept "Tiro".
   - IsManyPedAround:
       arity: 1
       method: utils.lnn_pred_converter.is_many_ped_around
@@ -55,11 +59,32 @@ predicates:
       arity: 1
       method: None
       description: Stop action.
+  - Fast:
+      arity: 1
+      method: None
+      description: Fast action.
+  - Normal:
+      arity: 1
+      method: None
+      description: Normal action.
+  - Slow:
+      arity: 1
+      method: None
+      description: Slow action.
 
 rules:
   - Stop:
       formula: Implies(Or(And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x))), And(IsPedestrian(x), MayorAround(x), Not(IsMayor(x))), And(Not(IsAmbulance(x)), IsInIntersection(x), AmbulanceIntersection(x)), And(IsBus(x), IsManyPedAround(x))), Stop(x))
       description: Or version of the following stop rule.
+  - Fast:
+      formula: Implies(And(Not(Or(And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x))), And(IsPedestrian(x), MayorAround(x), Not(IsMayor(x))), And(Not(IsAmbulance(x)), IsInIntersection(x), AmbulanceIntersection(x)), And(IsBus(x), IsManyPedAround(x)))), IsBus(x)), Fast(x))
+      description: If not stop, bus moves fast.
+  - Slow:
+      formula: Implies(And(Not(Or(And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x))), And(IsPedestrian(x), MayorAround(x), Not(IsMayor(x))), And(Not(IsAmbulance(x)), IsInIntersection(x), AmbulanceIntersection(x)), And(IsBus(x), IsManyPedAround(x)))), Not(IsBus(x)), IsTiro(x), IsManyPedAround(x)), Slow(x))
+      description: If not stop, not bus, tiro, many pedestrains around, move slowly.
+  - Normal:
+      formula: Implies(And(Not(Or(And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), And(IsCar(x), Not(IsAmbulance(x)), IsAtIntersection(x), IntersectionEmpty(x), IntersectionCarsEmpty(x), PreviousCars(x)), And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionCarsEmpty(x))), And(IsPedestrian(x), MayorAround(x), Not(IsMayor(x))), And(Not(IsAmbulance(x)), IsInIntersection(x), AmbulanceIntersection(x)), And(IsBus(x), IsManyPedAround(x)))), Not(IsBus(x)), Not(And(IsTiro(x), IsManyPedAround(x)))), Normal(x))
+      description: If not stop, not bus, not (tiro, many pedestrains around), move normally.
 #   - Cars_Stop1:
 #       formula: Implies(And(IsCar(x), IsAtIntersection(x), Not(IsAmbulance(x)), Not(And(IntersectionEmpty(x), IntersectionCarsEmpty(x)))), Car_Stop1(x))
 #       description: cars at intersection, not intersection empty, stop, ambulance not stop

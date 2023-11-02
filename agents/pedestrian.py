@@ -20,10 +20,10 @@ class Pedestrian(Agent):
         super().__init__(size, id, world_state_matrix, concepts, debug=debug)
         # pedestrian use A*, which is just a function
         self.action_mapping = {
-            0: "Left", 
-            1: "Right", 
-            2: "Up", 
-            3: "Down", 
+            0: "Left_Normal", 
+            1: "Right_Normal", 
+            2: "Up_Normal", 
+            3: "Down_Normal", 
             4: "Stop"
             }
         self.action_to_move = {
@@ -33,7 +33,7 @@ class Pedestrian(Agent):
             self.action_space[3].item(): torch.tensor((1, 0))
         }
         self.move_to_action = {
-            tuple(self.action_to_move[k].tolist()): k for k in self.action_to_move
+            self.action_to_move[k]: k for k in self.action_to_move
         }
 
     def init(self, world_state_matrix, debug=False):

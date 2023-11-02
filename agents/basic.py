@@ -48,16 +48,26 @@ class Agent:
         pass
 
     def get_action(self, local_action_dist):
-        if not torch.any(local_action_dist):
-            return self.get_global_action()
+        if len(local_action_dist.nonzero()) == 1:
+            # local planner is very strict, only one action is possible
+            final_action_dist = local_action_dist
         else:
-            # sample from the local planner
-            normalized_action_dist = local_action_dist / local_action_dist.sum()
-            dist = Categorical(normalized_action_dist)
-            # Sample an action index from the distribution
-            action_index = dist.sample()
-            # Get the actual action from the action space using the sampled index
-            return self.action_space[action_index]
+            global_action = self.get_global_action()
+            if len(global_action.nonzero()) == 1:
+            # local planner gives multiple actions, but global planner is very strict
+                final_action_dist = global_action
+            else:
+                # local planner gives multiple actions, use global planner to filter
+                final_action_dist = torch.logical_and(local_action_dist, global_action).float()
+        # now only one action is possible
+        assert len(final_action_dist.nonzero()) == 1
+        # sample from the local planner
+        normalized_action_dist = final_action_dist / final_action_dist.sum()
+        dist = Categorical(normalized_action_dist)
+        # Sample an action index from the distribution
+        action_index = dist.sample()
+        # Get the actual action from the action space using the sampled index
+        return self.action_space[action_index]
 
     def move(self, action, ped_layer):
         curr_pos = torch.nonzero((ped_layer==TYPE_MAP[self.type]).float())[0]
@@ -65,7 +75,7 @@ class Agent:
         next_pos = self.pos.clone()
         # becomes walked grid
         ped_layer[self.pos[0], self.pos[1]] += AGENT_WALKED_PATH_PLUS
-        next_pos += self.action_to_move.get(action, torch.tensor((0, 0)))
+        next_pos += self.action_to_move.get(action.item(), torch.tensor((0, 0)))
         self.pos = next_pos.clone()
         # Update Agent Map
         ped_layer[self.start[0], self.start[1]] = TYPE_MAP[self.type] + AGENT_START_PLUS
@@ -74,7 +84,16 @@ class Agent:
         return ped_layer
 
     def get_global_action(self):
-        next_pos = self.global_traj[0]
-        self.global_traj.pop(0)
-        del_pos = tuple((next_pos - self.pos).tolist())
-        return self.move_to_action.get(del_pos, self.action_space[-1].item())
+        global_action_dist = torch.zeros_like(self.action_space).float()
+        current_pos = torch.all((self.global_traj == self.pos), dim=1).nonzero()[0]
+        next_pos = current_pos + 1 if current_pos < len(self.global_traj) - 1 else 0
+        del_pos = self.global_traj[next_pos] - self.pos
+        for move in self.move_to_action.keys():
+            if torch.dot(del_pos.squeeze(), move) > 0:
+                next_point = self.pos + move
+                step = torch.max(torch.abs(move)).item()
+                if len(torch.all((self.global_traj[next_pos:next_pos+step] == next_point), dim=1).nonzero()) > 0:
+                    global_action_dist[self.move_to_action[move]] = 1.0
+        assert not torch.all(del_pos==0)
+        assert not torch.all(global_action_dist==0)
+        return global_action_dist
