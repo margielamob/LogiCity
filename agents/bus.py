@@ -2,6 +2,7 @@ from .car import Car
 import torch
 import numpy as np
 from utils.find import interpolate_car_path
+from planners import GPlanner_mapper
 from core.config import *
 import logging
 # import cv2
@@ -30,6 +31,9 @@ class Bus(Car):
         self.start = self.global_traj[0].clone()
         self.pos = self.start.clone()
         self.goal = self.global_traj[-1].clone()
+        self.midline_matrix = (world_state_matrix[STREET_ID] == Traffic_STREET+MID_LINE_CODE_PLUS)
+        self.global_planner = GPlanner_mapper[self.global_planner_type](self.movable_region, self.midline_matrix, CAR_STREET_OFFSET)
+        self.intersection_points = torch.cat([torch.cat(self.global_planner.start_lists, dim=0), torch.cat(self.global_planner.end_lists, dim=0)], dim=0)
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
     def route2waypoints(self, route_list, max_step):
