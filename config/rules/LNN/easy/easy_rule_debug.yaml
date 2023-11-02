@@ -22,8 +22,14 @@ predicates:
 
 rules:
   - Global:
-      formula: And(Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x))), Stop(x)), Implies(Or(Not(IsPedestrian(x)), Not(IsAtIntersection(x)), IntersectionEmpty(x)), Normal(x)))
+      formula: And(Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x))), Stop(x)), Implies(Not(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x)))), Normal(x)))
       description: Or version of the following stop rule.
+#   - Global:
+#       formula: And(Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x))), Stop(x)), Implies(Not(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x)))), Normal(x)))
+#       description: Or version of the following stop rule.
+#   - Global:
+#       formula: And(Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x))), Stop(x)), Implies(Or(Not(IsPedestrian(x)), Not(IsAtIntersection(x)), IntersectionEmpty(x)), Normal(x)))
+#       description: Or version of the following stop rule.
 #   - Stop:
 #       formula: Implies(And(IsPedestrian(x), IsAtIntersection(x), Not(IntersectionEmpty(x))), Stop(x))
 #       description: Or version of the following stop rule.

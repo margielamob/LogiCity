@@ -10,7 +10,6 @@ class LNNPlanner:
             self.data = load(file, Loader=FullLoader)
         
         self._create_predicates()
-        self.model = Model()
         self._create_rules()
         
     def _create_predicates(self):
@@ -34,10 +33,12 @@ class LNNPlanner:
             'Implies': Implies,
             'Not': Not
         }
-        
+        self.model_list = []
+        self.model_preds = []
         x = Variables('x')  # For demonstration, considering only one variable for now
         
         for r in self.data["rules"]:
+            local_model = Model()
             rule_name, rule_info = list(r.items())[0]
             formula_str = rule_info["formula"]
             
@@ -50,7 +51,12 @@ class LNNPlanner:
             
             rule_instance = eval(formula_str)  # This dynamically evaluates the Python equivalent formula
             # All the rules are considered as axioms for now
-            self.model.add_knowledge(rule_instance, world=World.AXIOM)
+            local_model.add_knowledge(rule_instance, world=World.AXIOM)
+            self.model_list.append(local_model)
+            model_pred = []
+            for key in local_model.nodes.keys():
+                model_pred.append(local_model.nodes[key])
+            self.model_preds.append(model_pred)
     
     # Example method to process world matrix for a specific predicate
     def add_world_data(self, world_matrix, intersect_matrix, agent_id, agent_type, agents):
@@ -78,11 +84,16 @@ class LNNPlanner:
                 
                 # Now only supporting one arity
                 data_dict[self.predicates[p]["instance"]][agent_name] = values
-
-        self.model.add_data(data_dict)
+        for model in self.model_list:
+            model_dict = {}
+            for key in data_dict.keys():
+                if key in self.model_preds[self.model_list.index(model)]:
+                    model_dict[key] = data_dict[key]
+            model.add_data(model_dict)
 
     def plan(self, world_matrix, intersect_matrix, agents):
-        self.model.reset_bounds()
+        for model in self.model_list:
+            model.reset_bounds()
         for p in self.predicates.keys():
             self.predicates[p]["instance"].flush()
         agents_actions = {}
@@ -92,8 +103,9 @@ class LNNPlanner:
             agent_type = agent.type
             agent_name = "{}_{}".format(agent_type, agent_id)
             self.add_world_data(world_matrix, intersect_matrix, agent_id, agent_type, agents)
-        self.model.infer(Direction.UPWARD)
-        self.model.infer(Direction.DOWNWARD)
+        for model in self.model_list:
+            model.infer(Direction.UPWARD)
+            model.infer(Direction.DOWNWARD)
         # use LNN to get the action distribution
         for agent in agents:
             agent_id = agent.layer_id
