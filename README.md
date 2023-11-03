@@ -51,9 +51,9 @@ Some important arguments:
 
 Let Bowen know if you opened a new branch.
 
-- Master
-
+- master
   is the main and protected branch, please make sure you pull a request before modifying anything on this branch.
 - concept
-
   is the dev branch for Bowen.
+- marl
+  is the dev branch for Haohong.
