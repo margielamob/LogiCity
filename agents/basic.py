@@ -59,8 +59,11 @@ class Agent:
             else:
                 # local planner gives multiple actions, use global planner to filter
                 final_action_dist = torch.logical_and(local_action_dist, global_action).float()
+                if len(final_action_dist.nonzero()) == 0:
+                    # local planner and global planner has conflict, but local planner is not strict, take global
+                    final_action_dist = global_action
         # now only one action is possible
-        assert len(final_action_dist.nonzero()) == 1
+        assert len(final_action_dist.nonzero()) >= 1
         # sample from the local planner
         normalized_action_dist = final_action_dist / final_action_dist.sum()
         dist = Categorical(normalized_action_dist)
