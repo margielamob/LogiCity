@@ -98,9 +98,15 @@ def sample_determine_start_goal(agent_type, id):
     start_goal_dict = {
         'Pedestrian': {
             1: (torch.tensor([p1_s_x, p1_s_y]), torch.tensor([p1_g_x, p1_g_y])),
-            2: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100])),
-            3: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100])),
-            4: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100]))
+            2: (torch.tensor([p1_g_x, p1_g_y]), torch.tensor([p1_s_y, p1_s_x])),
+            3: (torch.tensor([p1_g_y, p1_g_x]), torch.tensor([p1_s_x, p1_s_y])),
+            4: (torch.tensor([p1_s_y, p1_s_x]), torch.tensor([p1_g_y, p1_g_x])),
+            5: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100])),
+            6: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100])),
+            7: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100])),
+            8: (torch.tensor([p1_g_x+10, p1_g_y]), torch.tensor([p1_g_x+11, p1_g_y])),
+            9: (torch.tensor([p1_g_x+11, p1_g_y]), torch.tensor([p1_g_x+12, p1_g_y])),
+            10: (torch.tensor([p1_g_x+12, p1_g_y]), torch.tensor([p1_g_x+13, p1_g_y])),
         },
         'Car': {
             1: (torch.tensor([c1_s_x, c1_s_y]), torch.tensor([c1_g_x, c1_g_y])),

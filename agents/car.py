@@ -44,22 +44,22 @@ class Car(Agent):
             self.action_space[11].item(): torch.tensor((3, 0))
         }
         self.move_to_action = {
-            tuple(self.action_to_move[k].tolist()): k for k in self.action_to_move
+            self.action_to_move[k]: k for k in self.action_to_move
         }
         self.action_dist = torch.zeros_like(self.action_space).float()
         self.action_mapping = {
-            0: "Left_1", 
-            1: "Right_1", 
-            2: "Up_1", 
-            3: "Down_1", 
-            4: "Left_2", 
-            5: "Right_2", 
-            6: "Up_2", 
-            7: "Down_2",
-            8: "Left_3", 
-            9: "Right_3", 
-            10: "Up_3", 
-            11: "Down_3",
+            0: "Left_Slow", 
+            1: "Right_Slow", 
+            2: "Up_Slow", 
+            3: "Down_Slow", 
+            4: "Left_Normal", 
+            5: "Right_Normal", 
+            6: "Up_Normal", 
+            7: "Down_Normal",
+            8: "Left_Fast", 
+            9: "Right_Fast", 
+            10: "Up_Fast", 
+            11: "Down_Fast",
             12: "Stop"
             }
 
@@ -77,8 +77,9 @@ class Car(Agent):
         self.movable_region = (world_state_matrix[STREET_ID] == Traffic_STREET) | (world_state_matrix[STREET_ID] == CROSSING_STREET)
         self.midline_matrix = (world_state_matrix[STREET_ID] == Traffic_STREET+MID_LINE_CODE_PLUS)
         self.global_planner = GPlanner_mapper[self.global_planner_type](self.movable_region, self.midline_matrix, CAR_STREET_OFFSET)
+        self.intersection_points = torch.cat([torch.cat(self.global_planner.start_lists, dim=0), torch.cat(self.global_planner.end_lists, dim=0)], dim=0)
         # get global traj on the occupacy map
-        self.global_traj = self.global_planner.plan(self.start, self.goal, 2)
+        self.global_traj = self.global_planner.plan(self.start, self.goal, 1)
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
     def get_start(self, world_state_matrix):
@@ -170,7 +171,7 @@ class Car(Agent):
             
             # Fetch the corresponding location
             self.goal = torch.tensor(goal_point_list[random_index])
-            self.global_traj = self.global_planner.plan(self.start, self.goal, 2)
+            self.global_traj = self.global_planner.plan(self.start, self.goal, 1)
             logger.info("Generating new goal and gloabl plans for {}_{} done!".format(self.type, self.id))
             self.reach_goal = False
             # delete past traj
@@ -182,3 +183,43 @@ class Car(Agent):
             world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
 
             return self.get_action(local_action_dist), world_state_matrix[self.layer_id]
+
+    def get_global_action(self):
+        global_action_dist = torch.zeros_like(self.action_space).float()
+        current_pos = torch.all((self.global_traj == self.pos), dim=1).nonzero()[0]
+        next_pos = current_pos + 1 if current_pos < len(self.global_traj) - 1 else 0
+        del_pos = self.global_traj[next_pos] - self.pos
+        for move in self.move_to_action.keys():
+            if torch.dot(del_pos.squeeze(), move) > 0:
+                next_point = self.pos + move
+                step = torch.max(torch.abs(move)).item()
+                # for cars, it can't bypass the intersection line, check this, reject the move if it go bypass the line
+                if step > 1:
+                    if self.move_bypass(self.pos, next_point):
+                        continue
+                if len(torch.all((self.global_traj[next_pos:next_pos+step] == next_point), dim=1).nonzero()) > 0:
+                    global_action_dist[self.move_to_action[move]] = 1.0
+        assert not torch.all(del_pos==0)
+        assert not torch.all(global_action_dist==0)
+        return global_action_dist
+
+    def move_bypass(self, A, B):
+        # Compute the vectors
+        AB = B - A
+        AP = self.intersection_points - A.unsqueeze(0)
+        BP = self.intersection_points - B.unsqueeze(0)
+        BA = -AB
+
+        # Check if points are on the line defined by A and B
+        area = AB[0] * (self.intersection_points[:, 1] - A[1]) - AB[1] * (self.intersection_points[:, 0] - A[0])
+        on_line = (area == 0)
+
+        # Check if points are on the segment AB (between A and B)
+        on_segment = (torch.matmul(AP, AB.unsqueeze(1)).squeeze() >= 0) & (torch.matmul(BP, BA.unsqueeze(1)).squeeze() >= 0)
+
+        # Final mask where both conditions are true
+        on_line_segment = on_line & on_segment
+
+        # Check if any point satisfies the condition
+        has_point_on_segment = on_line_segment.any().item()
+        return has_point_on_segment

@@ -36,7 +36,6 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
-    mayor: 1.0
 
 - class: Pedestrian
   id: 6
@@ -44,10 +43,12 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    mayor: 1.0
 
 - class: Pedestrian
   id: 7
   size: 1
+  lplanner: LNN
   gplanner: A*
   concepts:
     type: Pedestrian
@@ -69,6 +70,7 @@ agents:
 - class: Pedestrian
   id: 10
   size: 1
+  lplanner: LNN
   gplanner: A*
   concepts:
     type: Pedestrian
@@ -100,6 +102,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    mayor: 1.0
 
 - class: Pedestrian
   id: 15
@@ -158,6 +161,62 @@ agents:
   concepts:
     type: Pedestrian
 
+- class: Pedestrian
+  id: 23
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 24
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 25
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 26
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 27
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 28
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 29
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
+- class: Pedestrian
+  id: 30
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
+
 - class: Private_car
   id: 1
   size: 1
@@ -181,8 +240,16 @@ agents:
   concepts:
     type: Car
 
-- class: Bus
+- class: Private_car
   id: 4
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    tiro: 1.0
+
+- class: Bus
+  id: 5
   size: 1
   gplanner: A*vg
   concepts:
@@ -191,18 +258,12 @@ agents:
     no.: 61A # no. is used to define the bus routes 
 
 - class: Private_car
-  id: 5
-  size: 1
-  gplanner: A*vg
-  concepts:
-    type: Car
-
-- class: Private_car
   id: 6
   size: 1
   gplanner: A*vg
   concepts:
     type: Car
+    tiro: 1.0
 
 - class: Private_car
   id: 7
@@ -210,6 +271,7 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
+    tiro: 1.0
 
 - class: Private_car
   id: 8
@@ -227,6 +289,21 @@ agents:
 
 - class: Private_car
   id: 10
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    tiro: 1.0
+
+- class: Private_car
+  id: 11
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+
+- class: Private_car
+  id: 12
   size: 1
   gplanner: A*vg
   concepts:

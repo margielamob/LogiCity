@@ -2,7 +2,7 @@
 
 Main Developer: Bowen Li, bowenli2@cs.cmu.edu
 
-<img src="figs/81.png" alt="81" style="zoom:30%;" />
+<img src="imgs/81.png" alt="81" style="zoom:30%;" />
 
 ## Intro
 
@@ -17,10 +17,19 @@ In the end, we hope LogiCity can be used for evaluating cross-community downstre
 This research project and code repo are **ongoing**, please **DO NOT** share with anyone without permission from Bowen.
 
 ## Dependencies
-
-```shell
-pip install -r requirements.txt
-```
+- From scratch
+  ```shell
+  conda create -n logicity python=3.9
+  conda activate logicity
+  pip install -r requirements.txt
+  ```
+- Using docker
+  ```shell
+  docker pull bowenli1024/logicity:v1
+  docker run bowenli1024/logicity:v1
+  # you may need to re-build the lnn lib
+  pip install -r requirements.txt
+  ```
 
 ## Running
 
@@ -51,9 +60,9 @@ Some important arguments:
 
 Let Bowen know if you opened a new branch.
 
-- Master
-
+- master
   is the main and protected branch, please make sure you pull a request before modifying anything on this branch.
 - concept
-
   is the dev branch for Bowen.
+- marl
+  is the dev branch for Haohong.

@@ -26,21 +26,24 @@ def visualize_city(city, resolution, agent_layer=None, file_name="city.png"):
     
     # Add the legend
     padding = int(5*scale_factor)
+    column_width = int(70*scale_factor)
     legend_width = resolution
     legend_height = resolution
     legend_item_height = int(10*scale_factor)
     legend_img = np.ones((legend_height, legend_width, 3), dtype=np.uint8) * 255  # white background
 
     for idx, (key, value) in enumerate(city.color_map.items()):
+        c = idx//23
+        idx = idx%23
         y_offset = idx * legend_item_height + padding
         if y_offset + legend_item_height > legend_height:  # Ensure we don't render beyond the legend image
             break
-        cv2.rectangle(legend_img, (padding, y_offset), (padding + legend_item_height, y_offset + legend_item_height), city.color_map[key], -1)
+        cv2.rectangle(legend_img, (padding+column_width*c, y_offset), (padding+column_width*c + legend_item_height, y_offset + legend_item_height), city.color_map[key], -1)
         if key in city.label2type.keys():
-            cv2.putText(legend_img, str(city.label2type[key]), (padding + int(15*scale_factor), y_offset + legend_item_height - int(3*scale_factor)), cv2.FONT_HERSHEY_SIMPLEX, 0.2*scale_factor, \
+            cv2.putText(legend_img, str(city.label2type[key]), (padding+column_width*c + int(15*scale_factor), y_offset + legend_item_height - int(3*scale_factor)), cv2.FONT_HERSHEY_SIMPLEX, 0.2*scale_factor, \
                 (0, 0, 0), 2, lineType=cv2.LINE_AA)
         else:
-            cv2.putText(legend_img, key, (padding + int(15*scale_factor), y_offset + legend_item_height - int(3*scale_factor)), cv2.FONT_HERSHEY_SIMPLEX, 0.2*scale_factor, \
+            cv2.putText(legend_img, key, (padding+column_width*c + int(15*scale_factor), y_offset + legend_item_height - int(3*scale_factor)), cv2.FONT_HERSHEY_SIMPLEX, 0.2*scale_factor, \
                 (0, 0, 0), 2, lineType=cv2.LINE_AA)
 
     # Combine the visual grid and the legend side by side
