@@ -17,10 +17,19 @@ In the end, we hope LogiCity can be used for evaluating cross-community downstre
 This research project and code repo are **ongoing**, please **DO NOT** share with anyone without permission from Bowen.
 
 ## Dependencies
-
-```shell
-pip install -r requirements.txt
-```
+- From scratch
+  ```shell
+  conda create -n logicity python=3.9
+  conda activate logicity
+  pip install -r requirements.txt
+  ```
+- Using docker
+  ```shell
+  docker pull bowenli1024/logicity:v1
+  docker run bowenli1024/logicity:v1
+  # you may need to re-build the lnn lib
+  pip install -r requirements.txt
+  ```
 
 ## Running
 
