@@ -11,7 +11,7 @@ IMAGE_BASE_PATH = "./imgs"
 SCALE = 4
 
 PATH_DICT = {
-    "Car": [os.path.join(IMAGE_BASE_PATH, "car{}.png").format(i) for i in range(1, 5)],
+    "Car": [os.path.join(IMAGE_BASE_PATH, "car{}.png").format(i) for i in range(1, 6)],
     "Pedestrian": [os.path.join(IMAGE_BASE_PATH, "pedestrian{}.png").format(i) for i in range(1, 6)],
     "Walking Street": os.path.join(IMAGE_BASE_PATH, "walking.png"),
     "Traffic Street": os.path.join(IMAGE_BASE_PATH, "traffic.png"),
@@ -167,7 +167,7 @@ def flip_icon(icon, left, left_, top, top_, type, last_icon=None):
     else:
         return icon
 
-def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None):
+def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None, agents=None):
     current_map = static_map.copy()
     agent_layer = gridmap[BASIC_LAYER:]
     resized_grid = np.repeat(np.repeat(agent_layer, SCALE, axis=1), SCALE, axis=2)
@@ -182,9 +182,51 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
         left_, top_, right_, bottom_ = get_pos(local_layer_)
         
         agent_type = LABEL_MAP[local_layer[top, left].item()]
-        icon_list = icon_dict[agent_type]
-        icon_id = i%len(icon_list)
-        icon = icon_list[icon_id]
+        agent_name = "{}_{}".format(agent_type, BASIC_LAYER + i)
+        if agents != None:
+            concepts = agents[agent_name]["concepts"]
+            is_ambulance = False
+            is_bus = False
+            is_tiro = False
+            is_mayor = False
+            if "tiro" in concepts.keys():
+                if concepts["tiro"] == 1.0:
+                    is_tiro = True
+            if "bus" in concepts.keys():
+                if concepts["bus"] == 1.0:
+                    is_bus = True
+            if "ambulance" in concepts.keys():
+                if concepts["ambulance"] == 1.0:
+                    is_ambulance = True
+            if "mayor" in concepts.keys():
+                if concepts["mayor"] == 1.0:
+                    is_mayor = True
+            if is_ambulance:
+                icon = icon_dict[agent_type][3]
+            elif is_bus:
+                icon = icon_dict[agent_type][4]
+            elif is_tiro:
+                icon = icon_dict[agent_type][2]
+            elif is_mayor:
+                icon = icon_dict[agent_type][1]
+            else:
+                if agent_type == "Pedestrian":
+                    icon_list = icon_dict[agent_type].copy()
+                    icon_list.pop(1)
+                    icon_id = i%len(icon_list)
+                    icon = icon_list[icon_id]
+                if agent_type == "Car":
+                    icon_list = icon_dict[agent_type].copy()
+                    icon_list.pop(2)
+                    icon_list.pop(2)
+                    icon_list.pop(2)
+                    icon_id = i%len(icon_list)
+                    icon = icon_list[icon_id]
+        else:
+            icon_list = icon_dict[agent_type]
+            icon_id = i%len(icon_list)
+            icon = icon_list[icon_id]
+
         if last_icons is not None:
             last_icon = last_icons["{}_{}".format(agent_type, i)]
             icon = flip_icon(icon, left, left_, top, top_, agent_type, last_icon)
@@ -220,22 +262,22 @@ def main():
             resized_img = resize_with_aspect_ratio(raw_img, ICON_SIZE_DICT[key])
             icon_dict[key] = resized_img
 
-    with open("log/train_1k_easy.pkl", "rb") as f:
-        data = pkl.load(f)["Time_Obs"]
-        print(data.keys())
-        static_map = gridmap2img_static(data[1]["World"].numpy(), icon_dict)
-        cv2.imwrite("vis_city/static_layout.png", static_map)
-        last_icons = None
-        for key in tqdm(data.keys()):
-            try:
-                grid = data[key]["World"].numpy()
-                grid_ = data[key+1]["World"].numpy()
-                img, last_icons = gridmap2img_agents(grid, grid_, icon_dict, static_map, last_icons)
-                cv2.imwrite("vis_city/{}.png".format(key), img)
-            except:
-                print("Finished")
-                break
-        cv2.destroyAllWindows()
+    with open("log/easy_1k.pkl", "rb") as f:
+        data = pkl.load(f)
+        obs = data["Time_Obs"]
+        agents = data["Static Info"]["Agents"]
+
+    print(obs.keys())
+    static_map = gridmap2img_static(obs[1]["World"].numpy(), icon_dict)
+    cv2.imwrite("vis_city/static_layout.png", static_map)
+    last_icons = None
+    for key in tqdm(obs.keys()):
+        grid = obs[key]["World"].numpy()
+        grid_ = obs[key+1]["World"].numpy()
+        img, last_icons = gridmap2img_agents(grid, grid_, icon_dict, static_map, last_icons, agents)
+        cv2.imwrite("vis_city/{}.png".format(key), img)
+    cv2.destroyAllWindows()
+
     return
 
 if __name__ == '__main__':

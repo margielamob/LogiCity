@@ -140,8 +140,6 @@ class LNNPlanner:
             agent_name = "{}_{}".format(agent.type, agent.layer_id)
             agent_grounding = []
             for pred in logic_groundings.keys():
-                if pred == 'Stop' or pred == "Normal":
-                    continue
                 agent_grounding.append(self.predicates[pred]["instance"].get_data(agent_name))
             all_grounding.append(torch.cat(agent_grounding, dim=0))
         return torch.stack(all_grounding, dim=0)

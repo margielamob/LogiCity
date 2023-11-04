@@ -87,6 +87,7 @@ class CityLoader:
                 "id": agent.layer_id,
                 "type": agent.type,
                 "size": agent.size,
+                "concepts": agent.concepts
             }
             for predicate in city.local_planner.predicates.keys():
                 # ONLY Arity-1 predicate is supported
