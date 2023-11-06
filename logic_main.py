@@ -98,6 +98,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_path', type=str, default='log/easy_1k_train.pkl', help='Path to the training data')
     parser.add_argument('--test_data_path', type=str, default='log/easy_100_test.pkl', help='Path to the test data')
     parser.add_argument('--log_dir', type=str, default='log/logic', help='Directory to save logs')
+    parser.add_argument('--exp', type=str, default='log/logic', help='Directory to save logs')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training and testing')
     parser.add_argument('--epochs', type=int, default=10, help='Number of epochs to train')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate for the optimizer')
