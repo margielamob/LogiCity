@@ -34,14 +34,22 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
 ## Running
 
 ```shell
-python3 main.py
+# easy mode
+python3 main.py --rules config/rules/LNN/easy/easy_rule.yaml --exp easy
+# medium mode
+python3 main.py --rules config/rules/LNN/medium/medium_rule.yaml --exp medium
 ```
+By default, this will run with 42 agents specified in `config/agents/v0.yaml`, you may make any modifications.
 
 Some important arguments:
 
 `--vis`: if True, the simulation will save the plain color map and display the agents at each time step, by default, the images will be saved in `./vis`
 
 `--debug`: if True, the start and goal point of each agent will be pre-defined in `./utils/sample.py`, function `sample_determine_start_goal()`
+
+`--max-steps`: Maxium steps of the sim.
+
+`--log_dir`: Directory to save the cached sim.
 
 ## Visualization
 
@@ -54,15 +62,20 @@ Some important arguments:
   ```
 - Render some carton-style city / UAV field of view
 
-  (On going..., may need some coding on `pkl2city.py` and `pkl2city_uav.py`)
+  ```python3
+  # get the carton-style images
+  python3 pkl2city.py # you can also have more surprising vis by the pkl2city_uav.py
+  # make a video
+  python3 tools/img2video.py # change some file name if necessary
+  ```
 
 ## Branches
 
 Let Bowen know if you opened a new branch.
 
 - master
-  is the main and protected branch, please make sure you pull a request before modifying anything on this branch.
-- concept
-  is the dev branch for Bowen.
+  is the main and protected branch, it now supports two kind of rule-based simulation. please make sure you pull a request before modifying anything on this branch.
+- logiNN
+  is the dev branch for Bowen. He is developing partially-observable supervised navigator and learning logic reasoning.
 - marl
-  is the dev branch for Haohong.
+  is the dev branch for Haohong. He is developing fully observable RL-based navigator.
