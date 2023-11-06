@@ -19,10 +19,10 @@ def parse_arguments():
     parser.add_argument('--rules', type=str, default="config/rules/LNN/easy/easy_rule.yaml", help='YAML path to the rule definition.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log")
-    parser.add_argument('--exp', type=str, default="easy_1k")
+    parser.add_argument('--exp', type=str, default="easy_100_test")
     parser.add_argument('--vis', type=bool, default=False, help='Visualize the city.')
-    parser.add_argument('--max-steps', type=int, default=1000, help='Maximum number of steps for the simulation.')
-    parser.add_argument('--seed', type=int, default=18, help='random seed to use.')
+    parser.add_argument('--max-steps', type=int, default=100, help='Maximum number of steps for the simulation.')
+    parser.add_argument('--seed', type=int, default=5, help='random seed to use.')
     parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
 
     return parser.parse_args()

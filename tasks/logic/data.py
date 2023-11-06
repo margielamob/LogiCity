@@ -3,12 +3,11 @@ import pickle
 from torch.utils.data.dataset import Dataset
 
 class LogicDataset(Dataset):
-    def __init__(self, data_path):
-        with open(data_path, 'rb') as f:
-            data = pickle.load(f)
-        self.data = torch.load(data_path)
+    def __init__(self, dataX, dataY):
+        self.dataX = dataX
+        self.dataY = dataY
     def __len__(self):
-        return len(self.data)
+        return self.dataX.shape[0]
     def __getitem__(self, idx):
-        return self.data[idx]
+        return self.dataX[idx], self.dataY[idx]
     
