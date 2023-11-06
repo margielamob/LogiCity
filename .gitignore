@@ -8,3 +8,4 @@ vis_city/
 vis_city_uav/
 odom_progress/
 *.log
+*.tar
