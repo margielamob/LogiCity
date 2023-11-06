@@ -73,9 +73,9 @@ Some important arguments:
 
 Let Bowen know if you opened a new branch.
 
-- master
+- `master`
   is the main and protected branch, it now supports two kind of rule-based simulation. please make sure you pull a request before modifying anything on this branch.
-- logiNN
+- `logiNN`
   is the dev branch for Bowen. He is developing partially-observable supervised navigator and learning logic reasoning.
-- marl
+- `marl`
   is the dev branch for Haohong. He is developing fully observable RL-based navigator.
