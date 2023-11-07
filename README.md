@@ -31,7 +31,9 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
   pip install -r requirements.txt
   ```
 
-## Running
+## Running Sim
+
+Only running the simulation for data collection, the cached data will be saved to a `.pkl` file.
 
 ```shell
 # easy mode
@@ -50,6 +52,17 @@ Some important arguments:
 `--max-steps`: Maxium steps of the sim.
 
 `--log_dir`: Directory to save the cached sim.
+
+## Running Tasks
+
+### Learning Logic
+
+Training different algorithm to fit the Logic in the sim.
+
+```shell
+# easy mode
+python3 logic_main.py
+```
 
 ## Visualization
 
