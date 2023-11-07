@@ -1,3 +1,4 @@
+import os
 import torch
 import argparse
 from tensorboardX import SummaryWriter
@@ -21,13 +22,40 @@ def visualize_samples(data_X, data_Y, num_samples=5):
 
 def test(model, dataloader, criterion, device):
     model.eval()
-    total_loss = 0.0
+    label_losses = {name: 0.0 for name in dataloader.dataset.Yname}  # Initialize losses for each Yname
+    label_fail = {name: 0.0 for name in dataloader.dataset.Yname}  # Initialize losses for each Yname
+    
+    # To store the number of times each label was encountered
+    label_counts = {name: 0 for name in dataloader.dataset.Yname}
+    
     with torch.no_grad():
         for inputs, labels in dataloader:
             outputs = model(inputs.to(device))
-            loss = criterion(outputs, labels.to(device))
-            total_loss += loss.item()
-    return total_loss / len(dataloader)
+            outputs_label = outputs.argmax(dim=1)
+            labels_pos = labels.argmax(dim=1)
+            # Calculate loss for each label
+            for i, name in enumerate(dataloader.dataset.Yname):
+                ids = (labels[:, i] == 1.0).nonzero()
+                if ids.shape[0]>0:
+                # Note: this assumes that the model's output and the labels are structured
+                # such that each column corresponds to the label represented by Yname[i]
+                    sum_label_loss = torch.abs(outputs[ids, i] - labels.to(device)[ids, i]).sum().item()
+                    sum_fail = (outputs_label[ids] != labels_pos.to(device)[ids]).sum().item()
+                    label_losses[name] += sum_label_loss
+                    label_counts[name] += ids.shape[0]
+                    label_fail[name] += sum_fail
+    
+    # Average the loss for each label
+    for name in label_losses:
+        if label_counts[name] == 0:
+            label_losses[name] = -1.0
+            label_fail[name] = -1.0
+        else:
+            label_losses[name] /= label_counts[name]
+            label_fail[name] /= label_counts[name]
+    
+    # Return total loss averaged and losses per Yname
+    return label_losses, label_fail
 
 def save_checkpoint(state, filename='checkpoint.pth.tar'):
     torch.save(state, filename)
@@ -38,16 +66,18 @@ def load_checkpoint(filename):
 
 def main(args):
     # Set up logging
-    writer = SummaryWriter(args.log_dir)
+    os.makedirs(f'{args.log_dir}/{args.exp}', exist_ok=True)
+    writer = SummaryWriter(f'{args.log_dir}/{args.exp}')
 
     # parse raw pkl for training
-    input_sz, output_sz, data_X, data_Y = parse_pkl(args.data_path)
+    input_sz, output_sz, data_X, data_Y, Xname, Yname = parse_pkl(args.data_path)
 
     # Load or create model
     if args.resume:
         checkpoint = load_checkpoint(args.model_path)
-        model = MLP(input_sz, output_sz)
+        model = MLP(input_sz, 128, output_sz)
         model.load_state_dict(checkpoint['state_dict'])
+        model.to(args.device)
         optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
         optimizer.load_state_dict(checkpoint['optimizer'])
         start_epoch = checkpoint['epoch']
@@ -57,15 +87,15 @@ def main(args):
         start_epoch = 0
 
     # Load training data
-    train_data = LogicDataset(data_X, data_Y)
-    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
+    train_data = LogicDataset(data_X, data_Y, Xname, Yname, args.adjust_dist)
+    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
     # Load test data
-    _, _, test_data_X, test_data_Y = parse_pkl(args.test_data_path)
-    test_data = LogicDataset(test_data_X, test_data_Y)
-    test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=False)
+    _, _, test_data_X, test_data_Y, _, _ = parse_pkl(args.test_data_path)
+    test_data = LogicDataset(test_data_X, test_data_Y, Xname, Yname)
+    test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
     
     # Define loss function
-    criterion = nn.MSELoss().to(args.device)
+    criterion = nn.L1Loss().to(args.device)
 
     # Training loop
     model.train()
@@ -79,29 +109,35 @@ def main(args):
             loss.backward()
             optimizer.step()
             writer.add_scalar('Loss/train', loss.item(), epoch * len(train_loader) + i)
-        test_loss = test(model, test_loader, criterion, args.device)
-        writer.add_scalar('Loss/test', test_loss)
-        print(f'Epoch: {epoch}, Test Loss: {test_loss}')
-        save_checkpoint({
-            'epoch': epoch + 1,
-            'state_dict': model.state_dict(),
-            'optimizer': optimizer.state_dict(),
-        }, filename=f'checkpoint_{epoch}.pth.tar')
 
-    # [Test loop from previous example]
+        test_label_losses, test_label_error = test(model, test_loader, criterion, args.device)
+        # Log individual label losses
+        avg_loss = 0
+        num_labels = 0
+        avg_error = 0
+        for label, loss in test_label_losses.items():
+            if loss>=0:
+                avg_loss += loss
+                num_labels += 1
+                avg_error += test_label_error[label]
+            writer.add_scalar(f'Loss/test_{label}', loss, epoch)
+            writer.add_scalar(f'Error/test_{label}', test_label_error[label], epoch)
+        print(f'Epoch: {epoch}, Test Loss: {avg_loss/num_labels}, Test Error: {avg_error/num_labels}')
+        if (epoch + 1) % args.save_freq == 0:
+            save_checkpoint({
+                'epoch': epoch + 1,
+                'state_dict': model.state_dict(),
+                'optimizer': optimizer.state_dict(),
+            }, filename=f'{args.log_dir}/{args.exp}/checkpoint_{epoch}.pth.tar')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--resume', action='store_true', help='Resume training from a checkpoint')
-    parser.add_argument('--model_path', type=str, default=None, help='Path to load the model')
+    parser.add_argument('--config', type=str, default='config/tasks/logic/medium_small_unbalanced.yaml', help='Directory to configure file')
+    parser.add_argument('--resume', default=False, help='Resume training from a checkpoint')
     parser.add_argument('--device', type=str, default='cuda:0', help='Device to train on')
-    parser.add_argument('--data_path', type=str, default='log/easy_1k_train.pkl', help='Path to the training data')
-    parser.add_argument('--test_data_path', type=str, default='log/easy_100_test.pkl', help='Path to the test data')
-    parser.add_argument('--log_dir', type=str, default='log/logic', help='Directory to save logs')
-    parser.add_argument('--exp', type=str, default='log/logic', help='Directory to save logs')
-    parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training and testing')
-    parser.add_argument('--epochs', type=int, default=10, help='Number of epochs to train')
-    parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate for the optimizer')
+    parser.add_argument('--num_workers', type=int, default=16, help='Number of workers for the dataloader')
+    parser.add_argument('--data_path', type=str, default='log/medium_1k_train.pkl', help='Path to the training data')
+    parser.add_argument('--test_data_path', type=str, default='log/medium_100_test.pkl', help='Path to the test data')
 
     args = parser.parse_args()
     main(args)

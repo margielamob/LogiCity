@@ -19,10 +19,15 @@ def parse_pkl(data_path):
         if LNN_predictates[i] != 'Stop' and LNN_predictates[i] != 'Normal' and LNN_predictates[i] != 'Fast' and LNN_predictates[i] != 'Slow':
             k += 1
     Xs = all_data[:, :k]
+    Xs_name = LNN_predictates[:k]
+    # use averaged lower and upper bound as the input/output
+    Xs = Xs.mean(dim=-1, keepdim=False)
     Ys = all_data[:, k:]
+    Ys_name = LNN_predictates[k:]
+    Ys = Ys.mean(dim=-1, keepdim=False)
     input_sz = Xs.shape[1]
     output_sz = Ys.shape[1]
     print("All logic predicates: {}".format(LNN_predictates))
     print('Input Logic Pred size: {}'.format(input_sz))
     print('Output Logic Pred size: {}'.format(output_sz))
-    return input_sz, output_sz, Xs, Ys
+    return input_sz, output_sz, Xs, Ys, Xs_name, Ys_name

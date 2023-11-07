@@ -1,0 +1,13 @@
+resume: False
+model_path: null
+device: 'cuda:0'
+num_workers: 16
+data_path: 'log/medium_1k_train.pkl'
+test_data_path: 'log/medium_100_test.pkl'
+log_dir: 'log/logic'
+exp: 'medium_small_unbalanced_1'
+batch_size: 256
+epochs: 200
+save_freq: 10
+learning_rate: 0.0001
+adjust_dist: False
