@@ -1,14 +1,29 @@
 import os
+import yaml
 import torch
+import logging
 import argparse
-from tensorboardX import SummaryWriter
-from torch.utils.data import DataLoader
-from torch import nn, optim
-from tasks.logic.data import LogicDataset
-from tasks.logic.models import MLP
-from tasks.logic.pkl_parser import parse_pkl
-import matplotlib.pyplot as plt
+import pandas as pd
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+from torch import nn, optim
+from torch.utils.data import DataLoader
+from tensorboardX import SummaryWriter
+
+from tasks.logic.models import MLP
+from tasks.logic.data import LogicDataset
+from tasks.logic.pkl_parser import parse_pkl
+
+def update_args_from_config(args, config):
+    for key, value in config.items():
+        setattr(args, key, value)
+
+def setup_logging(args):
+    log_file_path = f"{args.log_dir}/{args.exp}/config.log"
+    logging.basicConfig(filename=log_file_path, level=logging.INFO)
+    logging.info("Configuration Parameters:")
+    for arg in vars(args):
+        logging.info(f"{arg}: {getattr(args, arg)}")
 
 def visualize_samples(data_X, data_Y, num_samples=5):
     fig, axes = plt.subplots(num_samples, 2, figsize=(10, 2*num_samples))
@@ -20,7 +35,7 @@ def visualize_samples(data_X, data_Y, num_samples=5):
     plt.tight_layout()
     plt.show()
 
-def test(model, dataloader, criterion, device):
+def test(model, dataloader, args, epoch, device, save=False):
     model.eval()
     label_losses = {name: 0.0 for name in dataloader.dataset.Yname}  # Initialize losses for each Yname
     label_fail = {name: 0.0 for name in dataloader.dataset.Yname}  # Initialize losses for each Yname
@@ -53,8 +68,14 @@ def test(model, dataloader, criterion, device):
         else:
             label_losses[name] /= label_counts[name]
             label_fail[name] /= label_counts[name]
-    
-    # Return total loss averaged and losses per Yname
+    if save:
+        df = pd.DataFrame({
+            'Label': list(label_losses.keys()),
+            'Loss': list(label_losses.values()),
+            'Error': list(label_fail.values())
+        })
+        df.to_excel(f"{args.log_dir}/{args.exp}/test_results_epoch_{epoch}.xlsx", index=False)
+
     return label_losses, label_fail
 
 def save_checkpoint(state, filename='checkpoint.pth.tar'):
@@ -67,6 +88,7 @@ def load_checkpoint(filename):
 def main(args):
     # Set up logging
     os.makedirs(f'{args.log_dir}/{args.exp}', exist_ok=True)
+    setup_logging(args)
     writer = SummaryWriter(f'{args.log_dir}/{args.exp}')
 
     # parse raw pkl for training
@@ -110,7 +132,7 @@ def main(args):
             optimizer.step()
             writer.add_scalar('Loss/train', loss.item(), epoch * len(train_loader) + i)
 
-        test_label_losses, test_label_error = test(model, test_loader, criterion, args.device)
+        test_label_losses, test_label_error = test(model, test_loader, args, epoch+1, args.device, save=(epoch + 1) % args.save_freq == 0)
         # Log individual label losses
         avg_loss = 0
         num_labels = 0
@@ -132,12 +154,17 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='config/tasks/logic/medium_small_unbalanced.yaml', help='Directory to configure file')
+    parser.add_argument('--config', type=str, default='config/tasks/logic/easy_small_unbalanced.yaml', help='Directory to configure file')
     parser.add_argument('--resume', default=False, help='Resume training from a checkpoint')
     parser.add_argument('--device', type=str, default='cuda:0', help='Device to train on')
     parser.add_argument('--num_workers', type=int, default=16, help='Number of workers for the dataloader')
-    parser.add_argument('--data_path', type=str, default='log/medium_1k_train.pkl', help='Path to the training data')
-    parser.add_argument('--test_data_path', type=str, default='log/medium_100_test.pkl', help='Path to the test data')
+    parser.add_argument('--data_path', type=str, default='log/easy_1k_train.pkl', help='Path to the training data')
+    parser.add_argument('--test_data_path', type=str, default='log/easy_100_test.pkl', help='Path to the test data')
 
     args = parser.parse_args()
+    with open(args.config, 'r') as file:
+        config = yaml.safe_load(file)
+
+    # Update args with config
+    update_args_from_config(args, config)
     main(args)
