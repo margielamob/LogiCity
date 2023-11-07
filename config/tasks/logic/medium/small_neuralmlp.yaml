@@ -1,3 +1,4 @@
+model_type: "Neural_MLP"
 model_path: null
 log_dir: 'log/logic'
 exp: 'medium_small_unbalanced_1'

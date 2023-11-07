@@ -1,8 +1,7 @@
+model_type: "Symbolic_Decision_Tree"
 model_path: null
 log_dir: 'log/logic'
-exp: 'easy_small_unbalanced_1'
-batch_size: 256
-epochs: 200
+exp: 'easy_decision_tree'
 save_freq: 20
 learning_rate: 0.0001
 adjust_dist: False

@@ -3,19 +3,20 @@ from torch.utils.data import Dataset
 from prettytable import PrettyTable
 
 class LogicDataset(Dataset):
-    def __init__(self, dataX, dataY, Xname, Yname, adjust=False):
+    def __init__(self, dataX, dataY, Xname, Yname, logger, adjust=False):
         self.dataX = dataX
         self.dataY = dataY
         self.Yname = Yname  # Store the Yname
+        self.logger = logger
         
         if adjust:
-            self.print_distribution("Before adjustment")
+            self.log_distribution("Before adjustment")
             self.balance_data()
-            self.print_distribution("After adjustment")
+            self.log_distribution("After adjustment")
         else:
-            self.print_distribution("Dataset distribution")
+            self.log_distribution("Dataset distribution")
 
-    def print_distribution(self, message):
+    def log_distribution(self, message):
         unique_rows, counts = np.unique(self.dataY, axis=0, return_counts=True)
 
         # Create a PrettyTable instance
@@ -34,7 +35,8 @@ class LogicDataset(Dataset):
         table.sortby = "Count"
         table.reversesort = True
 
-        print(table)
+        # Log the table using the provided logger
+        self.logger.info(f"\n{table}")
 
     def balance_data(self):
         # Get all unique rows and their counts
