@@ -2,12 +2,10 @@ import os
 import torch
 import pandas as pd
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 from torch import nn, optim
 from torch.utils.data import DataLoader
-from tensorboardX import SummaryWriter
 
-from tasks.logic.models import MLP
+from tasks.logic.neural import MLP
 from tasks.logic.data import LogicDataset
 from tasks.logic.pkl_parser import parse_pkl
 
@@ -66,7 +64,7 @@ def runner(args, logger, writer):
     os.makedirs(f'{args.log_dir}/{args.exp}', exist_ok=True)
 
     # parse raw pkl for training
-    input_sz, output_sz, data_X, data_Y, Xname, Yname = parse_pkl(args.data_path)
+    input_sz, output_sz, data_X, data_Y, Xname, Yname = parse_pkl(args.data_path, logger)
 
     # Load or create model
     if args.resume:

@@ -2,7 +2,7 @@ import pickle
 import torch
 from tqdm import tqdm
 
-def parse_pkl(data_path):
+def parse_pkl(data_path, logger):
     print('Parsing data from {}'.format(data_path))
     with open(data_path, 'rb') as f:
         data = pickle.load(f)
@@ -27,7 +27,7 @@ def parse_pkl(data_path):
     Ys = Ys.mean(dim=-1, keepdim=False)
     input_sz = Xs.shape[1]
     output_sz = Ys.shape[1]
-    print("All logic predicates: {}".format(LNN_predictates))
-    print('Input Logic Pred size: {}'.format(input_sz))
-    print('Output Logic Pred size: {}'.format(output_sz))
+    logger.info("All logic predicates: {}".format(LNN_predictates))
+    logger.info('Input Logic Pred size: {}'.format(input_sz))
+    logger.info('Output Logic Pred size: {}'.format(output_sz))
     return input_sz, output_sz, Xs, Ys, Xs_name, Ys_name
