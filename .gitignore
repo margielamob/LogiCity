@@ -7,5 +7,6 @@ vis/
 vis_city/
 vis_city_uav/
 odom_progress/
+dataset/
 *.log
 *.tar
