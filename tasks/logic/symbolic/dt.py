@@ -12,8 +12,8 @@ class DecisionTreeRunner:
         self.logger = logger
 
     def log_distribution(self, message):
+        # TODO: Log the distribution of both the training and test dataset
         unique_rows, counts = np.unique(self.data_Y, axis=0, return_counts=True)
-
         # Create a PrettyTable instance
         table = PrettyTable()
         # Use Yname for the field names
@@ -47,6 +47,7 @@ class DecisionTreeRunner:
         self.clf.fit(self.data_X_train, data_Y_converted)
     
     def evaluate(self):
+        # TODO: Log the accuracy for each label
         # Make predictions
         predictions = self.clf.predict(self.data_X_test)
         data_Y_converted = np.where(self.data_Y_test == 0.5, 0, 1)
