@@ -55,12 +55,12 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='config/tasks/logic/easy/small_symbolicdt.yaml', help='Directory to configure file')
+    parser.add_argument('--config', type=str, default='config/tasks/logic/medium/small_symbolicdt.yaml', help='Directory to configure file')
     parser.add_argument('--resume', default=False, help='Resume training from a checkpoint')
     parser.add_argument('--device', type=str, default='cuda:0', help='Device to train on')
     parser.add_argument('--num_workers', type=int, default=16, help='Number of workers for the dataloader')
-    parser.add_argument('--data_path', type=str, default='log/easy_1k_train.pkl', help='Path to the training data')
-    parser.add_argument('--test_data_path', type=str, default='log/easy_100_test.pkl', help='Path to the test data')
+    parser.add_argument('--train_data_path', type=str, default='log/medium_1k_train.pkl', help='Path to the training data')
+    parser.add_argument('--test_data_path', type=str, default='log/medium_100_test.pkl', help='Path to the test data')
 
     args = parser.parse_args()
     with open(args.config, 'r') as file:

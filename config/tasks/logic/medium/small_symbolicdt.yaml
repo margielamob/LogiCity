@@ -1,3 +1,3 @@
 model_type: "Symbolic_Decision_Tree"
 log_dir: 'log/logic'
-exp: 'easy_decision_tree'
+exp: 'medium_decision_tree'

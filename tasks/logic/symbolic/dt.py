@@ -8,12 +8,15 @@ class DecisionTreeRunner:
     def __init__(self, data_X_train, data_Y_train, data_X_test, data_Y_test, Yname, logger):
         self.data_X_train = data_X_train
         self.data_Y_train = data_Y_train
+        self.data_X_test = data_X_test
+        self.data_Y_test = data_Y_test
         self.Yname = Yname
         self.logger = logger
+        self.log_distribution("Dataset distribution before training")
 
     def log_distribution(self, message):
         # TODO: Log the distribution of both the training and test dataset
-        unique_rows, counts = np.unique(self.data_Y, axis=0, return_counts=True)
+        unique_rows, counts = np.unique(self.data_Y_train, axis=0, return_counts=True)
         # Create a PrettyTable instance
         table = PrettyTable()
         # Use Yname for the field names
@@ -31,12 +34,29 @@ class DecisionTreeRunner:
         table.reversesort = True
 
         # Log the table using the provided logger
-        self.logger.info(f"\n{table}")
+        self.logger.info(f"Training Dist\n{table}")
+
+        unique_rows, counts = np.unique(self.data_Y_test, axis=0, return_counts=True)
+        # Create a PrettyTable instance
+        table = PrettyTable()
+        # Use Yname for the field names
+        table.field_names = self.Yname + ["Count"]
+        table.title = message
+
+        # Populate the table with data
+        for row, count in zip(unique_rows, counts):
+            # Convert row to labels using Yname
+            label_row = [self.Yname[i] if x == 1 else "UNKNOWN" for i, x in enumerate(row)]
+            table.add_row(label_row + [count])
+
+        # Sort the table by the 'Count' column
+        table.sortby = "Count"
+        table.reversesort = True
+
+        # Log the table using the provided logger
+        self.logger.info(f"Test Dist\n{table}")
 
     def run(self):
-        # Log the distribution of the dataset
-        self.log_distribution("Dataset distribution before training")
-
         # Convert the 0.5 in data_Y to 0 to indicate 'UNKNOWN'/'FALSE'
         data_Y_converted = np.where(self.data_Y_train == 0.5, 0, 1)
 
@@ -47,7 +67,6 @@ class DecisionTreeRunner:
         self.clf.fit(self.data_X_train, data_Y_converted)
     
     def evaluate(self):
-        # TODO: Log the accuracy for each label
         # Make predictions
         predictions = self.clf.predict(self.data_X_test)
         data_Y_converted = np.where(self.data_Y_test == 0.5, 0, 1)

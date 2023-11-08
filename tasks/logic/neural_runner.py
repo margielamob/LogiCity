@@ -60,7 +60,6 @@ def load_checkpoint(filename):
     return checkpoint
 
 def runner(args, logger, writer):
-    # TODO: wrapper for training and testing similar to symbolic runner
     # Set up logging
     os.makedirs(f'{args.log_dir}/{args.exp}', exist_ok=True)
 
