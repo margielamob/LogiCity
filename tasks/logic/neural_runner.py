@@ -1,56 +1,42 @@
 import os
 import torch
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from torch import nn, optim
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
+from sklearn.metrics import accuracy_score, classification_report
 
 from tasks.logic.neural import MLP
 from tasks.logic.data import LogicDataset
 from tasks.logic.pkl_parser import parse_pkl
 
-def test(model, dataloader, args, epoch, device, save=False):
+def test(model, dataloader, args, epoch, device, Yname, save=False):
     model.eval()
-    label_losses = {name: 0.0 for name in dataloader.dataset.Yname}  # Initialize losses for each Yname
-    label_fail = {name: 0.0 for name in dataloader.dataset.Yname}  # Initialize losses for each Yname
-    
-    # To store the number of times each label was encountered
-    label_counts = {name: 0 for name in dataloader.dataset.Yname}
-    
     with torch.no_grad():
+        outputs = []
+        Ys = []
         for inputs, labels in dataloader:
-            outputs = model(inputs.to(device))
-            outputs_label = outputs.argmax(dim=1)
-            labels_pos = labels.argmax(dim=1)
-            # Calculate loss for each label
-            for i, name in enumerate(dataloader.dataset.Yname):
-                ids = (labels[:, i] == 1.0).nonzero()
-                if ids.shape[0]>0:
-                # Note: this assumes that the model's output and the labels are structured
-                # such that each column corresponds to the label represented by Yname[i]
-                    sum_label_loss = torch.abs(outputs[ids, i] - labels.to(device)[ids, i]).sum().item()
-                    sum_fail = (outputs_label[ids] != labels_pos.to(device)[ids]).sum().item()
-                    label_losses[name] += sum_label_loss
-                    label_counts[name] += ids.shape[0]
-                    label_fail[name] += sum_fail
-    
+            output = model(inputs.to(device))
+            outputs.append(output)
+            Ys.append(labels)
+        outputs = torch.cat(outputs, dim=0)
+        Ys = torch.cat(Ys, dim=0)
     # Average the loss for each label
-    for name in label_losses:
-        if label_counts[name] == 0:
-            label_losses[name] = -1.0
-            label_fail[name] = -1.0
-        else:
-            label_losses[name] /= label_counts[name]
-            label_fail[name] /= label_counts[name]
-    if save:
-        df = pd.DataFrame({
-            'Label': list(label_losses.keys()),
-            'Loss': list(label_losses.values()),
-            'Error': list(label_fail.values())
-        })
-        df.to_excel(f"{args.log_dir}/{args.exp}/test_results_epoch_{epoch}.xlsx", index=False)
+    data_Y_converted = np.where(Ys == 0.5, 0, 1)
+    # Get the indices of the max probabilities
+    max_indices = torch.argmax(outputs, dim=1)
 
-    return label_losses, label_fail
+    # Convert to one-hot encoded tensor
+    predictions = F.one_hot(max_indices, num_classes=outputs.shape[1]).cpu().numpy()
+    accuracy = accuracy_score(data_Y_converted, predictions)
+    report_dict = classification_report(data_Y_converted, predictions, target_names=Yname, output_dict=True)
+    if save:
+        report_df = pd.DataFrame(report_dict).transpose()
+        report_df.to_excel(f"{args.log_dir}/{args.exp}/test_results_epoch_{epoch}.xlsx", index=True)
+
+    return accuracy, report_dict
 
 def save_checkpoint(state, filename='checkpoint.pth.tar'):
     torch.save(state, filename)
@@ -63,8 +49,15 @@ def runner(args, logger, writer):
     # Set up logging
     os.makedirs(f'{args.log_dir}/{args.exp}', exist_ok=True)
 
+    # Load training data
     # parse raw pkl for training
-    input_sz, output_sz, data_X, data_Y, Xname, Yname = parse_pkl(args.data_path, logger)
+    input_sz, output_sz, data_X, data_Y, Xname, Yname = parse_pkl(args.train_data_path, logger)
+    train_data = LogicDataset(data_X, data_Y, Xname, Yname, logger, args.adjust_dist)
+    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
+    # Load test data
+    _, _, test_data_X, test_data_Y, _, _ = parse_pkl(args.test_data_path, logger)
+    test_data = LogicDataset(test_data_X, test_data_Y, Xname, Yname, logger)
+    test_loader = DataLoader(test_data, batch_size=1, shuffle=False, num_workers=args.num_workers)
 
     # Load or create model
     if args.resume:
@@ -81,14 +74,6 @@ def runner(args, logger, writer):
         model = MLP(input_sz, 128, output_sz).to(args.device)
         optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
         start_epoch = 0
-
-    # Load training data
-    train_data = LogicDataset(data_X, data_Y, Xname, Yname, logger, args.adjust_dist)
-    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
-    # Load test data
-    _, _, test_data_X, test_data_Y, _, _ = parse_pkl(args.test_data_path)
-    test_data = LogicDataset(test_data_X, test_data_Y, Xname, Yname, logger)
-    test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
     
     # Define loss function
     criterion = nn.L1Loss().to(args.device)
@@ -105,21 +90,13 @@ def runner(args, logger, writer):
             loss.backward()
             optimizer.step()
             writer.add_scalar('Loss/train', loss.item(), epoch * len(train_loader) + i)
-
-        test_label_losses, test_label_error = test(model, test_loader, args, epoch+1, args.device, save=(epoch + 1) % args.save_freq == 0)
-        # Log individual label losses
-        avg_loss = 0
-        num_labels = 0
-        avg_error = 0
-        for label, loss in test_label_losses.items():
-            if loss>=0:
-                avg_loss += loss
-                num_labels += 1
-                avg_error += test_label_error[label]
-            writer.add_scalar(f'Loss/test_{label}', loss, epoch)
-            writer.add_scalar(f'Error/test_{label}', test_label_error[label], epoch)
-        logger.info(f'Epoch: {epoch}, Test Loss: {avg_loss/num_labels}, Test Error: {avg_error/num_labels}')
         if (epoch + 1) % args.save_freq == 0:
+            test_accuracy, test_label_acc = test(model, test_loader, args, epoch+1, args.device, Yname, save=epoch==args.epochs-1)
+            # Log individual label losses
+            writer.add_scalar(f'Loss/test_acc', test_accuracy, epoch)
+            for label, acc in test_label_acc.items():
+                writer.add_scalar(f'Error/test_{label}', acc['precision'], epoch)
+            logger.info(f'Epoch: {epoch}, Test Acc: {test_accuracy}')
             save_checkpoint({
                 'epoch': epoch + 1,
                 'state_dict': model.state_dict(),

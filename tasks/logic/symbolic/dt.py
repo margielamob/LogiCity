@@ -1,7 +1,7 @@
 import numpy as np
+import pandas as pd
 from prettytable import PrettyTable
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.metrics import accuracy_score, classification_report
 
 class DecisionTreeRunner:
@@ -15,7 +15,6 @@ class DecisionTreeRunner:
         self.log_distribution("Dataset distribution before training")
 
     def log_distribution(self, message):
-        # TODO: Log the distribution of both the training and test dataset
         unique_rows, counts = np.unique(self.data_Y_train, axis=0, return_counts=True)
         # Create a PrettyTable instance
         table = PrettyTable()
@@ -73,4 +72,7 @@ class DecisionTreeRunner:
         # Calculate accuracy
         accuracy = accuracy_score(data_Y_converted, predictions)
         self.logger.info(f"Accuracy: {accuracy}")
-        self.logger.info(classification_report(data_Y_converted, predictions, target_names=self.Yname))
+        report_dict = classification_report(data_Y_converted, predictions, target_names=self.Yname, output_dict=True)    
+        # Convert the classification report dictionary to a DataFrame
+        report_df = pd.DataFrame(report_dict).transpose()
+        return report_df

@@ -1,7 +1,7 @@
 model_type: "Neural_MLP"
-model_path: null
+model_path: "log/logic/easy_neural_mlp/checkpoint_179.pth.tar"
 log_dir: 'log/logic'
-exp: 'easy_small_unbalanced_1'
+exp: 'easy_neural_mlp'
 batch_size: 256
 epochs: 200
 save_freq: 20

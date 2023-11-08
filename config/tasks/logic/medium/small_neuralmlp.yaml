@@ -1,7 +1,7 @@
 model_type: "Neural_MLP"
 model_path: null
 log_dir: 'log/logic'
-exp: 'medium_small_unbalanced_1'
+exp: 'medium_neural_mlp'
 batch_size: 256
 epochs: 200
 save_freq: 20

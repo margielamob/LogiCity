@@ -9,4 +9,5 @@ def runner(args, logger, writer):
 
     dt_runner = DecisionTreeRunner(data_X_train, data_Y_train, data_X_test, data_Y_test, Yname, logger)
     dt_runner.run()
-    dt_runner.evaluate()
+    report = dt_runner.evaluate()
+    report.to_excel(f"{args.log_dir}/{args.exp}/classification_report.xlsx", index=True)
