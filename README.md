@@ -90,5 +90,7 @@ Let Bowen know if you opened a new branch.
   is the main and protected branch, it now supports two kind of rule-based simulation. please make sure you pull a request before modifying anything on this branch.
 - `logiNN`
   is the dev branch for Bowen. He is developing partially-observable supervised navigator and learning logic reasoning.
+- `PSC`
+  is the data collection branch for Bowen. It is used to collect a 42 agent simulation data on Pittsburgh Super Computing (PSC) Center.
 - `marl`
   is the dev branch for Haohong. He is developing fully observable RL-based navigator.
