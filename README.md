@@ -25,9 +25,9 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
   ```
 - Using docker
   ```shell
-  docker pull bowenli1024/logicity:v1
-  docker run bowenli1024/logicity:v1
-  # you may need to re-build the lnn lib
+  docker pull bowenli1024/logicity:v3
+  docker run bowenli1024/logicity:v3
+  # you may need to re-build the lnn/satnet lib
   pip install -r requirements.txt
   ```
 
@@ -60,7 +60,7 @@ Some important arguments:
 Training different algorithm to fit the Logic in the sim.
 
 ```shell
-# easy mode
+# see the config/tasks/logic configure files for easy/medium mode with Decision Tree, MLP, or SATNet.
 python3 logic_main.py
 ```
 
