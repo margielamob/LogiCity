@@ -7,20 +7,23 @@ from tqdm import tqdm
 from core.config import *
 from tools.pkl2city import PATH_DICT, SCALE, ICON_SIZE_DICT, resize_with_aspect_ratio, gridmap2img_static
 
-def parse_pkl(data_path, logger, fov=112, training_ratio=0.95, 
+np.random.seed(0)
+
+def parse_pkl(data_path, logger, fov=224, training_ratio=0.95, 
               all_parsed='dataset/nav/parsed_pkls/parsed_all_lonelyped_20k.pkl',
               img_path='dataset/nav/images/global_img.png'):
-    # TODO: parse raw pkl for all data and return train/test data
     train_data = {
         'traj': [],
         'centers': [],
-        'goals': [],
+        'local_goals': [],
+        'final_goals': [],
         'labels': []
     }
     test_data = {
         'traj': [],
         'centers': [],
-        'goals': [],
+        'local_goals': [],
+        'final_goals': [],
         'labels': []
     }
     logger.info('Parsing data from {}'.format(data_path))
@@ -120,7 +123,7 @@ def parse_pkl(data_path, logger, fov=112, training_ratio=0.95,
                 if len(path[0])> 0:
                     for i in range(len(path[0])):
                         distance = np.linalg.norm(np.array([path[0][i], path[1][i]]) - center)
-                        if (np.abs(path[0][i] - center[0]) > fov) or (np.abs(path[1][i] - center[1]) > fov):
+                        if (np.abs(path[0][i] - center[0]) > fov//2) or (np.abs(path[1][i] - center[1]) > fov//2):
                             continue
                         elif distance > max_dis:
                             max_dis = distance
@@ -162,19 +165,21 @@ def parse_pkl(data_path, logger, fov=112, training_ratio=0.95,
             if traj_id not in train_data["traj"]:
                 train_data["traj"].append(traj_id)
             train_data["centers"].append(all_centers[i])
-            train_data["goals"].append(all_goals[i])
+            train_data["local_goals"].append(all_goals[i])
+            train_data["final_goals"].append(all_final_goals[i])
             train_data["labels"].append(all_labels[i])
-            assert all_centers[i]["traj_id"] == all_goals[i]["traj_id"] == all_labels[i]["traj_id"]
-            assert all_centers[i]["step"] == all_goals[i]["step"] == all_labels[i]["step"]
+            assert all_centers[i]["traj_id"] == all_goals[i]["traj_id"] == all_labels[i]["traj_id"] == all_final_goals[i]["traj_id"]
+            assert all_centers[i]["step"] == all_goals[i]["step"] == all_labels[i]["step"] == all_final_goals[i]["step"]
         else:
             assert traj_id in test_traj_ids
             if traj_id not in test_data["traj"]:
                 test_data["traj"].append(traj_id)
             test_data["centers"].append(all_centers[i])
-            test_data["goals"].append(all_final_goals[i])
+            test_data["local_goals"].append(all_goals[i])
+            test_data["final_goals"].append(all_final_goals[i])
             test_data["labels"].append(all_labels[i])
-            assert all_centers[i]["traj_id"] == all_final_goals[i]["traj_id"] == all_labels[i]["traj_id"]
-            assert all_centers[i]["step"] == all_final_goals[i]["step"] == all_labels[i]["step"]
+            assert all_centers[i]["traj_id"] == all_goals[i]["traj_id"] == all_labels[i]["traj_id"] == all_final_goals[i]["traj_id"]
+            assert all_centers[i]["step"] == all_goals[i]["step"] == all_labels[i]["step"] == all_final_goals[i]["step"]
     logger.info('Done!')
     logger.info('Train data size: {} traj, {} steps'.format(len(train_data["traj"]), len(train_data["labels"])))
     logger.info('Test data size: {} traj, {} steps'.format(len(test_data["traj"]), len(test_data["labels"])))
@@ -207,19 +212,36 @@ def visualize_traj(static_map, data, traj_id, fov=224, folder='debug_traj'):
         label = traj_labels[i]["action"]
         print("step: {}, center: {}, goal: {}, label: {}".format(traj_centers[i]["step"], center, goal, label))
         static_map[center[0]:center[0]+4, center[1]:center[1]+4] = np.array([0, 110, 255])
-        # Calculate the region of the city image that falls within the FOV
-        x_start = max(center[0] - fov//2, 0)
-        y_start = max(center[1] - fov//2, 0)
-        x_end = min(center[0] + fov//2, static_map.shape[0])
-        y_end = min(center[1] + fov//2, static_map.shape[1])
-
-        # Calculate where this region should be placed in the fov_img
-        new_x_start = max(fov//2 - center[0], 0)
-        new_y_start = max(fov//2 - center[1], 0)
-        new_x_end = new_x_start + (x_end - x_start)
-        new_y_end = new_y_start + (y_end - y_start)
         static_map[goal[0]:goal[0]+4, goal[1]:goal[1]+4] = np.array([255, 110, 0])
-        fov_img[new_x_start:new_x_end, new_y_start:new_y_end] = static_map[x_start:x_end, y_start:y_end]
+        fov_img = get_fov(static_map, center, fov)
         cv2.imwrite("{}/global_{}.png".format(folder, traj_centers[i]["step"]), static_map)
         cv2.imwrite("{}/fov_{}.png".format(folder, traj_centers[i]["step"]), fov_img)
 
+def get_fov(global_img, center, fov):
+    fov_img = np.ones((fov, fov, 3), dtype=np.uint8) * 255
+    # Calculate the region of the city image that falls within the FOV
+    x_start = max(center[0] - fov//2, 0)
+    y_start = max(center[1] - fov//2, 0)
+    x_end = min(center[0] + fov//2, global_img.shape[0])
+    y_end = min(center[1] + fov//2, global_img.shape[1])
+
+    # Calculate where this region should be placed in the fov_img
+    new_x_start = max(fov//2 - center[0], 0)
+    new_y_start = max(fov//2 - center[1], 0)
+    new_x_end = new_x_start + (x_end - x_start)
+    new_y_end = new_y_start + (y_end - y_start)
+    fov_img[new_x_start:new_x_end, new_y_start:new_y_end] = global_img[x_start:x_end, y_start:y_end]
+    return fov_img
+
+def move(curr_center, action):
+    # see agents/pedestrian.py, line 29
+    if action == 0:
+        return np.array([curr_center[0], curr_center[1] - 1*SCALE])
+    elif action == 1:
+        return np.array([curr_center[0], curr_center[1] + 1*SCALE])
+    elif action == 2:
+        return np.array([curr_center[0] - 1*SCALE, curr_center[1]])
+    elif action == 3:
+        return np.array([curr_center[0] + 1*SCALE, curr_center[1]])
+    elif action == 4:
+        return np.array([curr_center[0], curr_center[1]])

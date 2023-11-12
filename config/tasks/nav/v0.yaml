@@ -6,7 +6,7 @@ model_path: null
 log_dir: 'log/nav'
 exp: 'ped_nav'
 batch_size: 32
-epochs: 200
+epochs: 10
 save_freq: 1
 learning_rate: 0.001
 backbone_lr: 0.0
