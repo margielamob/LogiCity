@@ -8,5 +8,8 @@ vis_city/
 vis_city_uav/
 odom_progress/
 dataset/
+models/
+debug_traj/
 *.log
 *.tar
+*.pkl

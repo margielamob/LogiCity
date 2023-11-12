@@ -84,7 +84,7 @@ class CityLoader:
             city.add_agent(agent)
             agent_name = "{}_{}".format(agent.type, agent.layer_id)
             cached_observation["Static Info"]["Agents"][agent_name] = {
-                "id": agent.layer_id,
+                "layer_id": agent.layer_id,
                 "type": agent.type,
                 "size": agent.size,
                 "concepts": agent.concepts
