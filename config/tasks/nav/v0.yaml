@@ -1,0 +1,15 @@
+model_type: "NavNet"
+backbone: "resnet50"
+pos_hidden: 128
+decoder_hidden: 512
+model_path: null
+log_dir: 'log/nav'
+exp: 'ped_nav'
+batch_size: 32
+epochs: 10
+save_freq: 1
+learning_rate: 0.001
+backbone_lr: 0.0
+weight_decay: 0.0001
+momentum: 0.9
+optimizer: "adam"
