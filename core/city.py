@@ -40,7 +40,7 @@ class City:
         # first do local planning based on city rules
         agent_action_dist = self.local_planner.plan(self.city_grid, self.intersection_matrix, self.agents)
         pred_grounds = self.local_planner.get_current_lnn_state(self.logic_grounds, self.agents)
-        current_obs["LNN_state"] = pred_grounds
+        current_obs["LNN_state"] = pred_grounds.clone().detach()
         # Then do global action taking acording to the local planning results
         for agent in self.agents:
             # re-initialized agents may update city matrix as well

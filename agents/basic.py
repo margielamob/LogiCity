@@ -97,6 +97,8 @@ class Agent:
                 step = torch.max(torch.abs(move)).item()
                 if len(torch.all((self.global_traj[next_pos:next_pos+step] == next_point), dim=1).nonzero()) > 0:
                     global_action_dist[self.move_to_action[move]] = 1.0
-        assert not torch.all(del_pos==0)
+        if torch.all(del_pos==0):
+            self.global_traj.pop(next_pos)
+            global_action_dist[-1] = 1.0
         assert not torch.all(global_action_dist==0)
         return global_action_dist

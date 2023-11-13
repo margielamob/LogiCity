@@ -17,6 +17,7 @@ In the end, we hope LogiCity can be used for evaluating cross-community downstre
 This research project and code repo are **ongoing**, please **DO NOT** share with anyone without permission from Bowen.
 
 ## Dependencies
+
 - From scratch
   ```shell
   conda create -n logicity python=3.9
@@ -25,17 +26,26 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
   ```
 - Using docker
   ```shell
-  docker pull bowenli1024/logicity:v1
-  docker run bowenli1024/logicity:v1
-  # you may need to re-build the lnn lib
+  docker pull bowenli1024/logicity:v3
+  docker run bowenli1024/logicity:v3
+  # you may need to re-build the lnn/satnet lib
   pip install -r requirements.txt
   ```
 
-## Running
+## LogiCity Simulation
+
+### Running
+
+Only running the simulation for data collection, the cached data will be saved to a `.pkl` file.
 
 ```shell
-python3 main.py
+# easy mode
+python3 main.py --rules config/rules/LNN/easy/easy_rule.yaml --exp easy
+# medium mode
+python3 main.py --rules config/rules/LNN/medium/medium_rule.yaml --exp medium
 ```
+
+By default, this will run with 42 agents specified in `config/agents/v0.yaml`, you may make any modifications.
 
 Some important arguments:
 
@@ -43,26 +53,56 @@ Some important arguments:
 
 `--debug`: if True, the start and goal point of each agent will be pre-defined in `./utils/sample.py`, function `sample_determine_start_goal()`
 
-## Visualization
+`--max-steps`: Maxium steps of the sim.
+
+`--log_dir`: Directory to save the cached sim.
+
+### Visualization
 
 - Plain color
-
   The plain color images can be saved by setting `args.vis=True`, then you may use this tool to get a .gif file:
-
   ```python3
   python3 tools/img2video.py
   ```
 - Render some carton-style city / UAV field of view
+  ```python3
+  # get the carton-style images
+  python3 pkl2city.py # you can also have more surprising vis by the pkl2city_uav.py
+  # make a video
+  python3 tools/img2video.py # change some file name if necessary
+  ```
 
-  (On going..., may need some coding on `pkl2city.py` and `pkl2city_uav.py`)
+## LogiCity Tasks
+
+LogiCity now supports two tasks: Learning Logic (Induct the decision logic by the concept-action pairs) and Learning Navigation (Learn to take action by the img (local FOV)-action pairs).
+
+### Learning Logic
+
+Training different algorithm to fit the Logic in the sim.
+
+```shell
+# see the config/tasks/logic configure files for easy/medium mode with Decision Tree, MLP, or SATNet.
+python3 logic_main.py
+```
+
+### Learning Navigation
+
+```shell
+# see the config/tasks/nav configure files for the settings like network, training pipeline, etc. Now it by defaults use ResNet50.
+# You may need some dataset from Bowen
+python3 nav_main.py
+```
+
 
 ## Branches
 
 Let Bowen know if you opened a new branch.
 
-- master
-  is the main and protected branch, please make sure you pull a request before modifying anything on this branch.
-- concept
-  is the dev branch for Bowen.
-- marl
-  is the dev branch for Haohong.
+- `master`
+  is the main and protected branch, it now supports two kind of rule-based simulation. please make sure you pull a request before modifying anything on this branch.
+- `logiNN`
+  is the dev branch for Bowen. He is developing partially-observable supervised navigator and learning logic reasoning.
+- `PSC`
+  is the data collection branch for Bowen. It is used to collect a 42 agent simulation data on Pittsburgh Super Computing (PSC) Center.
+- `marl`
+  is the dev branch for Haohong. He is developing fully observable RL-based navigator.
