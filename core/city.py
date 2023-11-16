@@ -8,6 +8,7 @@ import torch
 import torch.nn.functional as F
 from core.config import *
 from utils.vis import visualize_intersections
+from utils.find import find_midroad_segments
 
 class City:
     def __init__(self, grid_size, local_planner, rule_file=None):
@@ -109,6 +110,7 @@ class City:
             self.city_grid[STREET_ID][left:(right+1), bottom+TRAFFIC_STREET_WID] = street_code
             self.city_grid[STREET_ID][left-TRAFFIC_STREET_WID, top:(bottom+1)] = street_code
             self.city_grid[STREET_ID][right+TRAFFIC_STREET_WID, top:(bottom+1)] = street_code
+        self.midline_matrix = (self.city_grid[STREET_ID] == street_code)
     
     def add_intersections(self):
         # Extract the 0-th layer of the world matrix
@@ -126,8 +128,37 @@ class City:
             ymin, ymax = min(block_positions[:, 0])-1, max(block_positions[:, 0])+1
             corners[block_id] = [(xmin, ymin), (xmin, ymax), (xmax, ymin), (xmax, ymax)]
 
-        intersection_matrix = np.zeros((2, world_layer.shape[0], world_layer.shape[1]), dtype=bool)
+        intersection_matrix = torch.zeros((3, world_layer.shape[0], world_layer.shape[1]), dtype=bool)
         intersection_line_len = TRAFFIC_STREET_WID + 2*WALKING_STREET_WID - 1
+        # intersection line will also be determined by the mid line
+        midroad_segments = find_midroad_segments(self.midline_matrix)
+        end_lists = []
+        mid_lists = []
+        for segment in midroad_segments:
+            mid_start, mid_end = segment
+            if mid_start[0] == mid_end[0]:
+                assert mid_end[1] > mid_start[1]
+                # horizonal mid line
+                bottom_e = mid_end + torch.tensor([1, 1])
+                mid_lists.append(mid_end + torch.tensor([0, 1]))
+                end_lists.append(bottom_e)
+                top_e = mid_start + torch.tensor([-1, -1])
+                end_lists.append(top_e)
+                mid_lists.append(mid_start + torch.tensor([0, -1]))
+            elif mid_start[1] == mid_end[1]:
+                assert mid_end[0] > mid_start[0]
+                # vertical mid line
+                left_e = mid_end + torch.tensor([1, -1])
+                mid_lists.append(mid_end + torch.tensor([1, 0]))
+                end_lists.append(left_e)
+                right_e = mid_start + torch.tensor([-1, 1])
+                mid_lists.append(mid_start + torch.tensor([-1, 0]))
+                end_lists.append(right_e)
+                
+        end_lists = torch.stack(end_lists, dim=0)
+        mid_lists = torch.stack(mid_lists, dim=0)
+        mid_x, mid_y = mid_lists.t()
+        end_x, end_y = end_lists.t()
         for block_id, block_corners in corners.items():
             for other_block_id, other_block_corners in corners.items():
                 if block_id != other_block_id:
@@ -135,9 +166,22 @@ class City:
                         for other_corner in other_block_corners:
                             corner_dis = np.linalg.norm(np.array(corner) - np.array(other_corner))
                             if corner_dis == intersection_line_len:
+                                local_line = torch.zeros_like(intersection_matrix[0])
                                 rr, cc = line(corner[0], corner[1], other_corner[0], other_corner[1])
-                                # first layer is for check "At intersection, they are lines"
-                                intersection_matrix[0, rr, cc] = True
+                                # still need to track the complete intersection
+                                intersection_matrix[2, rr, cc] = True
+                                # first layer is for check "At intersection, they are lines that about to **enter** an intersection"
+                                local_line[rr, cc] = True
+                                local_line[mid_x, mid_y] = False
+                                labeled_local_line, num_line = label(local_line.numpy())
+                                assert num_line == 2
+                                labeled_local_line = torch.from_numpy(labeled_local_line)
+                                if torch.any(labeled_local_line[end_x, end_y]==1):
+                                    assert torch.all(labeled_local_line[end_x, end_y]!=2)
+                                    intersection_matrix[0, labeled_local_line==1] = True
+                                else:
+                                    assert torch.all(labeled_local_line[end_x, end_y]!=1)
+                                    intersection_matrix[0, labeled_local_line==2] = True
                             elif corner_dis > 1.4*intersection_line_len and corner_dis < 1.5*intersection_line_len:
                                 # second layer is for check "In intersection, they are blocks"
                                 rr, cc = line(corner[0], corner[1], other_corner[0], other_corner[1])
@@ -145,13 +189,13 @@ class City:
                                 assert rr.max()!=rr.min() and cc.max()!=cc.min()
                                 intersection_matrix[1, rr.min():rr.max(), cc.min():cc.max()] = True
                                 
-
         # Label connected regions in the intersection matrix
         labeled_matrix_line, num_line = label(intersection_matrix[0])
         assert num_line == NUM_INTERSECTIONS_LINES, "Number of intersection lines is not {}".format(NUM_INTERSECTIONS_LINES)
         labeled_matrix_block, num_block = label(intersection_matrix[1])
         assert num_block == NUM_INTERSECTIONS_BLOCKS, "Number of intersection blocks is not {}".format(NUM_INTERSECTIONS_BLOCKS)
-        intersection_matrix = np.array([labeled_matrix_line, labeled_matrix_block])
+        labeled_matrix_square, _ = label(intersection_matrix[2])
+        intersection_matrix = np.array([labeled_matrix_line, labeled_matrix_block, labeled_matrix_square])
         self.intersection_matrix = torch.tensor(intersection_matrix)
         # exclusion_radius = 2*AT_INTERSECTION_E+1
         # self.intersection_matrix = F.max_pool2d(intersection_matrix[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2)

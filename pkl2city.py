@@ -262,7 +262,7 @@ def main():
             resized_img = resize_with_aspect_ratio(raw_img, ICON_SIZE_DICT[key])
             icon_dict[key] = resized_img
 
-    with open("log/easy_1k.pkl", "rb") as f:
+    with open("log/med_2k_vis.pkl", "rb") as f:
         data = pkl.load(f)
         obs = data["Time_Obs"]
         agents = data["Static Info"]["Agents"]
@@ -275,7 +275,7 @@ def main():
         grid = obs[key]["World"].numpy()
         grid_ = obs[key+1]["World"].numpy()
         img, last_icons = gridmap2img_agents(grid, grid_, icon_dict, static_map, last_icons, agents)
-        cv2.imwrite("vis_city/{}.png".format(key), img)
+        cv2.imwrite("vis_city/step_{}.png".format(key), img)
     cv2.destroyAllWindows()
 
     return

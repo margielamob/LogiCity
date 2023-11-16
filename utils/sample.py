@@ -63,7 +63,7 @@ def sample_determine_start_goal(agent_type, id):
     p1_g_x = p1_s_x + WALKING_STREET_LENGTH + TRAFFIC_STREET_WID*2
     p1_g_y = p1_s_y + TRAFFIC_STREET_WID + WALKING_STREET_WID
     # Vehicles
-    c1_s_x = TRAFFIC_STREET_WID + WALKING_STREET_WID + 1
+    c1_s_x = TRAFFIC_STREET_WID + WALKING_STREET_WID + 11
     c1_s_y = TRAFFIC_STREET_WID+3*WALKING_STREET_WID+2*BUILDING_SIZE+2
     c1_g_x = c1_s_x + WALKING_STREET_LENGTH + TRAFFIC_STREET_WID*3
     c1_g_y = c1_s_y
