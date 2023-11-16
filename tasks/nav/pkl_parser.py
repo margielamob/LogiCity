@@ -1,5 +1,6 @@
 import os
 import cv2
+import glob
 import torch
 import pickle
 import numpy as np
@@ -26,7 +27,13 @@ def parse_pkl(data_path, logger, fov=224, training_ratio=0.95,
         'final_goals': [],
         'labels': []
     }
-    logger.info('Parsing data from {}'.format(data_path))
+    # Get the directory from the data_path
+    directory = os.path.dirname(data_path)
+
+    # List all the .pkl files in the directory that match the pattern 'lonely_ped_20k_*.pkl'
+    pkl_files = glob.glob(os.path.join(directory, 'lonely_ped_20k_*.pkl'))
+    logger.info('Parsing data from {}'.format(directory))
+    logger.info('Found {} files'.format(len(pkl_files)))
     if not os.path.exists(img_path):
         with open(data_path, 'rb') as f:
             data = pickle.load(f)
@@ -72,78 +79,84 @@ def parse_pkl(data_path, logger, fov=224, training_ratio=0.95,
         traj_id = 0
         local_step = 0
         # start 1, not 0
-        for key in agents.keys():
-            logger.info("Processing agent {}".format(key))
-            agent_info = agents[key]
-            layer_id = agent_info["id"]
-            for key in tqdm(obs.keys()):
-                grid = obs[key]["World"].numpy()
-                agent_layer = grid[layer_id]
-                resized_grid = np.repeat(np.repeat(agent_layer, SCALE, axis=0), SCALE, axis=1)
-                type_label = TYPE_MAP[agent_info["type"]]
-                # new traj?
-                walked = np.where(resized_grid == np.float32(type_label + AGENT_WALKED_PATH_PLUS))
-                start = np.where(resized_grid == np.float32(type_label + AGENT_START_PLUS))
-                goal = np.where(resized_grid == np.float32(type_label + AGENT_GOAL_PLUS))
-                if len(goal[0]) == 0:
-                    # no goal, the agent is "AT" the goal, skip
-                    continue
-                if len(walked[0]) == 0 and len(start[0]) > 0:
-                    # new traj
-                    traj_id += 1
-                    logger.info("New traj: {}".format(traj_id))
-                    all_traj.append(traj_id)
-                    local_step = 0
-                elif len(walked[0]) > 0 and len(start[0]) > 0:
-                    local_step += 1
-                else:
-                    # no start and no walked path, skip
-                    continue
-                # 1. get agent_loc, defined as the left-top corner of the agent
-                agent_loc = np.where(resized_grid == type_label)
-                center = np.array([agent_loc[0].min(), agent_loc[1].min()])
-                assert resized_grid[center[0], center[1]] == type_label
-                all_centers.append({
-                    "traj_id": traj_id,
-                    "step": local_step,
-                    "center": center
-                })
-                # 2. get final_goal_loc, defined as the left-top corner of the goal
-                final_goal_loc = np.where(resized_grid == np.float32(type_label + AGENT_GOAL_PLUS))
-                final_goal = np.array([final_goal_loc[0].min(), final_goal_loc[1].min()])
-                assert (resized_grid[final_goal[0], final_goal[1]] == np.float32(type_label + AGENT_GOAL_PLUS))
-                all_final_goals.append({
-                    "traj_id": traj_id,
-                    "step": local_step,
-                    "goal": final_goal
-                })
-                # 3. get local_goal_loc, defined as the farthest point in the FOV
-                path = np.where(resized_grid == np.float32(type_label + AGENT_GLOBAL_PATH_PLUS))
-                max_dis = 0
-                if len(path[0])> 0:
-                    for i in range(len(path[0])):
-                        distance = np.linalg.norm(np.array([path[0][i], path[1][i]]) - center)
-                        if (np.abs(path[0][i] - center[0]) > fov//2) or (np.abs(path[1][i] - center[1]) > fov//2):
-                            continue
-                        elif distance > max_dis:
-                            max_dis = distance
-                            local_goal = np.array([path[0][i], path[1][i]])
-                    assert resized_grid[local_goal[0], local_goal[1]] == np.float32(type_label + AGENT_GLOBAL_PATH_PLUS)
-                else:
-                    # last step, no path
-                    local_goal = final_goal
-                    assert resized_grid[local_goal[0], local_goal[1]] == np.float32(type_label + AGENT_GOAL_PLUS)
-                all_goals.append({
-                    "traj_id": traj_id,
-                    "step": local_step,
-                    "goal": local_goal
-                })
-                # 4. get local_action
-                all_labels.append({
-                    "traj_id": traj_id,
-                    "step": local_step,
-                    "action": obs[key]['Agent_actions'][layer_id-BASIC_LAYER].numpy()
-                })
+        for pkl_file in tqdm(pkl_files):
+            logger.info('Processing {}'.format(pkl_file))
+            with open(data_path, 'rb') as f:
+                data = pickle.load(f)
+                obs = data["Time_Obs"]
+                agents = data["Static Info"]["Agents"]
+            for key in agents.keys():
+                logger.info("Processing agent {}".format(key))
+                agent_info = agents[key]
+                layer_id = agent_info["id"]
+                for key in tqdm(obs.keys()):
+                    grid = obs[key]["World"].numpy()
+                    agent_layer = grid[layer_id]
+                    resized_grid = np.repeat(np.repeat(agent_layer, SCALE, axis=0), SCALE, axis=1)
+                    type_label = TYPE_MAP[agent_info["type"]]
+                    # new traj?
+                    walked = np.where(resized_grid == np.float32(type_label + AGENT_WALKED_PATH_PLUS))
+                    start = np.where(resized_grid == np.float32(type_label + AGENT_START_PLUS))
+                    goal = np.where(resized_grid == np.float32(type_label + AGENT_GOAL_PLUS))
+                    if len(goal[0]) == 0:
+                        # no goal, the agent is "AT" the goal, skip
+                        continue
+                    if len(walked[0]) == 0 and len(start[0]) > 0:
+                        # new traj
+                        traj_id += 1
+                        logger.info("New traj: {}".format(traj_id))
+                        all_traj.append(traj_id)
+                        local_step = 0
+                    elif len(walked[0]) > 0 and len(start[0]) > 0:
+                        local_step += 1
+                    else:
+                        # no start and no walked path, skip
+                        continue
+                    # 1. get agent_loc, defined as the left-top corner of the agent
+                    agent_loc = np.where(resized_grid == type_label)
+                    center = np.array([agent_loc[0].min(), agent_loc[1].min()])
+                    assert resized_grid[center[0], center[1]] == type_label
+                    all_centers.append({
+                        "traj_id": traj_id,
+                        "step": local_step,
+                        "center": center
+                    })
+                    # 2. get final_goal_loc, defined as the left-top corner of the goal
+                    final_goal_loc = np.where(resized_grid == np.float32(type_label + AGENT_GOAL_PLUS))
+                    final_goal = np.array([final_goal_loc[0].min(), final_goal_loc[1].min()])
+                    assert (resized_grid[final_goal[0], final_goal[1]] == np.float32(type_label + AGENT_GOAL_PLUS))
+                    all_final_goals.append({
+                        "traj_id": traj_id,
+                        "step": local_step,
+                        "goal": final_goal
+                    })
+                    # 3. get local_goal_loc, defined as the farthest point in the FOV
+                    path = np.where(resized_grid == np.float32(type_label + AGENT_GLOBAL_PATH_PLUS))
+                    max_dis = 0
+                    if len(path[0])> 0:
+                        for i in range(len(path[0])):
+                            distance = np.linalg.norm(np.array([path[0][i], path[1][i]]) - center)
+                            if (np.abs(path[0][i] - center[0]) > fov//2) or (np.abs(path[1][i] - center[1]) > fov//2):
+                                continue
+                            elif distance > max_dis:
+                                max_dis = distance
+                                local_goal = np.array([path[0][i], path[1][i]])
+                        assert resized_grid[local_goal[0], local_goal[1]] == np.float32(type_label + AGENT_GLOBAL_PATH_PLUS)
+                    else:
+                        # last step, no path
+                        local_goal = final_goal
+                        assert resized_grid[local_goal[0], local_goal[1]] == np.float32(type_label + AGENT_GOAL_PLUS)
+                    all_goals.append({
+                        "traj_id": traj_id,
+                        "step": local_step,
+                        "goal": local_goal
+                    })
+                    # 4. get local_action
+                    all_labels.append({
+                        "traj_id": traj_id,
+                        "step": local_step,
+                        "action": obs[key]['Agent_actions'][layer_id-BASIC_LAYER].numpy()
+                    })
         # Split train/test
         logger.info('Done!')
         with open(all_parsed, 'wb') as f:
@@ -156,7 +169,7 @@ def parse_pkl(data_path, logger, fov=224, training_ratio=0.95,
             }, f)
     logger.info('3. Splitting train/test...')
     traj_ids = np.unique(all_traj)
-    np.random.shuffle(traj_ids)
+    # np.random.shuffle(traj_ids)
     train_traj_ids = traj_ids[:int(len(traj_ids) * training_ratio)]
     test_traj_ids = traj_ids[int(len(traj_ids) * training_ratio):]
     for i in range(len(all_centers)):

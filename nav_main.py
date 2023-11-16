@@ -48,7 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, default='config/tasks/nav/v0.yaml', help='Directory to configure file')
     parser.add_argument('--resume', default=False, help='Resume training from a checkpoint')
     parser.add_argument('--device', type=str, default='cuda:0', help='Device to train on')
-    parser.add_argument('--num_workers', type=int, default=32, help='Number of workers for the dataloader')
+    parser.add_argument('--num_workers', type=int, default=16, help='Number of workers for the dataloader')
     parser.add_argument('--raw_pkl_path', type=str, default='dataset/nav/raw_pkls/lonely_ped_20k_0.pkl', help='Path to the training data')
     parser.add_argument('--fov', type=int, default=224, help='Field of view of the agent')
 

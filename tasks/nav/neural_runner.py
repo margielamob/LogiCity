@@ -117,7 +117,7 @@ def runner(args, logger, writer):
     os.makedirs(f'{args.log_dir}/{args.exp}', exist_ok=True)
 
     # parse raw pkl for all data
-    train_data, test_data, global_img = parse_pkl(args.raw_pkl_path, logger, args.fov, training_ratio=0.9)
+    train_data, test_data, global_img = parse_pkl(args.raw_pkl_path, logger, args.fov, training_ratio=0.98)
     action_space = train_data["labels"][0]["action"].shape[0]
     # check_traj = np.random.choice(train_data['traj'], 1)[0]
     # visualize_traj(global_img, train_data, check_traj)
