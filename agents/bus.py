@@ -48,7 +48,9 @@ class Bus(Car):
 
     def get_next_action(self, world_state_matrix, local_action_dist):
         # buses never reaches the goal
-        current_occupency = world_state_matrix[BASIC_LAYER:] == world_state_matrix[BASIC_LAYER:].to(torch.int64)
+        occup = world_state_matrix[BASIC_LAYER:]
+        occup[occup==0] += 0.1
+        current_occupency = occup == (occup.to(torch.int64))
         current_occupency = current_occupency.sum(dim=0)
         return self.get_action(local_action_dist, current_occupency), world_state_matrix[self.layer_id]
 

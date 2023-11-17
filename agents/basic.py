@@ -99,9 +99,9 @@ class Agent:
                 # 1. if the next point is on the global traj
                 if len(torch.all((self.global_traj[next_pos:next_pos+step] == next_point), dim=1).nonzero()) > 0:
                     # 2. if the next point is not occupied
-                    if not current_occupency[next_point[0], next_point[1]]:
-                        global_action_dist[self.move_to_action[move]] = 1.0
-        if (global_action_dist==0):
+                    # if not current_occupency[next_point[0], next_point[1]]:
+                    global_action_dist[self.move_to_action[move]] = 1.0
+        if torch.all(global_action_dist==0):
             global_action_dist[-1] = 1.0
             if torch.all(del_pos==0):
                 self.global_traj.pop(next_pos)

@@ -110,9 +110,7 @@ class Pedestrian(Agent):
                     logger.info("{}_{} reached goal! In Debug, it will stop".format(self.type, self.id))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
-                current_occupency = world_state_matrix[BASIC_LAYER:] == world_state_matrix[BASIC_LAYER:].to(torch.int64)
-                current_occupency = current_occupency.sum(dim=0)
-                return self.get_action(local_action_dist, current_occupency), world_state_matrix[self.layer_id]
+                return self.get_action(local_action_dist, None), world_state_matrix[self.layer_id]
         else:
             if self.reach_goal_buffer > 0:
                 self.reach_goal_buffer -= 1
@@ -152,4 +150,4 @@ class Pedestrian(Agent):
                     = TYPE_MAP[self.type] + AGENT_GLOBAL_PATH_PLUS
             world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
 
-            return self.get_action(local_action_dist), world_state_matrix[self.layer_id]
+            return self.get_action(local_action_dist, None), world_state_matrix[self.layer_id]

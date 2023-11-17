@@ -142,7 +142,9 @@ class Car(Agent):
                     logger.info("{}_{} reached goal! In Debug, it will stop".format(self.type, self.id))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
-                current_occupency = world_state_matrix[BASIC_LAYER:] == world_state_matrix[BASIC_LAYER:].to(torch.int64)
+                occup = world_state_matrix[BASIC_LAYER:]
+                occup[occup==0] += 0.1
+                current_occupency = occup == (occup.to(torch.int64))
                 current_occupency = current_occupency.sum(dim=0)
                 return self.get_action(local_action_dist, current_occupency), world_state_matrix[self.layer_id]
         else:
@@ -183,8 +185,12 @@ class Car(Agent):
                 world_state_matrix[self.layer_id][way_points[0], way_points[1]] \
                     = TYPE_MAP[self.type] + AGENT_GLOBAL_PATH_PLUS
             world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
-
-            return self.get_action(local_action_dist), world_state_matrix[self.layer_id]
+            occup = world_state_matrix[BASIC_LAYER:]
+            occup[occup==0] += 0.1
+            # car need to consider other cars
+            current_occupency = occup == (occup.to(torch.int64))
+            current_occupency = current_occupency.sum(dim=0)
+            return self.get_action(local_action_dist, current_occupency), world_state_matrix[self.layer_id]
 
     def get_global_action(self, current_occupency):
         global_action_dist = torch.zeros_like(self.action_space).float()
@@ -205,10 +211,10 @@ class Car(Agent):
                     # 2. if the next point is not occupied
                     if not current_occupency[next_point[0], next_point[1]]:
                         global_action_dist[self.move_to_action[move]] = 1.0
-        if (global_action_dist==0):
+        if torch.all(global_action_dist==0):
             global_action_dist[-1] = 1.0
             if torch.all(del_pos==0):
-                self.global_traj.pop(next_pos)
+                self.global_traj = torch.cat([self.global_traj[:next_pos], self.global_traj[next_pos+1:]], dim=0)
         return global_action_dist
 
     def move_bypass(self, A, B):
