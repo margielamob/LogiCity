@@ -58,7 +58,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='config/tasks/logic/easy/satnet.yaml', help='Directory to configure file')
+    parser.add_argument('--config', type=str, default='config/tasks/logic/easy/satnet_obs_noi_ns.yaml', help='Directory to configure file')
     parser.add_argument('--resume', default=False, help='Resume training from a checkpoint')
     parser.add_argument('--device', type=str, default='cuda:0', help='Device to train on')
     parser.add_argument('--num_workers', type=int, default=16, help='Number of workers for the dataloader')

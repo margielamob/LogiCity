@@ -1,0 +1,11 @@
+model_type: "Neural_MLP"
+model_path: null
+log_dir: 'log/logic'
+exp: 'easy_mlp_ns_1.0'
+batch_size: 256
+epochs: 20
+save_freq: 5
+learning_rate: 0.0001
+train_noise_std: 1.0
+test_noise_std: 1.0
+adjust_dist: False

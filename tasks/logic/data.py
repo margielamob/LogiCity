@@ -4,12 +4,14 @@ from torch.utils.data import Dataset
 from prettytable import PrettyTable
 
 class LogicDataset(Dataset):
-    def __init__(self, dataX, dataY, Xname, Yname, logger, adjust=False):
+    def __init__(self, dataX, dataY, Xname, Yname, logger, noise_std = 0.0):
         self.dataX = dataX
         self.dataY = dataY
         self.Yname = Yname  # Store the Yname
         self.logger = logger
         self.log_distribution("Dataset distribution")
+        self.add_gaussian_noise(noise_std)
+        logger.info(f"Noise std: {noise_std}")
 
     def log_distribution(self, message):
         unique_rows, counts = np.unique(self.dataY, axis=0, return_counts=True)
@@ -32,6 +34,13 @@ class LogicDataset(Dataset):
 
         # Log the table using the provided logger
         self.logger.info(f"\n{table}")
+
+    def add_gaussian_noise(self, std_dev=0.0):
+        # Adding Gaussian noise
+        noise = torch.randn(self.dataX.size()) * std_dev
+        noisy_tensor = self.dataX.to(torch.float32) + noise
+        # Clamping to ensure values are within 0 and 1
+        self.dataX = noisy_tensor.clamp(0, 1)
 
     def __len__(self):
         return self.dataX.shape[0]
