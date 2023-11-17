@@ -8,7 +8,7 @@ def parse_pkl(data_path, logger):
         data = pickle.load(f)
     LNN_predictates = data['Static Info']['Logic']['Predicates']
     all_data = []
-    for i in tqdm(range(1, len(data['Time_Obs']) + 1)):
+    for i in tqdm(range(len(data['Time_Obs']))):
         time_data = data['Time_Obs'][i]["LNN_state"]
         all_data.append(time_data)
     # logic is independent of time or agents

@@ -1,12 +1,12 @@
 model_type: "SATNet"
 model_path: null
 log_dir: 'log/logic'
-exp: 'medium_satnet'
+exp: 'easy_satnet_clean'
 batch_size: 256
-epochs: 50
-save_freq: 10
-m: 40
-aux: 20
+epochs: 10
+save_freq: 5
+m: 20
+aux: 12
 prox_lam: 1e-1
 learning_rate: 0.0001
 adjust_dist: False

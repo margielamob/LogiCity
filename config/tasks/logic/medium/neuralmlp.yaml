@@ -1,9 +1,9 @@
 model_type: "Neural_MLP"
 model_path: null
 log_dir: 'log/logic'
-exp: 'medium_neural_mlp'
+exp: 'medium_mlp_clean'
 batch_size: 256
-epochs: 200
-save_freq: 20
+epochs: 50
+save_freq: 10
 learning_rate: 0.0001
 adjust_dist: False

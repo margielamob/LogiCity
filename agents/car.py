@@ -2,6 +2,7 @@ from .basic import Agent
 import torch
 import torch.nn.functional as F
 from torch.distributions import Categorical
+from utils.gen import gen_occ
 from utils.find import find_nearest_building, find_building_mask
 from utils.sample import sample_start_goal, sample_start_goal_vh, sample_determine_start_goal
 from planners import GPlanner_mapper
@@ -129,8 +130,11 @@ class Car(Agent):
         # Return the indices of the desired locations
         return goal_point
 
-    def get_next_action(self, world_state_matrix, local_action_dist):
-        # for now, just reckless take the global traj
+    def get_next_action(self, world_state_matrix, local_action_dist, occ_map):
+        # Ambulances negelct the collide
+        if "ambulance" in self.concepts.keys():
+            if self.concepts["ambulance"] == 1.0:
+                occ_map = torch.zeros_like(occ_map)
         # reached goal
         if not self.reach_goal:
             if torch.all(self.pos == self.goal):
@@ -142,11 +146,7 @@ class Car(Agent):
                     logger.info("{}_{} reached goal! In Debug, it will stop".format(self.type, self.id))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
-                occup = world_state_matrix[BASIC_LAYER:]
-                occup[occup==0] += 0.1
-                current_occupency = occup == (occup.to(torch.int64))
-                current_occupency = current_occupency.sum(dim=0)
-                return self.get_action(local_action_dist, current_occupency), world_state_matrix[self.layer_id]
+                return self.get_action(local_action_dist, occ_map), world_state_matrix[self.layer_id]
         else:
             if self.reach_goal_buffer > 0:
                 self.reach_goal_buffer -= 1
@@ -185,12 +185,7 @@ class Car(Agent):
                 world_state_matrix[self.layer_id][way_points[0], way_points[1]] \
                     = TYPE_MAP[self.type] + AGENT_GLOBAL_PATH_PLUS
             world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
-            occup = world_state_matrix[BASIC_LAYER:]
-            occup[occup==0] += 0.1
-            # car need to consider other cars
-            current_occupency = occup == (occup.to(torch.int64))
-            current_occupency = current_occupency.sum(dim=0)
-            return self.get_action(local_action_dist, current_occupency), world_state_matrix[self.layer_id]
+            return self.get_action(local_action_dist, occ_map), world_state_matrix[self.layer_id]
 
     def get_global_action(self, current_occupency):
         global_action_dist = torch.zeros_like(self.action_space).float()

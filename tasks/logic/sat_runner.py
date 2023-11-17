@@ -59,7 +59,7 @@ def runner(args, logger, writer):
     # Load test data
     _, _, test_data_X, test_data_Y, _, _ = parse_pkl(args.test_data_path, logger)
     test_data = LogicDatasetSAT(test_data_X, test_data_Y, Xname, Yname, logger)
-    test_loader = DataLoader(test_data, batch_size=1, shuffle=False, num_workers=args.num_workers)
+    test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
     # Load or create model
     if args.resume:
@@ -92,7 +92,7 @@ def runner(args, logger, writer):
             writer.add_scalar('Loss/train', loss.item(), epoch * len(train_loader) + i)
         if (epoch + 1) % args.save_freq == 0:
             logger.info(f'Testing and Saving model at epoch {epoch}')
-            test_accuracy, test_label_acc = test(model, test_loader, args, epoch+1, args.device, Yname, save=epoch==args.epochs-1)
+            test_accuracy, test_label_acc = test(model, test_loader, args, epoch+1, args.device, Yname, save=True)
             # Log individual label losses
             writer.add_scalar(f'Loss/test_acc', test_accuracy, epoch)
             for label, acc in test_label_acc.items():

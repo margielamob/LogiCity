@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from core.config import *
 from utils.vis import visualize_intersections
 from utils.find import find_midroad_segments
+from utils.gen import gen_occ
 
 class City:
     def __init__(self, grid_size, local_planner, rule_file=None):
@@ -43,14 +44,21 @@ class City:
         pred_grounds = self.local_planner.get_current_lnn_state(self.logic_grounds, self.agents)
         current_obs["LNN_state"] = pred_grounds.clone().detach()
         # Then do global action taking acording to the local planning results
+        # get occupancy map
         for agent in self.agents:
             # re-initialized agents may update city matrix as well
             agent_name = "{}_{}".format(agent.type, agent.layer_id)
             empty_action = agent.action_dist.clone()
-            # local reasoning-based action distribution
             local_action_dist = agent_action_dist[agent_name]
+            # get local occupancy map
+            local_world = self.city_grid[:, agent.pos[0]-OCC_CHECK_RANGE//2:agent.pos[0]+OCC_CHECK_RANGE//2, \
+                                            agent.pos[1]-OCC_CHECK_RANGE//2:agent.pos[1]+OCC_CHECK_RANGE//2].clone()
+            local_occ_map = gen_occ(torch.cat([local_world[BASIC_LAYER:agent.layer_id], local_world[agent.layer_id+1:]]))
+            occ_map = torch.zeros_like(self.city_grid[0])
+            occ_map[agent.pos[0]-OCC_CHECK_RANGE//2:agent.pos[0]+OCC_CHECK_RANGE//2, \
+                    agent.pos[1]-OCC_CHECK_RANGE//2:agent.pos[1]+OCC_CHECK_RANGE//2] = local_occ_map
             # global trajectory-based action or sampling from local action distribution
-            local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, local_action_dist)
+            local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, local_action_dist, occ_map)
             # save the current action in the action
             empty_action[local_action] = 1.0
             current_obs["Agent_actions"].append(empty_action)

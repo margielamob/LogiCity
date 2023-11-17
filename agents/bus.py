@@ -46,13 +46,9 @@ class Bus(Car):
             self.global_traj.extend(path[:-1])
         self.global_traj = torch.stack(self.global_traj, dim=0)
 
-    def get_next_action(self, world_state_matrix, local_action_dist):
+    def get_next_action(self, world_state_matrix, local_action_dist, occ_map):
         # buses never reaches the goal
-        occup = world_state_matrix[BASIC_LAYER:]
-        occup[occup==0] += 0.1
-        current_occupency = occup == (occup.to(torch.int64))
-        current_occupency = current_occupency.sum(dim=0)
-        return self.get_action(local_action_dist, current_occupency), world_state_matrix[self.layer_id]
+        return self.get_action(local_action_dist, occ_map), world_state_matrix[self.layer_id]
 
     def move(self, action, ped_layer):
         curr_pos = torch.nonzero((ped_layer==TYPE_MAP[self.type]).float())[0]

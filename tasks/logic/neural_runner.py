@@ -17,7 +17,7 @@ def test(model, dataloader, args, epoch, device, Yname, save=False):
     with torch.no_grad():
         outputs = []
         Ys = []
-        for inputs, labels in dataloader:
+        for inputs, labels in tqdm(dataloader):
             output = model(inputs.to(device))
             outputs.append(output)
             Ys.append(labels)
@@ -57,7 +57,7 @@ def runner(args, logger, writer):
     # Load test data
     _, _, test_data_X, test_data_Y, _, _ = parse_pkl(args.test_data_path, logger)
     test_data = LogicDataset(test_data_X, test_data_Y, Xname, Yname, logger)
-    test_loader = DataLoader(test_data, batch_size=1, shuffle=False, num_workers=args.num_workers)
+    test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
     # Load or create model
     if args.resume:
@@ -80,8 +80,9 @@ def runner(args, logger, writer):
 
     # Training loop
     model.train()
-    for epoch in tqdm(range(start_epoch, args.epochs)):
-        for i, (inputs, labels) in enumerate(train_loader):
+    for epoch in range(start_epoch, args.epochs):
+        logger.info(f'Epoch: {epoch}')
+        for i, (inputs, labels) in tqdm(enumerate(train_loader)):
             inputs = inputs.to(args.device)
             labels = labels.to(args.device)
             optimizer.zero_grad()
@@ -91,11 +92,12 @@ def runner(args, logger, writer):
             optimizer.step()
             writer.add_scalar('Loss/train', loss.item(), epoch * len(train_loader) + i)
         if (epoch + 1) % args.save_freq == 0:
-            test_accuracy, test_label_acc = test(model, test_loader, args, epoch+1, args.device, Yname, save=epoch==args.epochs-1)
+            logger.info(f'Tesing model at epoch {epoch}')
+            test_accuracy, test_label_acc = test(model, test_loader, args, epoch+1, args.device, Yname, save=True)
             # Log individual label losses
-            writer.add_scalar(f'Loss/test_acc', test_accuracy, epoch)
+            writer.add_scalar(f'Acc/test_acc', test_accuracy, epoch)
             for label, acc in test_label_acc.items():
-                writer.add_scalar(f'Error/test_{label}', acc['precision'], epoch)
+                writer.add_scalar(f'Acc/test_{label}', acc['precision'], epoch)
             logger.info(f'Epoch: {epoch}, Test Acc: {test_accuracy}')
             save_checkpoint({
                 'epoch': epoch + 1,

@@ -97,7 +97,7 @@ class Pedestrian(Agent):
         # Return the indices of the desired locations
         return goal_point
 
-    def get_next_action(self, world_state_matrix, local_action_dist):
+    def get_next_action(self, world_state_matrix, local_action_dist, occ_map):
         # for now, just reckless take the global traj
         # reached goal
         if not self.reach_goal:
@@ -110,7 +110,7 @@ class Pedestrian(Agent):
                     logger.info("{}_{} reached goal! In Debug, it will stop".format(self.type, self.id))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
-                return self.get_action(local_action_dist, None), world_state_matrix[self.layer_id]
+                return self.get_action(local_action_dist, occ_map), world_state_matrix[self.layer_id]
         else:
             if self.reach_goal_buffer > 0:
                 self.reach_goal_buffer -= 1
@@ -150,4 +150,4 @@ class Pedestrian(Agent):
                     = TYPE_MAP[self.type] + AGENT_GLOBAL_PATH_PLUS
             world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
 
-            return self.get_action(local_action_dist, None), world_state_matrix[self.layer_id]
+            return self.get_action(local_action_dist, occ_map), world_state_matrix[self.layer_id]
