@@ -1,15 +1,18 @@
 import numpy as np
 import pandas as pd
+import torch
 from prettytable import PrettyTable
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report
 
 class DecisionTreeRunner:
-    def __init__(self, data_X_train, data_Y_train, data_X_test, data_Y_test, Yname, logger):
+    def __init__(self, data_X_train, data_Y_train, data_X_test, data_Y_test, Yname, logger, w_bernoulli=False):
         self.data_X_train = data_X_train
         self.data_Y_train = data_Y_train
         self.data_X_test = data_X_test
         self.data_Y_test = data_Y_test
+        self.add_noise(w_bernoulli)
+        
         self.Yname = Yname
         self.logger = logger
         self.log_distribution("Dataset distribution before training")
@@ -76,3 +79,18 @@ class DecisionTreeRunner:
         # Convert the classification report dictionary to a DataFrame
         report_df = pd.DataFrame(report_dict).transpose()
         return report_df
+
+    def add_noise(self, w_bernoulli=False):
+        if not w_bernoulli:
+            return
+        else:
+            dataX = torch.cat((self.data_X_train, self.data_X_test), dim=0)
+            train_sz = self.data_X_train.shape[0]
+            test_sz = self.data_X_test.shape[0]
+            # Adding uniform noise
+            noise_0 = torch.rand(dataX.size()) * 0.5
+            noise_1 = torch.rand(dataX.size()) * 0.5 + 0.5
+            noisy_tensor = torch.where(dataX == 0, noise_0, noise_1)
+            bernoulli_tensor = torch.bernoulli(noisy_tensor)
+            self.data_X_train = bernoulli_tensor[:train_sz]
+            return

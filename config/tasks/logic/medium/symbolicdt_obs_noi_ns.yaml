@@ -1,4 +1,4 @@
 model_type: "Symbolic_Decision_Tree"
 log_dir: 'log/logic'
-exp: 'medium_dt_clean'
-w_bernoulli: False
+exp: 'medium_dt_obs_noi_ns_train_only'
+w_bernoulli: True

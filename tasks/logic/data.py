@@ -4,14 +4,15 @@ from torch.utils.data import Dataset
 from prettytable import PrettyTable
 
 class LogicDataset(Dataset):
-    def __init__(self, dataX, dataY, Xname, Yname, logger, noise_std = 0.0):
+    def __init__(self, dataX, dataY, Xname, Yname, logger, test=False, uni_boundary=0.5, w_bernoulli = False):
         self.dataX = dataX
         self.dataY = dataY
         self.Yname = Yname  # Store the Yname
         self.logger = logger
+        self.test = test
         self.log_distribution("Dataset distribution")
-        self.add_gaussian_noise(noise_std)
-        logger.info(f"Noise std: {noise_std}")
+        self.add_noise(uni_boundary, w_bernoulli)
+        logger.info(f"Sample from bernoulli: {w_bernoulli}")
 
     def log_distribution(self, message):
         unique_rows, counts = np.unique(self.dataY, axis=0, return_counts=True)
@@ -35,12 +36,21 @@ class LogicDataset(Dataset):
         # Log the table using the provided logger
         self.logger.info(f"\n{table}")
 
-    def add_gaussian_noise(self, std_dev=0.0):
-        # Adding Gaussian noise
-        noise = torch.randn(self.dataX.size()) * std_dev
-        noisy_tensor = self.dataX.to(torch.float32) + noise
-        # Clamping to ensure values are within 0 and 1
-        self.dataX = noisy_tensor.clamp(0, 1)
+    def add_noise(self, uni_boundary, w_bernoulli=False):
+        # Adding uniform noise
+        noise_0 = torch.rand(self.dataX.size()) * uni_boundary
+        noise_1 = 1 - torch.rand(self.dataX.size()) * uni_boundary
+        noisy_tensor = torch.where(self.dataX == 0, noise_0, noise_1)
+        if not w_bernoulli:
+            self.dataX = noisy_tensor
+            return
+        # Adding bernoulli noise
+        else:
+            if self.test:
+                return
+            bernoulli_tensor = torch.bernoulli(noisy_tensor)
+            self.dataX = bernoulli_tensor
+            return
 
     def __len__(self):
         return self.dataX.shape[0]
@@ -49,8 +59,8 @@ class LogicDataset(Dataset):
         return self.dataX[idx], self.dataY[idx]
 
 class LogicDatasetSAT(LogicDataset):
-    def __init__(self, dataX, dataY, Xname, Yname, logger, adjust=False):
-        super().__init__(dataX, dataY, Xname, Yname, logger, adjust)
+    def __init__(self, dataX, dataY, Xname, Yname, logger, test=False, uni_boundary=0.5, w_bernoulli = False):
+        super().__init__(dataX, dataY, Xname, Yname, logger, test=False, uni_boundary=uni_boundary, w_bernoulli = w_bernoulli)
         self.dataY = torch.tensor(np.where(dataY == 0.5, 0, 1)).float()
         self.input_data = torch.cat((self.dataX, torch.zeros_like(self.dataY)), 1)
         mask_list = [1]*self.dataX.shape[1] + [0]*self.dataY.shape[1]
