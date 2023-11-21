@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, classification_report
 
 import satnet
-from tasks.logic.data import LogicDatasetSAT
+from tasks.logic.neural.data import LogicDatasetSAT
 from tasks.logic.pkl_parser import parse_pkl
 
 def test(model, dataloader, args, epoch, device, Yname, save=False):
@@ -54,11 +54,12 @@ def runner(args, logger, writer):
     # Load training data
     # parse raw pkl for training
     input_sz, output_sz, data_X, data_Y, Xname, Yname = parse_pkl(args.train_data_path, logger)
-    train_data = LogicDatasetSAT(data_X, data_Y, Xname, Yname, logger, False, args.uni_boundary, args.w_bernoulli)
+    input_sz += args.irr_c
+    train_data = LogicDatasetSAT(data_X, data_Y, Xname, Yname, logger, False, args.uni_boundary, args.w_bernoulli, args.irr_c)
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
     # Load test data
     _, _, test_data_X, test_data_Y, _, _ = parse_pkl(args.test_data_path, logger)
-    test_data = LogicDatasetSAT(test_data_X, test_data_Y, Xname, Yname, logger, args.w_bernoulli)
+    test_data = LogicDatasetSAT(test_data_X, test_data_Y, Xname, Yname, logger, True, args.uni_boundary, args.w_bernoulli, args.irr_c)
     test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
     # Load or create model

@@ -4,14 +4,14 @@ from torch.utils.data import Dataset
 from prettytable import PrettyTable
 
 class LogicDataset(Dataset):
-    def __init__(self, dataX, dataY, Xname, Yname, logger, test=False, uni_boundary=0.5, w_bernoulli = False):
+    def __init__(self, dataX, dataY, Xname, Yname, logger, test=False, uni_boundary=0.5, w_bernoulli = False, irr_c=0):
         self.dataX = dataX
         self.dataY = dataY
         self.Yname = Yname  # Store the Yname
         self.logger = logger
         self.test = test
         self.log_distribution("Dataset distribution")
-        self.add_noise(uni_boundary, w_bernoulli)
+        self.add_noise(uni_boundary, w_bernoulli, irr_c)
         logger.info(f"Sample from bernoulli: {w_bernoulli}")
 
     def log_distribution(self, message):
@@ -36,7 +36,12 @@ class LogicDataset(Dataset):
         # Log the table using the provided logger
         self.logger.info(f"\n{table}")
 
-    def add_noise(self, uni_boundary, w_bernoulli=False):
+    def add_noise(self, uni_boundary, w_bernoulli=False, irr_c=0):
+        # Adding irr concepts
+        if irr_c > 0:
+            noise_irr_c = torch.rand((self.dataX.shape[0], irr_c))
+            bernoulli_c = torch.bernoulli(noise_irr_c)
+            self.dataX = torch.cat((self.dataX, bernoulli_c), dim=1)
         # Adding uniform noise
         noise_0 = torch.rand(self.dataX.size()) * uni_boundary
         noise_1 = 1 - torch.rand(self.dataX.size()) * uni_boundary
@@ -59,8 +64,8 @@ class LogicDataset(Dataset):
         return self.dataX[idx], self.dataY[idx]
 
 class LogicDatasetSAT(LogicDataset):
-    def __init__(self, dataX, dataY, Xname, Yname, logger, test=False, uni_boundary=0.5, w_bernoulli = False):
-        super().__init__(dataX, dataY, Xname, Yname, logger, test=False, uni_boundary=uni_boundary, w_bernoulli = w_bernoulli)
+    def __init__(self, dataX, dataY, Xname, Yname, logger, test=False, uni_boundary=0.5, w_bernoulli = False, irr_c=0):
+        super().__init__(dataX, dataY, Xname, Yname, logger, test=False, uni_boundary=uni_boundary, w_bernoulli = w_bernoulli, irr_c=irr_c)
         self.dataY = torch.tensor(np.where(dataY == 0.5, 0, 1)).float()
         self.input_data = torch.cat((self.dataX, torch.zeros_like(self.dataY)), 1)
         mask_list = [1]*self.dataX.shape[1] + [0]*self.dataY.shape[1]

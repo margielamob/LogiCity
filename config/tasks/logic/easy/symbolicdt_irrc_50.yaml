@@ -1,13 +1,8 @@
-model_type: "Neural_MLP"
-model_path: null
+model_type: "Symbolic_Decision_Tree"
 train_data_path: 'dataset/logic/easy_42_11.17/train.pkl'
 test_data_path: 'dataset/logic/easy_42_11.17/test.pkl'
 log_dir: 'log/logic'
-exp: 'easy_mlp_clean'
-batch_size: 256
-epochs: 20
-save_freq: 5
-learning_rate: 0.0001
+exp: 'easy_dt_irrc_1000'
 uni_boundary: 0.0
 w_bernoulli: False
-irr_c: 0
+irr_c: 1000

@@ -6,12 +6,12 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report
 
 class DecisionTreeRunner:
-    def __init__(self, data_X_train, data_Y_train, data_X_test, data_Y_test, Yname, logger, w_bernoulli=False):
+    def __init__(self, data_X_train, data_Y_train, data_X_test, data_Y_test, Yname, logger, uni_boundary=0.5, w_bernoulli=False, irr_c=0):
         self.data_X_train = data_X_train
         self.data_Y_train = data_Y_train
         self.data_X_test = data_X_test
         self.data_Y_test = data_Y_test
-        self.add_noise(w_bernoulli)
+        self.add_noise(uni_boundary, w_bernoulli, irr_c)
         
         self.Yname = Yname
         self.logger = logger
@@ -80,17 +80,23 @@ class DecisionTreeRunner:
         report_df = pd.DataFrame(report_dict).transpose()
         return report_df
 
-    def add_noise(self, w_bernoulli=False):
-        if not w_bernoulli:
-            return
-        else:
-            dataX = torch.cat((self.data_X_train, self.data_X_test), dim=0)
-            train_sz = self.data_X_train.shape[0]
-            test_sz = self.data_X_test.shape[0]
-            # Adding uniform noise
-            noise_0 = torch.rand(dataX.size()) * 0.5
-            noise_1 = torch.rand(dataX.size()) * 0.5 + 0.5
-            noisy_tensor = torch.where(dataX == 0, noise_0, noise_1)
-            bernoulli_tensor = torch.bernoulli(noisy_tensor)
-            self.data_X_train = bernoulli_tensor[:train_sz]
-            return
+    def add_noise(self, uni_boundary, w_bernoulli=False, irr_c=0):
+        dataX = torch.cat((self.data_X_train, self.data_X_test), dim=0)
+        # Adding irr concepts
+        if irr_c > 0:
+            noise_irr_c = torch.rand((dataX.shape[0], irr_c))
+            bernoulli_c = torch.bernoulli(noise_irr_c)
+            dataX = torch.cat((dataX, bernoulli_c), dim=1)
+        train_sz = self.data_X_train.shape[0]
+        test_sz = self.data_X_test.shape[0]
+        # Adding uniform noise
+        noise_0 = torch.rand(dataX.size()) * uni_boundary
+        noise_1 = 1 - torch.rand(dataX.size()) * uni_boundary
+        noisy_tensor = torch.where(dataX == 0, noise_0, noise_1)
+        self.data_X_train = noisy_tensor[:train_sz]
+        self.data_X_test = noisy_tensor[train_sz:]
+        # Adding bernoulli noise
+        if w_bernoulli:
+            bernoulli_tensor = torch.bernoulli(self.data_X_train)
+            self.data_X_train = bernoulli_tensor
+        return

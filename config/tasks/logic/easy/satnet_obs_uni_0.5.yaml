@@ -5,7 +5,7 @@ test_data_path: 'dataset/logic/easy_42_11.17/test.pkl'
 log_dir: 'log/logic'
 exp: 'easy_satnet_uni_0.5'
 batch_size: 256
-epochs: 20
+epochs: 50
 save_freq: 5
 m: 20
 aux: 12
