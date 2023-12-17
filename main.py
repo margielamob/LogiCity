@@ -8,7 +8,6 @@ from core.config import *
 import torch
 import time
 import numpy as np
-
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
 
@@ -21,9 +20,9 @@ def parse_arguments():
     parser.add_argument('--log_dir', type=str, default="./log")
     parser.add_argument('--exp', type=str, default="med_2000")
     parser.add_argument('--vis', type=bool, default=False, help='Visualize the city.')
-    parser.add_argument('--max-steps', type=int, default=2000, help='Maximum number of steps for the simulation.')
+    parser.add_argument('--max-steps', type=int, default=100, help='Maximum number of steps for the simulation.')
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
-    parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
+    parser.add_argument('--debug', type=bool, default=True, help='In debug mode, the agents are in defined positions.')
 
     return parser.parse_args()
 
@@ -33,7 +32,7 @@ def main(args, logger):
     np.random.seed(args.seed)
     # Create a city instance with a predefined grid
     city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, args.debug)
-    visualize_city(city, 4*WORLD_SIZE, -1, "vis/init.png")
+    # visualize_city(city, 4*WORLD_SIZE, -1, "vis/init.png")
 
     # Main simulation loop
     steps = 0
@@ -50,8 +49,8 @@ def main(args, logger):
         cached_observation["Time_Obs"][steps] = time_obs
 
     # Save the cached observation for better rendering
-    with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
-        pkl.dump(cached_observation, f)
+    # with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
+    #     pkl.dump(cached_observation, f)
 
 if __name__ == '__main__':
     args = parse_arguments()
