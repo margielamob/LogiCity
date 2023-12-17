@@ -3,26 +3,36 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from core.config import *
+from utils.find import find_agent
 import logging
 
 logger = logging.getLogger(__name__)
 
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
-def check_is_at_intersection(world, agent_id, agent_type, intersect_matrix, agents):
-    agent_layer = world[agent_id]
-    agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
+def is_at(world_matrix, intersect_matrix, agents, entity1, entity2):
+    # TODO: need to check if the entity x is at entity y
+    # Must be "Agents" at "Intersections"
+    if "Agents" not in entity1:
+        return torch.tensor([0.0, 0.0])
+    if "Intersections" not in entity2:
+        return torch.tensor([0.0, 0.0])
+    agent = find_agent(agents, entity1)
+    agent_layer = world_matrix[agent.layer_id]
+    agent_position = (agent_layer == TYPE_MAP[agent.type]).nonzero()[0]
     # at intersection needs to care if the car is "entering" or "leaving", so use intersect_matrix[0]
-    if agent_type == "Car":
-        if intersect_matrix[0, agent_position[0], agent_position[1]]:
-            return torch.tensor([1.0, 1.0])
-        else:
-            return torch.tensor([0.0, 0.0])
+    if intersect_matrix[0, agent_position[0], agent_position[1]]:
+        return torch.tensor([1.0, 1.0])
     else:
-        if intersect_matrix[2, agent_position[0], agent_position[1]]:
-            return torch.tensor([1.0, 1.0])
-        else:
-            return torch.tensor([0.0, 0.0])
+        return torch.tensor([0.0, 0.0])
+        
+def is_intersection(world, agent_id, agent_type, intersect_matrix, agents):
+    # TODO: need to check if the entity is an intersection
+    return torch.tensor([0.0, 0.0])
+
+def is_inter_carempty(world, agent_id, agent_type, intersect_matrix, agents):
+    # TODO: need to check if the entity is an intersection and there is no car in the intersection
+    return torch.tensor([0.0, 0.0])
 
 def check_is_in_intersection(world, agent_id, agent_type, intersect_matrix, agents):
     agent_layer = world[agent_id]

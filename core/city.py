@@ -130,10 +130,20 @@ class City:
         
         # Find the corners of the blocks
         corners = {}
+        minxmin, minymin = self.grid_size[0], self.grid_size[1]
+        maxxmax, maxymax = 0, 0
         for block_id in unique_blocks:
             block_positions = (world_layer == block_id).nonzero()
             xmin, xmax = min(block_positions[:, 1])-1, max(block_positions[:, 1])+1
             ymin, ymax = min(block_positions[:, 0])-1, max(block_positions[:, 0])+1
+            if xmin < minxmin:
+                minxmin = xmin
+            if ymin < minymin:
+                minymin = ymin
+            if xmax > maxxmax:
+                maxxmax = xmax
+            if ymax > maxymax:
+                maxymax = ymax 
             corners[block_id] = [(xmin, ymin), (xmin, ymax), (xmax, ymin), (xmax, ymax)]
 
         intersection_matrix = torch.zeros((3, world_layer.shape[0], world_layer.shape[1]), dtype=bool)
@@ -176,9 +186,24 @@ class City:
                             if corner_dis == intersection_line_len:
                                 local_line = torch.zeros_like(intersection_matrix[0])
                                 rr, cc = line(corner[0], corner[1], other_corner[0], other_corner[1])
-                                # still need to track the complete intersection
-                                intersection_matrix[2, rr, cc] = True
-                                # first layer is for check "At intersection, they are lines that about to **enter** an intersection"
+                                # Third layer is for check "In intersection, they are blocks", here is for T-junctions
+                                if rr.max()==rr.min():
+                                    if rr.min() == minxmin:
+                                        # T junction
+                                        intersection_matrix[2, 0:rr.min()+1, cc.min():cc.max()+1] = True
+                                    elif rr.max() == maxxmax:
+                                        # T junction
+                                        intersection_matrix[2, rr.max():, cc.min():cc.max()+1] = True
+                                else:
+                                    if cc.min() == minymin:
+                                        # T junction
+                                        intersection_matrix[2, rr.min():rr.max()+1, 0:cc.min()+1] = True
+                                    elif cc.max() == maxymax:
+                                        # T junction
+                                        intersection_matrix[2, rr.min():rr.max()+1, cc.max():] = True
+                                # First and second layer is for check "At intersection, they are lines that about to **enter** an intersection"
+                                # Second layer checks pedestrains, they are allowed to enter the intersection in both directions
+                                # We use the mid line and end points to determine the entrance line
                                 local_line[rr, cc] = True
                                 local_line[mid_x, mid_y] = False
                                 labeled_local_line, num_line = label(local_line.numpy())
@@ -195,19 +220,17 @@ class City:
                                 rr, cc = line(corner[0], corner[1], other_corner[0], other_corner[1])
                                 # Gather the vertices of the polygon
                                 assert rr.max()!=rr.min() and cc.max()!=cc.min()
-                                intersection_matrix[1, rr.min():rr.max(), cc.min():cc.max()] = True
+                                intersection_matrix[2, rr.min():rr.max()+1, cc.min():cc.max()+1] = True
                                 
         # Label connected regions in the intersection matrix
-        labeled_matrix_line, num_line = label(intersection_matrix[0])
+        _, num_line = label(intersection_matrix[0])
         assert num_line == NUM_INTERSECTIONS_LINES, "Number of intersection lines is not {}".format(NUM_INTERSECTIONS_LINES)
         labeled_matrix_block, num_block = label(intersection_matrix[1])
         assert num_block == NUM_INTERSECTIONS_BLOCKS, "Number of intersection blocks is not {}".format(NUM_INTERSECTIONS_BLOCKS)
-        labeled_matrix_square, _ = label(intersection_matrix[2])
-        intersection_matrix = np.array([labeled_matrix_line, labeled_matrix_block, labeled_matrix_square])
+        labeled_matrix_line = intersection_matrix[0].numpy().astype(labeled_matrix_block.dtype) * labeled_matrix_block
+        intersection_matrix = np.array([labeled_matrix_line, labeled_matrix_block])
+        # line and block has the same label
         self.intersection_matrix = torch.tensor(intersection_matrix)
-        # exclusion_radius = 2*AT_INTERSECTION_E+1
-        # self.intersection_matrix = F.max_pool2d(intersection_matrix[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2)
-        # self.intersection_matrix = self.intersection_matrix.squeeze(0).squeeze(0)
 
     def add_agent(self, agent):
         """Add a agents to the city and mark its position on the grid. Label correspons

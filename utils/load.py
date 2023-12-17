@@ -35,6 +35,7 @@ class CityLoader:
                 city_config[keys] = agent_config[keys]
 
         # Create a city instance with the specified grid size
+        logger.info("Get rules info from {}".format(rule_yaml_file))
         city = City(grid_size=(WORLD_SIZE, WORLD_SIZE), local_planner=rule_type, rule_file=rule_yaml_file)
         cached_observation["Static Info"]["Logic"]["Predicates"] = list(city.local_planner.predicates.keys())
         cached_observation["Static Info"]["Logic"]["Rules"] = city.local_planner.data["rules"]

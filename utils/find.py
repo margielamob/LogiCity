@@ -129,3 +129,10 @@ def interpolate_car_path(movable_map, path_on_graph, max_step):
                 interpolated.append(torch.tensor(current_point))
 
     return torch.stack(interpolated, dim=0)
+
+def find_agent(agents, entity_name):
+    _, agent_type, agent_id = entity_name.split("_")
+    for agent in agents:
+        if agent.type == agent_type and agent.layer_id == int(agent_id):
+            return agent
+    return None

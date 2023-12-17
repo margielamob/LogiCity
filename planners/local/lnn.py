@@ -1,6 +1,8 @@
-from lnn import Model, Predicates, Variables, Implies, And, Or, Not, Fact, World, Direction
+from lnn import Model, Predicate, Variables, Implies, And, Or, Not, Exists, Forall, World, Direction
 from yaml import load, FullLoader
+from core.config import *
 import importlib
+import numpy as np
 import torch
 
 class LNNPlanner:
@@ -11,6 +13,8 @@ class LNNPlanner:
         
         self._create_predicates()
         self._create_rules()
+        self.entity_types = self.data["entity"]
+        self.entity_list = []
         
     def _create_predicates(self):
         # Using a dictionary to store the arity as well
@@ -18,7 +22,7 @@ class LNNPlanner:
         for p in self.data["predicates"]:
             predicate, info = list(p.items())[0]
             self.predicates[predicate] = {
-                "instance": Predicates(predicate),
+                "instance": Predicate(predicate, info["arity"]),
                 "method": info["method"],
                 "arity": info["arity"],
                 "description": info["description"]
@@ -31,11 +35,13 @@ class LNNPlanner:
             'And': And,
             'Or': Or,
             'Implies': Implies,
-            'Not': Not
+            'Not': Not,
+            'Exists': Exists,
+            'Forall': Forall
         }
         self.model_list = []
         self.model_preds = []
-        x = Variables('x')  # For demonstration, considering only one variable for now
+        x, y = Variables('x', 'y') # maximum 2 variables for now
         
         for r in self.data["rules"]:
             local_model = Model()
@@ -47,7 +53,7 @@ class LNNPlanner:
                 formula_str = formula_str.replace(predicate, "self.predicates['{}']['instance']".format(str(predicate)))
             
             for key, func in logical_mapping.items():
-                formula_str = formula_str.replace(key, f'{func.__name__}')
+                formula_str = formula_str.replace(key, func.__name__)
             
             rule_instance = eval(formula_str)  # This dynamically evaluates the Python equivalent formula
             # All the rules are considered as axioms for now
@@ -58,32 +64,34 @@ class LNNPlanner:
                 model_pred.append(local_model.nodes[key])
             self.model_preds.append(model_pred)
     
-    # Example method to process world matrix for a specific predicate
-    def add_world_data(self, world_matrix, intersect_matrix, agent_id, agent_type, agents):
-        # Convert the world matrix to the format expected by LNN
+    # Process world matrix to ground the world state predicates
+    def add_world_data(self, world_matrix, intersect_matrix, agents):
+        # Convert the world to predicates, symbolic grounding
         data_dict = {}
-        agent_name = "{}_{}".format(agent_type, agent_id)
-        
+
         for p in self.predicates.keys():
-            data_dict[self.predicates[p]["instance"]] = {}
+            predicate_info = self.predicates[p]
+            arity = predicate_info["arity"]
+            data_dict[predicate_info["instance"]] = {}
 
-            if self.predicates[p]["method"]!='None':
+            method_full_name = predicate_info["method"]
+            module_name, method_name = method_full_name.rsplit('.', 1)
+            module = importlib.import_module(module_name)
+            method = getattr(module, method_name)
 
-                method_full_name = self.predicates[p]["method"]
-                # Split the string to separate module name and method name
-                module_name, method_name = method_full_name.rsplit('.', 1)
+            if arity == 1:
+                # Unary predicate processing
+                for entity in self.entity_list:
+                    values = method(world_matrix, intersect_matrix, entity)
+                    data_dict[predicate_info["instance"]][entity] = values
+            elif arity == 2:
+                # Binary predicate processing
+                for entity1 in self.entity_list:
+                    for entity2 in self.entity_list:
+                        if entity1.id != entity2.id:
+                            values = method(world_matrix, intersect_matrix, entity1, entity2)
+                            data_dict[predicate_info["instance"]][(entity1, entity2)] = values
 
-                # Dynamically import the module
-                module = importlib.import_module(module_name)
-
-                # Get the method from the module
-                method = getattr(module, method_name)
-
-                # Call the method
-                values = method(world_matrix, agent_id, agent_type, intersect_matrix, agents)
-                
-                # Now only supporting one arity
-                data_dict[self.predicates[p]["instance"]][agent_name] = values
         for model in self.model_list:
             model_dict = {}
             for key in data_dict.keys():
@@ -91,22 +99,23 @@ class LNNPlanner:
                     model_dict[key] = data_dict[key]
             model.add_data(model_dict)
 
+
     def plan(self, world_matrix, intersect_matrix, agents):
         for model in self.model_list:
             model.reset_bounds()
         for p in self.predicates.keys():
+            # Flush the data for each predicate
             self.predicates[p]["instance"].flush()
-        agents_actions = {}
-        for agent in agents:
-            # ego id
-            agent_id = agent.layer_id
-            agent_type = agent.type
-            agent_name = "{}_{}".format(agent_type, agent_id)
-            self.add_world_data(world_matrix, intersect_matrix, agent_id, agent_type, agents)
+        # Add the world data to the predicates, this may need enumerate all groundings
+        if len(self.entity_list) == 0:
+            # initialize the entity list
+            self.world2entity(world_matrix, intersect_matrix, agents)
+        self.add_world_data(world_matrix, intersect_matrix, agents)
         for model in self.model_list:
             model.infer(Direction.UPWARD)
             model.infer(Direction.DOWNWARD)
         # use LNN to get the action distribution
+        agents_actions = {}
         for agent in agents:
             agent_id = agent.layer_id
             agent_type = agent.type
@@ -143,3 +152,21 @@ class LNNPlanner:
                 agent_grounding.append(self.predicates[pred]["instance"].get_data(agent_name))
             all_grounding.append(torch.cat(agent_grounding, dim=0))
         return torch.stack(all_grounding, dim=0)
+    
+    def world2entity(self, world_matrix, intersect_matrix, agents):
+        for entity_type in self.entity_types:
+            if entity_type == 'Agents':
+                entity_name = "Agents_{}_{}"
+                for agent in agents:
+                    agent_type = agent.type
+                    # This is layer id, not agent id
+                    agent_id = agent.layer_id
+                    agent_name = entity_name.format(agent_type, agent_id)
+                    self.entity_list.append(agent_name)
+            elif entity_type == 'Intersections':
+                unique_intersections = np.unique(intersect_matrix[0])
+                unique_intersections = unique_intersections[unique_intersections != 0]
+                for i in unique_intersections:
+                    entity_name = "{}_{}".format(entity_type, i)
+                    self.entity_list.append(entity_name)
+                assert len(unique_intersections) == NUM_INTERSECTIONS_BLOCKS
