@@ -39,7 +39,6 @@ def is_intersection(world_matrix, intersect_matrix, agents, entity):
         return torch.tensor([0.0, 0.0])
 
 def is_inter_carempty(world_matrix, intersect_matrix, agents, entity):
-    # TODO: need to check if the entity is an intersection and there is no car in the intersection
     if "Intersections" not in entity:
         return torch.tensor([0.0, 0.0])
     _, inter_id = entity.split("_")

@@ -42,8 +42,6 @@ class City:
         current_world = self.city_grid.clone()
         # first do local planning based on city rules, use the current world state, don't update the city matrix
         agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents)
-        pred_grounds = self.local_planner.get_current_lnn_state(self.logic_grounds, self.agents)
-        current_obs["LNN_state"] = pred_grounds.clone().detach()
         # Then do global action taking acording to the local planning results
         # get occupancy map
         for agent in self.agents:

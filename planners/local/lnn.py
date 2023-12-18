@@ -94,9 +94,8 @@ class LNNPlanner:
                 # Binary predicate processing
                 for entity1 in self.entity_list:
                     for entity2 in self.entity_list:
-                        if entity1 != entity2:
-                            values = method(world_matrix, intersect_matrix, agents, entity1, entity2)
-                            data_dict[predicate_info["instance"]][(entity1, entity2)] = values
+                        values = method(world_matrix, intersect_matrix, agents, entity1, entity2)
+                        data_dict[predicate_info["instance"]][(entity1, entity2)] = values
 
         for model in self.model_list:
             model_dict = {}
@@ -147,16 +146,6 @@ class LNNPlanner:
         value[value==0.5] = 0.0
         value = torch.clip(value.sum(), 0.0, 1.0)
         return value
-
-    def get_current_lnn_state(self, logic_groundings, agents):
-        all_grounding = []
-        for agent in agents:
-            agent_name = "{}_{}".format(agent.type, agent.layer_id)
-            agent_grounding = []
-            for pred in logic_groundings.keys():
-                agent_grounding.append(self.predicates[pred]["instance"].get_data(agent_name))
-            all_grounding.append(torch.cat(agent_grounding, dim=0))
-        return torch.stack(all_grounding, dim=0)
     
     def world2entity(self, world_matrix, intersect_matrix, agents):
         for entity_type in self.entity_types:

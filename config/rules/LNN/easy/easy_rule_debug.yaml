@@ -30,8 +30,8 @@ predicates:
 
 rules:
   - Pedestrian_Stop:
-      formula: Forall(x, Exists(y, Implies(And(IsPedestrian(x), IsIntersection(y), IsAt(x, y), Not(IsInterCarEmpty(y))), Stop(x))))
+      formula: Forall(x, Implies(Exists(y, And(IsPedestrian(x), IsIntersection(y), IsAt(x, y), Not(IsInterCarEmpty(y)))), Stop(x)))
       description: pedestrians at intersection, not intersection empty with cars, stop
   - Pedestrian_Normal:
-      formula: Forall(x, Forall(y, Implies(Not(And(IsPedestrian(x), IsIntersection(y), IsAt(x, y), Not(IsInterCarEmpty(y)))), Normal(x))))
+      formula: Forall(x, Implies(Not(Exists(y, And(IsPedestrian(x), IsIntersection(y), IsAt(x, y), Not(IsInterCarEmpty(y))))), Normal(x)))
       description: pedestrians not at intersection, or intersection empty with cars, normal
