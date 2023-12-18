@@ -39,8 +39,9 @@ class City:
         current_obs["Agent_actions"] = []
 
         new_matrix = torch.zeros_like(self.city_grid)
-        # first do local planning based on city rules
-        agent_action_dist = self.local_planner.plan(self.city_grid, self.intersection_matrix, self.agents)
+        current_world = self.city_grid.clone()
+        # first do local planning based on city rules, use the current world state, don't update the city matrix
+        agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents)
         pred_grounds = self.local_planner.get_current_lnn_state(self.logic_grounds, self.agents)
         current_obs["LNN_state"] = pred_grounds.clone().detach()
         # Then do global action taking acording to the local planning results
@@ -205,6 +206,7 @@ class City:
                                 # Second layer checks pedestrains, they are allowed to enter the intersection in both directions
                                 # We use the mid line and end points to determine the entrance line
                                 local_line[rr, cc] = True
+                                intersection_matrix[1, rr, cc] = True
                                 local_line[mid_x, mid_y] = False
                                 labeled_local_line, num_line = label(local_line.numpy())
                                 assert num_line == 2
@@ -223,13 +225,17 @@ class City:
                                 intersection_matrix[2, rr.min():rr.max()+1, cc.min():cc.max()+1] = True
                                 
         # Label connected regions in the intersection matrix
+        # Check if the number of connected regions is correct, car lines, ped lines, and blocks
         _, num_line = label(intersection_matrix[0])
-        assert num_line == NUM_INTERSECTIONS_LINES, "Number of intersection lines is not {}".format(NUM_INTERSECTIONS_LINES)
-        labeled_matrix_block, num_block = label(intersection_matrix[1])
+        assert num_line == NUM_INTERSECTIONS_LINES, "Number of intersection lines for cars is not {}".format(NUM_INTERSECTIONS_LINES)
+        _, num_line = label(intersection_matrix[1])
+        labeled_matrix_block, num_block = label(intersection_matrix[2])
         assert num_block == NUM_INTERSECTIONS_BLOCKS, "Number of intersection blocks is not {}".format(NUM_INTERSECTIONS_BLOCKS)
+        assert num_line == NUM_INTERSECTIONS_BLOCKS, "Number of intersection lines for peds is not {}".format(NUM_INTERSECTIONS_BLOCKS)
+        # Label the intersection matrix, they share the same ID
         labeled_matrix_line = intersection_matrix[0].numpy().astype(labeled_matrix_block.dtype) * labeled_matrix_block
-        intersection_matrix = np.array([labeled_matrix_line, labeled_matrix_block])
-        # line and block has the same label
+        labeled_matrix_line_ped = intersection_matrix[1].numpy().astype(labeled_matrix_block.dtype) * labeled_matrix_block
+        intersection_matrix = np.array([labeled_matrix_line, labeled_matrix_line_ped, labeled_matrix_block])
         self.intersection_matrix = torch.tensor(intersection_matrix)
 
     def add_agent(self, agent):

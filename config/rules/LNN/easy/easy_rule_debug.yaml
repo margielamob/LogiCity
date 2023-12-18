@@ -23,8 +23,15 @@ predicates:
       arity: 1
       method: None
       description: Stop action.
+  - Normal:
+      arity: 1
+      method: None
+      description: Normal action.
 
 rules:
-  - Pedestrian_Stop1:
+  - Pedestrian_Stop:
       formula: Forall(x, Exists(y, Implies(And(IsPedestrian(x), IsIntersection(y), IsAt(x, y), Not(IsInterCarEmpty(y))), Stop(x))))
       description: pedestrians at intersection, not intersection empty with cars, stop
+  - Pedestrian_Normal:
+      formula: Forall(x, Forall(y, Implies(Not(And(IsPedestrian(x), IsIntersection(y), IsAt(x, y), Not(IsInterCarEmpty(y)))), Normal(x))))
+      description: pedestrians not at intersection, or intersection empty with cars, normal

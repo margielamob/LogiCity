@@ -1,6 +1,8 @@
 from lnn import Model, Predicate, Variables, Implies, And, Or, Not, Exists, Forall, World, Direction
 from yaml import load, FullLoader
 from core.config import *
+from utils.find import find_entity
+from utils.check import check_fol_rule_syntax
 import importlib
 import numpy as np
 import torch
@@ -47,6 +49,7 @@ class LNNPlanner:
             local_model = Model()
             rule_name, rule_info = list(r.items())[0]
             formula_str = rule_info["formula"]
+            check_fol_rule_syntax(formula_str)
             
             # Replace formula's string content to make it Python executable
             for predicate in self.predicates:
@@ -75,6 +78,9 @@ class LNNPlanner:
             data_dict[predicate_info["instance"]] = {}
 
             method_full_name = predicate_info["method"]
+            if method_full_name == "None":
+                # Means this predicate is not grounded by the world, it is an action predicate
+                continue
             module_name, method_name = method_full_name.rsplit('.', 1)
             module = importlib.import_module(module_name)
             method = getattr(module, method_name)
@@ -82,14 +88,14 @@ class LNNPlanner:
             if arity == 1:
                 # Unary predicate processing
                 for entity in self.entity_list:
-                    values = method(world_matrix, intersect_matrix, entity)
+                    values = method(world_matrix, intersect_matrix, agents, entity)
                     data_dict[predicate_info["instance"]][entity] = values
             elif arity == 2:
                 # Binary predicate processing
                 for entity1 in self.entity_list:
                     for entity2 in self.entity_list:
-                        if entity1.id != entity2.id:
-                            values = method(world_matrix, intersect_matrix, entity1, entity2)
+                        if entity1 != entity2:
+                            values = method(world_matrix, intersect_matrix, agents, entity1, entity2)
                             data_dict[predicate_info["instance"]][(entity1, entity2)] = values
 
         for model in self.model_list:
@@ -117,9 +123,8 @@ class LNNPlanner:
         # use LNN to get the action distribution
         agents_actions = {}
         for agent in agents:
-            agent_id = agent.layer_id
-            agent_type = agent.type
-            agent_name = "{}_{}".format(agent_type, agent_id)
+            entity_name = find_entity(agent)
+            agent_name = "{}_{}".format(agent.type, agent.layer_id)
             action_mapping = agent.action_mapping
             action_dist = torch.zeros_like(agent.action_dist)
             for key in self.predicates.keys():
@@ -129,7 +134,7 @@ class LNNPlanner:
                         action.append(action_id)
                 if len(action)>0:
                     for a in action:
-                        action_dist[a] = self.convert(key, agent_name)
+                        action_dist[a] = self.convert(key, entity_name)
             agents_actions[agent_name] = action_dist
         return agents_actions
 
@@ -158,10 +163,7 @@ class LNNPlanner:
             if entity_type == 'Agents':
                 entity_name = "Agents_{}_{}"
                 for agent in agents:
-                    agent_type = agent.type
-                    # This is layer id, not agent id
-                    agent_id = agent.layer_id
-                    agent_name = entity_name.format(agent_type, agent_id)
+                    agent_name = find_entity(agent)
                     self.entity_list.append(agent_name)
             elif entity_type == 'Intersections':
                 unique_intersections = np.unique(intersect_matrix[0])

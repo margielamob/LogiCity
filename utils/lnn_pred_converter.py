@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
 def is_at(world_matrix, intersect_matrix, agents, entity1, entity2):
-    # TODO: need to check if the entity x is at entity y
     # Must be "Agents" at "Intersections"
     if "Agents" not in entity1:
         return torch.tensor([0.0, 0.0])
@@ -21,18 +20,50 @@ def is_at(world_matrix, intersect_matrix, agents, entity1, entity2):
     agent_layer = world_matrix[agent.layer_id]
     agent_position = (agent_layer == TYPE_MAP[agent.type]).nonzero()[0]
     # at intersection needs to care if the car is "entering" or "leaving", so use intersect_matrix[0]
-    if intersect_matrix[0, agent_position[0], agent_position[1]]:
+    _, inter_id = entity2.split("_")
+    if agent.type == "Car":
+        if intersect_matrix[0, agent_position[0], agent_position[1]] == int(inter_id):
+            return torch.tensor([1.0, 1.0])
+        else:
+            return torch.tensor([0.0, 0.0])
+    else:
+        if intersect_matrix[1, agent_position[0], agent_position[1]] == int(inter_id):
+            return torch.tensor([1.0, 1.0])
+        else:
+            return torch.tensor([0.0, 0.0])
+        
+def is_intersection(world_matrix, intersect_matrix, agents, entity):
+    if "Intersections" in entity:
         return torch.tensor([1.0, 1.0])
     else:
         return torch.tensor([0.0, 0.0])
-        
-def is_intersection(world, agent_id, agent_type, intersect_matrix, agents):
-    # TODO: need to check if the entity is an intersection
-    return torch.tensor([0.0, 0.0])
 
-def is_inter_carempty(world, agent_id, agent_type, intersect_matrix, agents):
+def is_inter_carempty(world_matrix, intersect_matrix, agents, entity):
     # TODO: need to check if the entity is an intersection and there is no car in the intersection
-    return torch.tensor([0.0, 0.0])
+    if "Intersections" not in entity:
+        return torch.tensor([0.0, 0.0])
+    _, inter_id = entity.split("_")
+    inter_id = int(inter_id)
+    # check if there is a car in the intersection, use block
+    local_intersection = intersect_matrix[2] == inter_id
+    intersection_positions = (local_intersection).nonzero()
+    xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
+    ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
+    partial_world = world_matrix[BASIC_LAYER:, ymin:ymax+1, xmin:xmax+1]
+    # Create mask for integer values (except 0)
+    int_mask = partial_world == TYPE_MAP["Car"]
+
+    # Create mask for float values and zero
+    float_mask = partial_world != TYPE_MAP["Car"]
+
+    # Update values using masks
+    partial_world[int_mask] = 1
+    partial_world[float_mask] = 0
+
+    if partial_world.any():
+        return torch.tensor([0.0, 0.0])
+    else:
+        return torch.tensor([1.0, 1.0])
 
 def check_is_in_intersection(world, agent_id, agent_type, intersect_matrix, agents):
     agent_layer = world[agent_id]
@@ -111,34 +142,6 @@ def intersection_empty_ped(world, agent_id, agent_type, intersect_matrix, agents
         else:
             return torch.tensor([1.0, 1.0])
 
-def intersection_empty_cars(world, agent_id, agent_type, intersect_matrix, agents):
-    agent_layer = world[agent_id]
-    agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
-    if not intersect_matrix[2, agent_position[0], agent_position[1]]:
-        return torch.tensor([1.0, 1.0])
-    else:
-        local_intersection = intersect_matrix[2] == intersect_matrix[2, agent_position[0], agent_position[1]]
-        intersection_positions = (local_intersection).nonzero()
-        xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
-        ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
-        partial_world = world[BASIC_LAYER:, ymin+AT_INTERSECTION_OFFSET:ymax-AT_INTERSECTION_OFFSET+1, xmin+AT_INTERSECTION_OFFSET:xmax-AT_INTERSECTION_OFFSET+1]
-        # EXCLUDE myself
-        partial_world = torch.cat([partial_world[:agent_id-BASIC_LAYER], partial_world[agent_id-BASIC_LAYER+1:]], dim=0)
-        # Create mask for integer values (except 0)
-        int_mask = partial_world == TYPE_MAP["Car"]
-
-        # Create mask for float values and zero
-        float_mask = partial_world != TYPE_MAP["Car"]
-
-        # Update values using masks
-        partial_world[int_mask] = 1
-        partial_world[float_mask] = 0
-
-        if partial_world.any():
-            return torch.tensor([0.0, 0.0])
-        else:
-            return torch.tensor([1.0, 1.0])
-
 def inter2priority_list(intersection_positions):
     '''
     intersection_positions: tensor of shape (n, 2) where n is the number of points belonging to intersections
@@ -193,8 +196,8 @@ def previous_cars(world, agent_id, agent_type, intersect_matrix, agents):
     return bounds
 
 
-def is_pedestrian(world, agent_id, agent_type, intersect_matrix, agents):
-    if agent_type == "Pedestrian":
+def is_pedestrian(world_matrix, intersect_matrix, agents, entity):
+    if "Pedestrian" in entity:
         return torch.tensor([1.0, 1.0])
     else:
         return torch.tensor([0.0, 0.0])
@@ -284,27 +287,3 @@ def is_mayor_around(world, agent_id, agent_type, intersect_matrix, agents):
             return torch.tensor([1.0, 1.0])
         else:
             return torch.tensor([0.0, 0.0])
-
-def visualize_intersections(intersection_matrix):
-    # Get unique intersection IDs (excluding 0)
-    unique_intersections = np.unique(intersection_matrix)
-    unique_intersections = unique_intersections[unique_intersections != 0]
-    
-    # Create a color map for each intersection ID
-    colors = list(mcolors.CSS4_COLORS.values())
-    intersection_colors = {uid: colors[i % len(colors)] for i, uid in enumerate(unique_intersections)}
-
-    # Create an RGB visualization matrix
-    vis_matrix = np.zeros((*intersection_matrix.shape, 3), dtype=np.uint8)
-
-    for uid, color in intersection_colors.items():
-        r, g, b = mcolors.hex2color(color)
-        mask = (intersection_matrix == uid)
-        vis_matrix[mask] = (np.array([r, g, b]) * 255).astype(np.uint8)
-
-    # Plot
-    plt.imshow(vis_matrix)
-    plt.title("Intersections Visualization")
-    plt.axis('off')
-    plt.imsave("test.png", vis_matrix)
-

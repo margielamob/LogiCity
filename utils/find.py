@@ -136,3 +136,10 @@ def find_agent(agents, entity_name):
         if agent.type == agent_type and agent.layer_id == int(agent_id):
             return agent
     return None
+
+def find_entity(agent):
+    agent_type = agent.type
+    # This is layer id, not agent id
+    agent_id = agent.layer_id
+    agent_name = "Agents_{}_{}".format(agent_type, agent_id)
+    return agent_name

@@ -128,7 +128,7 @@ def vis_agent(vis_grid, city, agent_layer_ids, scale_factor, curr=True, s=True, 
 
     return vis_grid
 
-def visualize_intersections(intersection_matrix):
+def visualize_intersections(intersection_matrix, file_name="intersections.png"):
     # Get unique intersection IDs (excluding 0)
     unique_intersections = np.unique(intersection_matrix)
     unique_intersections = unique_intersections[unique_intersections != 0]
@@ -149,4 +149,4 @@ def visualize_intersections(intersection_matrix):
     plt.imshow(vis_matrix)
     plt.title("Intersections Visualization")
     plt.axis('off')
-    plt.imsave("test.png", vis_matrix)
+    plt.imsave(file_name, vis_matrix)
