@@ -14,8 +14,8 @@ def parse_arguments():
     # Add arguments for grid size, agent start and goal positions, etc.
     parser.add_argument('--map', type=str, default="config/maps/v1.1.yaml", help='YAML path to the map.')
     parser.add_argument('--agents', type=str, default="config/agents/debug.yaml", help='YAML path to the agent definition.')
-    parser.add_argument('--rule_type', type=str, default="LNN", help='We support ["LNN"].')
-    parser.add_argument('--rules', type=str, default="config/rules/LNN/easy/easy_rule_debug.yaml", help='YAML path to the rule definition.')
+    parser.add_argument('--rule_type', type=str, default="PyReason", help='We support ["LNN", "PyReason"].')
+    parser.add_argument('--rules', type=str, default="config/rules/PyReason/easy/easy_rule_debug.yaml", help='YAML path to the rule definition.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log")
     parser.add_argument('--exp', type=str, default="med_2000")
