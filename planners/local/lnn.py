@@ -41,8 +41,9 @@ class LNNPlanner:
             'Exists': Exists,
             'Forall': Forall
         }
-        self.model_list = []
-        self.model_preds = []
+        self.model_dict = {}
+        self.rule_dict = {}
+        self.model_preds = {}
         x, y = Variables('x', 'y') # maximum 2 variables for now
         
         for r in self.data["rules"]:
@@ -59,17 +60,18 @@ class LNNPlanner:
                 formula_str = formula_str.replace(key, func.__name__)
             
             rule_instance = eval(formula_str)  # This dynamically evaluates the Python equivalent formula
+            self.rule_dict[rule_name] = rule_instance
             # All the rules are considered as axioms for now
             local_model.add_knowledge(rule_instance, world=World.AXIOM)
-            self.model_list.append(local_model)
+            self.model_dict[rule_name] = local_model
             model_pred = []
             for key in local_model.nodes.keys():
                 model_pred.append(local_model.nodes[key])
-            self.model_preds.append(model_pred)
+            self.model_preds[rule_name] = model_pred
     
     # Process world matrix to ground the world state predicates
     def add_world_data(self, world_matrix, intersect_matrix, agents):
-        # Convert the world to predicates, symbolic grounding
+        # 1. Convert the world to predicates, symbolic grounding
         data_dict = {}
 
         for p in self.predicates.keys():
@@ -96,27 +98,27 @@ class LNNPlanner:
                     for entity2 in self.entity_list:
                         values = method(world_matrix, intersect_matrix, agents, entity1, entity2)
                         data_dict[predicate_info["instance"]][(entity1, entity2)] = values
-
-        for model in self.model_list:
+        for rule_name, model in self.model_dict.items():
+            # 2. Add the grounded predicates as facts to the model
             model_dict = {}
             for key in data_dict.keys():
-                if key in self.model_preds[self.model_list.index(model)]:
+                if key in self.model_preds[rule_name]:
                     model_dict[key] = data_dict[key]
             model.add_data(model_dict)
+            # 3. Add the rule as known truth to the model
+            model.add_knowledge(self.rule_dict[rule_name], world=World.AXIOM)
+
 
 
     def plan(self, world_matrix, intersect_matrix, agents):
-        for model in self.model_list:
-            model.reset_bounds()
-        for p in self.predicates.keys():
-            # Flush the data for each predicate
-            self.predicates[p]["instance"].flush()
+        for model in self.model_dict.values():
+            model.flush()
         # Add the world data to the predicates, this may need enumerate all groundings
         if len(self.entity_list) == 0:
             # initialize the entity list
             self.world2entity(world_matrix, intersect_matrix, agents)
         self.add_world_data(world_matrix, intersect_matrix, agents)
-        for model in self.model_list:
+        for model in self.model_dict.values():
             model.infer(Direction.UPWARD)
             model.infer(Direction.DOWNWARD)
         # use LNN to get the action distribution
@@ -134,6 +136,11 @@ class LNNPlanner:
                 if len(action)>0:
                     for a in action:
                         action_dist[a] = self.convert(key, entity_name)
+            # No action specified, use the default action, Normal
+            if action_dist.sum() == 0:
+                for action_id, action_name in action_mapping.items():
+                    if "Normal" in action_name:
+                        action_dist[action_id] = 1.0
             agents_actions[agent_name] = action_dist
         return agents_actions
 

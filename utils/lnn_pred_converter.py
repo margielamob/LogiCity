@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
+def true(world_matrix, intersect_matrix, agents, entity):
+    return torch.tensor([1.0, 1.0])
+
 def is_at(world_matrix, intersect_matrix, agents, entity1, entity2):
     # Must be "Agents" at "Intersections"
     if "Agents" not in entity1:
