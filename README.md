@@ -16,13 +16,23 @@ In the end, we hope LogiCity can be used for evaluating cross-community downstre
 
 This research project and code repo are **ongoing**, please **DO NOT** share with anyone without permission from Bowen.
 
-## Dependencies
+## Installation
 
 - From scratch
   ```shell
   conda create -n logicity python=3.9
   conda activate logicity
+  git clone --recurse-submodules https://github.com/Jaraxxus-Me/LogiCity.git
+  # requirements for logicity
   pip install -r requirements.txt
+  # requirements for lnn
+  cd src/lnn
+  pip install -r requirements.txt
+  pip install -e .
+  # requirements for pyreason
+  cd src/pyreason
+  pip install -r requirements.txt
+  python initialize.py
   ```
 - Using docker
   ```shell
@@ -92,7 +102,6 @@ python3 logic_main.py
 # You may need some dataset from Bowen
 python3 nav_main.py
 ```
-
 
 ## Branches
 

@@ -54,7 +54,6 @@ jupyterlab-widgets==3.0.9
 jupyterlab_server==2.25.0
 kiwisolver==1.4.5
 lazy_loader
--e git+https://github.com/Jaraxxus-Me/LNN.git@fc74c84536ad4cf607101514f77fe546d29b302a#egg=lnn
 MarkupSafe
 matplotlib
 matplotlib-inline
