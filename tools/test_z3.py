@@ -18,16 +18,22 @@ def logicity_demo():
     Stop = Function('Stop', Agent, BoolSort())
 
     # Initialize solver
+    strt = time.time()
     s = Solver()
 
     # Define the rule
-    rule = ForAll([dummyAgent], Stop(dummyAgent) == Exists([dummyIntersection], \
-                    And(IsPedestrian(dummyAgent), Not(IsInterCarEmpty(dummyIntersection)), IsAt(dummyAgent, dummyIntersection)), \
-                        patterns=[MultiPattern(IsInterCarEmpty(dummyIntersection), IsAt(dummyAgent, dummyIntersection))]), \
-                            patterns=[MultiPattern(Stop(dummyAgent), IsPedestrian(dummyAgent), IsAt(dummyAgent, dummyIntersection))] \
-                                )
+    # rule = ForAll([dummyAgent], Stop(dummyAgent) == Exists([dummyIntersection], \
+    #                 And(IsPedestrian(dummyAgent), Not(IsInterCarEmpty(dummyIntersection)), IsAt(dummyAgent, dummyIntersection)), \
+    #                     patterns=[MultiPattern(IsInterCarEmpty(dummyIntersection), IsAt(dummyAgent, dummyIntersection))]), \
+    #                         patterns=[MultiPattern(Stop(dummyAgent), IsPedestrian(dummyAgent), IsAt(dummyAgent, dummyIntersection))] \
+    #                             )
+    rule = ForAll([dummyAgent, dummyIntersection], \
+                  Implies(And(IsPedestrian(dummyAgent), Not(IsInterCarEmpty(dummyIntersection)), IsAt(dummyAgent, dummyIntersection)), \
+                          Stop(dummyAgent)
+                         )
+                 )
+    print("Time: ", time.time() - strt)
     s.add(rule)
-
     # Specify conditions, IsPedestrian, IsIntersect, IsInterCarEmpty
     for i in range(4):
         s.add(IsPedestrian(agents[i]))  # Agents 1-3 are pedestrians
@@ -35,18 +41,24 @@ def logicity_demo():
     for i in range(4, 8):
         s.add(Not(IsPedestrian(agents[i])))  # Agents 3-8 are not pedestrians
 
-    for i in range(32):
+    for i in range(31):
         s.add(IsInterCarEmpty(intersections[i]))  # Intersections 1-32 are not empty
 
+    s.add(Not(IsInterCarEmpty(intersections[31])))  # Intersections 32 is not empty
+
     # Specify IsAt
-    for agent in agents:
-        for inter in intersections:
-            s.add(IsAt(agent, inter))
+    s.add(IsAt(agents[0], intersections[0]))
+    s.add(IsAt(agents[1], intersections[31]))
+    s.add(IsAt(agents[2], intersections[31]))
+    s.add(IsAt(agents[3], intersections[31]))
+    s.add(IsAt(agents[4], intersections[5]))
+    s.add(IsAt(agents[5], intersections[6]))
+    s.add(IsAt(agents[6], intersections[7]))
+    s.add(IsAt(agents[7], intersections[31]))
 
     # s.add(Not(Stop(agents[2])))
     # s.add(Stop(agents[0]))
     # Check if there is a solution
-    strt = time.time()
     if s.check() == sat:
         m = s.model()
         for agent in agents:
@@ -123,8 +135,50 @@ def stack_demo_extended():
 
 def learn_z3():
     Agent = DeclareSort('Agents')
-    agents = [Const(f'agent_{i}', Agent) for i in range(3)]
-    IsOn = Function('IsAt', Agent, Agent, BoolSort())
+    Intersection = DeclareSort('Intersections')
+
+    agents = [Const(f'agent_{i}', Agent) for i in range(2)]
+    intersections = [Const(f'intersection_{i}', Intersection) for i in range(2)]
+
+    dummyAgent = Const('dummyAgent', Agent)
+    dummyIntersection = Const('dummyIntersection', Intersection)
+
+    IsAt = Function('IsAt', Agent, Intersection, BoolSort())
+    IsPedestrian = Function('IsPedestrian', Agent, BoolSort())
+    IsInterCarEmpty = Function('IsInterCarEmpty', Intersection, BoolSort())
+    Stop = Function('Stop', Agent, BoolSort())
+
+    s = Solver()
+    s.add(IsPedestrian(agents[0]))
+    s.add(IsPedestrian(agents[1]))
+
+    s.add(Not(IsInterCarEmpty(intersections[0])))
+    s.add(IsInterCarEmpty(intersections[1]))
+
+    
+    s.add(IsAt(agents[0], intersections[0]))
+    s.add(IsAt(agents[1], intersections[0]))
+    s.add(Not(IsAt(agents[0], intersections[1])))
+    s.add(Not(IsAt(agents[1], intersections[1])))
+    # s.add(Not(Stop(agents[1])))
+    # s.add(Not(IsAt(agents[1], intersections[1])))
+
+    s.add(ForAll([dummyAgent, dummyIntersection], \
+                 Implies(And(IsPedestrian(dummyAgent), IsAt(dummyAgent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection))
+                             )
+                         , Stop(dummyAgent)
+                        )   
+                 )
+         )
+    
+    if s.check() == sat:
+        m = s.model()
+        for agent in agents:
+            if m.evaluate(Stop(agent)):
+                print(f"Agent {agent} must stop")
+    else:
+        print("No solution found")  
+
 
 if __name__ == '__main__':
     logicity_demo()

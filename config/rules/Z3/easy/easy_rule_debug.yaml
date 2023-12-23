@@ -1,0 +1,34 @@
+EntityTypes:
+  - Agent
+  - Intersection
+
+predicates:
+  - IsAt:
+      type: D
+      arity: 2
+      method: IsAt(Agent, Intersection)
+      function: utils.pred_converter.z3.IsAt
+      description: Checks if agent x is at intersection y.
+  - IsPedestrian:
+      type: S
+      arity: 1
+      method: IsPed(Agent)
+      function: utils.pred_converter.z3.IsPed
+      description: Checks if agent x is a pedestrian.
+  - IsInterCarEmpty:
+      type: D
+      arity: 1
+      method: IsInterCarEmpty(Intersection)
+      function: utils.pred_converter.z3.IsInterCarEmpty
+      description: Checks if the intersection x is not empty with cars.
+  - Stop:
+      type: S
+      arity: 1
+      method: Stop(Agent)
+      function: None
+      description: Stop action.
+
+rules:
+  - Pedestrian_Stop:
+      formula: Forall([dummyAgent, dummyIntersection], Implies(And(IsPedestrian(dummyAgent), IsAt(dummyAgent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection)))), Stop(dummyAgent)))
+      description: pedestrians at intersection, not intersection empty with cars, stop
