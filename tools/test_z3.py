@@ -38,8 +38,10 @@ def logicity_demo():
     # Specify IsAt
     for agent in agents:
         for inter in intersections:
-            s.add(Not(IsAt(agent, inter)))
+            s.add(IsAt(agent, inter))
 
+    # s.add(Not(Stop(agents[2])))
+    # s.add(Stop(agents[0]))
     # Check if there is a solution
     strt = time.time()
     if s.check() == sat:
