@@ -22,18 +22,21 @@ def logicity_demo():
 
     # Define the rule
     rule = ForAll([dummyAgent], Stop(dummyAgent) == Exists([dummyIntersection], \
-                    And(IsPedestrian(dummyAgent), Not(IsInterCarEmpty(dummyIntersection)), IsAt(dummyAgent, dummyIntersection))))
+                    And(IsPedestrian(dummyAgent), Not(IsInterCarEmpty(dummyIntersection)), IsAt(dummyAgent, dummyIntersection)), \
+                        patterns=[MultiPattern(IsInterCarEmpty(dummyIntersection), IsAt(dummyAgent, dummyIntersection))]), \
+                            patterns=[MultiPattern(Stop(dummyAgent), IsPedestrian(dummyAgent), IsAt(dummyAgent, dummyIntersection))] \
+                                )
     s.add(rule)
 
     # Specify conditions, IsPedestrian, IsIntersect, IsInterCarEmpty
-    for i in range(3):
+    for i in range(4):
         s.add(IsPedestrian(agents[i]))  # Agents 1-3 are pedestrians
 
-    for i in range(3, 8):
+    for i in range(4, 8):
         s.add(Not(IsPedestrian(agents[i])))  # Agents 3-8 are not pedestrians
 
     for i in range(32):
-        s.add(Not(IsInterCarEmpty(intersections[i])))  # Intersections 1-32 are not empty
+        s.add(IsInterCarEmpty(intersections[i]))  # Intersections 1-32 are not empty
 
     # Specify IsAt
     for agent in agents:
@@ -118,6 +121,10 @@ def stack_demo_extended():
         print(s.model())
 
 
+def learn_z3():
+    Agent = DeclareSort('Agents')
+    agents = [Const(f'agent_{i}', Agent) for i in range(3)]
+    IsOn = Function('IsAt', Agent, Agent, BoolSort())
 
 if __name__ == '__main__':
     logicity_demo()
