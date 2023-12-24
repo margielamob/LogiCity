@@ -1,31 +1,24 @@
+import re
+import logging
+import importlib
+import numpy as np
 from z3 import *
 from yaml import load, FullLoader
 from core.config import *
-from utils.find import find_entity
-from utils.check import check_fol_rule_syntax
-import importlib
-import numpy as np
+
+
+logger = logging.getLogger(__name__)
 
 class Z3Planner:
     def __init__(self, yaml_path):        
         # Load the yaml file, create the predicates and rules
+        logger.info("Using Z3 solver as local planner")
         with open(yaml_path, 'r') as file:
             self.data = load(file, Loader=FullLoader)
         
         self._create_entities()
         self._create_predicates()
         self._create_rules()
-        self.entity_list = []
-
-    def __init__(self, yaml_path):        
-        # Load the yaml file, create the predicates and rules
-        with open(yaml_path, 'r') as file:
-            self.data = load(file, Loader=FullLoader)
-        
-        self._create_entities()
-        self._create_predicates()
-        self._create_rules()
-        self.entity_list = []
 
     def _create_entities(self):
         # Create Z3 sorts for each entity type
@@ -33,40 +26,50 @@ class Z3Planner:
         for entity_type in self.data["EntityTypes"]:
             # Create a Z3 sort (type) for each entity
             self.entity_types[entity_type] = DeclareSort(entity_type)
+        # Print the entity types
+        entity_types_info = "\n".join(["- {}: {}".format(entity, sort) for entity, sort in self.entity_types.items()])
+        logger.info("Number of Entity Types: {}\nEntity Types:\n{}".format(len(self.entity_types), entity_types_info))
 
     def _create_predicates(self):
         self.predicates = {}
-        for pred_name, info in self.data["predicates"].items():
+        for pred_dict in self.data["Predicates"]:
+            (pred_name, info), = pred_dict.items()
             method_name = info["method"].split('(')[0]
             arity = info["arity"]
             z3_func = None
             if arity == 1:
                 # Unary predicate
-                z3_func = Function(method_name, self.entity_types[info["method"].split('(')[1].split(')')[0]]\
-                                   , BoolSort())
+                entity_type = info["method"].split('(')[1].split(')')[0]
+                z3_func = Function(method_name, self.entity_types[entity_type], BoolSort())
             elif arity == 2:
                 # Binary predicate
                 types = info["method"].split('(')[1].split(')')[0].split(', ')
-                z3_func = Function(method_name, self.entity_types[types[0]], self.entity_types[types[1]]\
-                                   , BoolSort())
+                z3_func = Function(method_name, self.entity_types[types[0]], self.entity_types[types[1]], BoolSort())
 
             # Store complete predicate information
-            self.predicates[method_name] = {
+            self.predicates[pred_name] = {
                 "instance": z3_func,
                 "arity": arity,
                 "type": info["type"],
                 "method": info["method"],
-                "function": info.get("function", None)  # Optional, may be used for dynamic grounding
+                "function": info.get("function", None),  # Optional, may be used for dynamic grounding
             }
+        # Print the predicates
+        predicates_info = "\n".join(["- {}: {}".format(predicate, details) for predicate, details in self.predicates.items()])
+        logger.info("Number of Predicates: {}\nPredicates:\n{}".format(len(self.predicates), predicates_info))
 
     def _create_rules(self):
         self.rules = []
-        for rule_name, rule_info in self.data["rules"].items():
+        for rule_dict in self.data["Rules"]:
+            (rule_name, rule_info), = rule_dict.items()
+            # Check if the rule is valid
             formula = rule_info["formula"]
+            formatted_string = self.format_rule_string(rule_info["formula"])
+            logger.info("Rule: {} -> \n {}".format(rule_name, formatted_string))
 
             # Create Z3 variables based on the formula
             var_names = self._extract_variables(formula)
-            z3_vars = {var_name: Const(var_name, self.entity_types[var_name.split('_')[0]]) \
+            z3_vars = {var_name: Const(var_name, self.entity_types[var_name.replace('dummy', '')]) \
                        for var_name in var_names}
 
             # Substitute predicate names in the formula with Z3 function instances
@@ -82,9 +85,20 @@ class Z3Planner:
             self.rules.append(z3_formula)
 
     def _extract_variables(self, formula):
-        # A simple method to extract variable names from the formula string
-        # This implementation may need to be adjusted based on the exact format of your formulas
-        return [word for word in formula.split() if 'dummy' in word]
+        # Find the variable declaration part of the formula (after 'Forall([' or 'Exists([')
+        match = re.search(r'Forall\(\[([^\]]*)\]', formula)
+        if not match:
+            match = re.search(r'Exists\(\[([^\]]*)\]', formula)
+        
+        if match:
+            # Extract variable names from the matched string
+            var_section = match.group(1)
+            # Remove whitespace and split by commas
+            variables = [var.strip() for var in var_section.split(',')]
+            return variables
+        else:
+            # If no match, return an empty list
+            return []
     
     # Process world matrix to ground the world state predicates
     def add_world_data(self, world_matrix, intersect_matrix, agents):
@@ -194,3 +208,19 @@ class Z3Planner:
                     self.entities[entity_type].append(intersection_entity)
                 assert len(unique_intersections) == NUM_INTERSECTIONS_BLOCKS
         assert "Agent" in self.entities.keys() and "Intersection" in self.entities.keys()
+
+    def format_rule_string(self, rule_str):
+        indent_level = 0
+        formatted_str = ""
+        for char in rule_str:
+            if char == ',':
+                formatted_str += ',\n' + ' ' * 4 * indent_level
+            elif char == '(':
+                formatted_str += '(\n' + ' ' * 4 * (indent_level + 1)
+                indent_level += 1
+            elif char == ')':
+                indent_level -= 1
+                formatted_str += '\n' + ' ' * 4 * indent_level + ')'
+            else:
+                formatted_str += char
+        return formatted_str

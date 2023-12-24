@@ -2,7 +2,7 @@ EntityTypes:
   - Agent
   - Intersection
 
-predicates:
+Predicates:
   - IsAt:
       type: D
       arity: 2
@@ -28,7 +28,7 @@ predicates:
       function: None
       description: Stop action.
 
-rules:
-  - Pedestrian_Stop:
+Rules:
+  - PedestrianStop:
       formula: Forall([dummyAgent, dummyIntersection], Implies(And(IsPedestrian(dummyAgent), IsAt(dummyAgent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection)))), Stop(dummyAgent)))
       description: pedestrians at intersection, not intersection empty with cars, stop
