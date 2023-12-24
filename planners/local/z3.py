@@ -109,14 +109,22 @@ class Z3Planner(LocalPlanner):
         dynamic_groundings = self.ground_dynamic_predicates(world_matrix, intersect_matrix, agents)
 
         # Add the grounded predicates as facts to the solver
-        for predicate, grounding_list in {**self.static_groundings, **dynamic_groundings}.items():
-            for grounding in grounding_list:
-                if isinstance(grounding, tuple):
-                    # Binary predicate
-                    self.solver.add(predicate(*grounding))
+        for predicate, groundings in {**self.static_groundings, **dynamic_groundings}.items():
+            for true_entity in groundings["True"]:
+                if isinstance(true_entity, tuple):
+                    # Binary predicate, true case
+                    self.solver.add(predicate(*true_entity))
                 else:
-                    # Unary predicate
-                    self.solver.add(predicate(grounding))
+                    # Unary predicate, true case
+                    self.solver.add(predicate(true_entity))
+
+            for false_entity in groundings["False"]:
+                if isinstance(false_entity, tuple):
+                    # Binary predicate, false case
+                    self.solver.add(Not(predicate(*false_entity)))
+                else:
+                    # Unary predicate, false case
+                    self.solver.add(Not(predicate(false_entity)))
     
     def ground_static_predicates(self, world_matrix, intersect_matrix, agents):
         # Ground static predicates
@@ -137,7 +145,10 @@ class Z3Planner(LocalPlanner):
     def ground_predicate(self, pred_info, world_matrix, intersect_matrix, agents):
         # Return the groundings that satisfy the predicate
         # Generic method to ground a predicate
-        groundings = []
+        groundings = {
+            "True": [],
+            "False": []
+        }
         predicate_function = pred_info["instance"]
         arity = pred_info["arity"]
 
@@ -155,7 +166,9 @@ class Z3Planner(LocalPlanner):
                 entity_name = entity.decl().name()
                 value = method(world_matrix, intersect_matrix, agents, entity_name)
                 if value:
-                    groundings.append(entity)
+                    groundings["True"].append(entity)
+                else:
+                    groundings["False"].append(entity)
         elif arity == 2:
             # Binary predicate grounding
             for entity1 in self.entities[predicate_function.domain(0).name()]:
@@ -164,7 +177,9 @@ class Z3Planner(LocalPlanner):
                     entity2_name = entity2.decl().name()
                     value = method(world_matrix, intersect_matrix, agents, entity1_name, entity2_name)
                     if value:
-                        groundings.append((entity1, entity2))
+                        groundings["True"].append((entity1, entity2))
+                    else:
+                        groundings["False"].append((entity1, entity2))
         return groundings
 
     def plan(self, world_matrix, intersect_matrix, agents):
@@ -176,6 +191,9 @@ class Z3Planner(LocalPlanner):
 
         # 2. Add the grounded predicates as facts to the model
         self.add_world_data(world_matrix, intersect_matrix, agents)
+        # 3. Add Rule as known truth to the model
+        for rule_name, rule in self.rules.items():
+            self.solver.add(rule)
 
         # 3. Solve the FOL problem
         if self.solver.check() == sat:
