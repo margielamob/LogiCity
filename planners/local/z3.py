@@ -1,170 +1,196 @@
-from lnn import Model, Predicate, Variables, Implies, And, Or, Not, Exists, Forall, World, Direction
+from z3 import *
 from yaml import load, FullLoader
 from core.config import *
 from utils.find import find_entity
 from utils.check import check_fol_rule_syntax
 import importlib
 import numpy as np
-import torch
 
 class Z3Planner:
     def __init__(self, yaml_path):        
-        # Load the yaml file
+        # Load the yaml file, create the predicates and rules
         with open(yaml_path, 'r') as file:
             self.data = load(file, Loader=FullLoader)
         
+        self._create_entities()
         self._create_predicates()
         self._create_rules()
-        self.entity_types = self.data["entity"]
         self.entity_list = []
+
+    def __init__(self, yaml_path):        
+        # Load the yaml file, create the predicates and rules
+        with open(yaml_path, 'r') as file:
+            self.data = load(file, Loader=FullLoader)
         
+        self._create_entities()
+        self._create_predicates()
+        self._create_rules()
+        self.entity_list = []
+
+    def _create_entities(self):
+        # Create Z3 sorts for each entity type
+        self.entity_types = {}
+        for entity_type in self.data["EntityTypes"]:
+            # Create a Z3 sort (type) for each entity
+            self.entity_types[entity_type] = DeclareSort(entity_type)
+
     def _create_predicates(self):
-        # Using a dictionary to store the arity as well
         self.predicates = {}
-        for p in self.data["predicates"]:
-            predicate, info = list(p.items())[0]
-            self.predicates[predicate] = {
-                "instance": Predicate(predicate, info["arity"]),
+        for pred_name, info in self.data["predicates"].items():
+            method_name = info["method"].split('(')[0]
+            arity = info["arity"]
+            z3_func = None
+            if arity == 1:
+                # Unary predicate
+                z3_func = Function(method_name, self.entity_types[info["method"].split('(')[1].split(')')[0]]\
+                                   , BoolSort())
+            elif arity == 2:
+                # Binary predicate
+                types = info["method"].split('(')[1].split(')')[0].split(', ')
+                z3_func = Function(method_name, self.entity_types[types[0]], self.entity_types[types[1]]\
+                                   , BoolSort())
+
+            # Store complete predicate information
+            self.predicates[method_name] = {
+                "instance": z3_func,
+                "arity": arity,
+                "type": info["type"],
                 "method": info["method"],
-                "arity": info["arity"],
-                "description": info["description"]
+                "function": info.get("function", None)  # Optional, may be used for dynamic grounding
             }
-        
+
     def _create_rules(self):
-        # For the sake of simplicity, we'll only handle basic logical constructs here (And, Or, Implies)
-        # More complex rules might require further adjustments
-        logical_mapping = {
-            'And': And,
-            'Or': Or,
-            'Implies': Implies,
-            'Not': Not,
-            'Exists': Exists,
-            'Forall': Forall
-        }
-        self.model_dict = {}
-        self.rule_dict = {}
-        self.model_preds = {}
-        x, y = Variables('x', 'y') # maximum 2 variables for now
-        
-        for r in self.data["rules"]:
-            local_model = Model()
-            rule_name, rule_info = list(r.items())[0]
-            formula_str = rule_info["formula"]
-            check_fol_rule_syntax(formula_str)
-            
-            # Replace formula's string content to make it Python executable
-            for predicate in self.predicates:
-                formula_str = formula_str.replace(predicate, "self.predicates['{}']['instance']".format(str(predicate)))
-            
-            for key, func in logical_mapping.items():
-                formula_str = formula_str.replace(key, func.__name__)
-            
-            rule_instance = eval(formula_str)  # This dynamically evaluates the Python equivalent formula
-            self.rule_dict[rule_name] = rule_instance
-            # All the rules are considered as axioms for now
-            local_model.add_knowledge(rule_instance, world=World.AXIOM)
-            self.model_dict[rule_name] = local_model
-            model_pred = []
-            for key in local_model.nodes.keys():
-                model_pred.append(local_model.nodes[key])
-            self.model_preds[rule_name] = model_pred
+        self.rules = []
+        for rule_name, rule_info in self.data["rules"].items():
+            formula = rule_info["formula"]
+
+            # Create Z3 variables based on the formula
+            var_names = self._extract_variables(formula)
+            z3_vars = {var_name: Const(var_name, self.entity_types[var_name.split('_')[0]]) \
+                       for var_name in var_names}
+
+            # Substitute predicate names in the formula with Z3 function instances
+            for method_name, pred_info in self.predicates.items():
+                formula = formula.replace(method_name, f'self.predicates["{method_name}"]["instance"]')
+
+            # Now replace the variable names in the formula with their Z3 counterparts
+            for var_name, z3_var in z3_vars.items():
+                formula = formula.replace(var_name, f'z3_vars["{var_name}"]')
+
+            # Evaluate the modified formula string to create the Z3 expression
+            z3_formula = eval(formula)  # Still using eval(), but with a controlled environment
+            self.rules.append(z3_formula)
+
+    def _extract_variables(self, formula):
+        # A simple method to extract variable names from the formula string
+        # This implementation may need to be adjusted based on the exact format of your formulas
+        return [word for word in formula.split() if 'dummy' in word]
     
     # Process world matrix to ground the world state predicates
     def add_world_data(self, world_matrix, intersect_matrix, agents):
-        # 1. Convert the world to predicates, symbolic grounding
-        data_dict = {}
+        # Check if static predicates have been grounded, if not, ground them
+        if not hasattr(self, 'static_groundings'):
+            self.static_groundings = {}
+            self.ground_static_predicates(world_matrix, intersect_matrix, agents)
 
-        for p in self.predicates.keys():
-            predicate_info = self.predicates[p]
-            arity = predicate_info["arity"]
-            data_dict[predicate_info["instance"]] = {}
+        # Ground dynamic predicates based on the current world state
+        dynamic_groundings = self.ground_dynamic_predicates(world_matrix, intersect_matrix, agents)
 
-            method_full_name = predicate_info["method"]
-            if method_full_name == "None":
-                # Means this predicate is not grounded by the world, it is an action predicate
-                continue
-            module_name, method_name = method_full_name.rsplit('.', 1)
-            module = importlib.import_module(module_name)
-            method = getattr(module, method_name)
+        # Add the grounded predicates as facts to the solver
+        for predicate, groundings in {**self.static_groundings, **dynamic_groundings}.items():
+            for entities, value in groundings.items():
+                if value:
+                    if isinstance(entities, tuple):
+                        # Binary predicate
+                        self.solver.add(predicate(*entities))
+                    else:
+                        # Unary predicate
+                        self.solver.add(predicate(entities))
+    
+    def ground_static_predicates(self, world_matrix, intersect_matrix, agents):
+        # Ground static predicates
+        for pred_name, pred_info in self.predicates.items():
+            if pred_info["type"] == "S":
+                self.static_groundings[pred_info["instance"]] = \
+                    self.ground_predicate(pred_info, world_matrix, intersect_matrix, agents)
 
-            if arity == 1:
-                # Unary predicate processing
-                for entity in self.entity_list:
-                    values = method(world_matrix, intersect_matrix, agents, entity)
-                    data_dict[predicate_info["instance"]][entity] = values
-            elif arity == 2:
-                # Binary predicate processing
-                for entity1 in self.entity_list:
-                    for entity2 in self.entity_list:
-                        values = method(world_matrix, intersect_matrix, agents, entity1, entity2)
-                        data_dict[predicate_info["instance"]][(entity1, entity2)] = values
-        for rule_name, model in self.model_dict.items():
-            # 2. Add the grounded predicates as facts to the model
-            model_dict = {}
-            for key in data_dict.keys():
-                if key in self.model_preds[rule_name]:
-                    model_dict[key] = data_dict[key]
-            model.add_data(model_dict)
-            # 3. Add the rule as known truth to the model
-            model.add_knowledge(self.rule_dict[rule_name], world=World.AXIOM)
+    def ground_dynamic_predicates(self, world_matrix, intersect_matrix, agents):
+        # Ground dynamic predicates
+        dynamic_groundings = {}
+        for pred_name, pred_info in self.predicates.items():
+            if pred_info["type"] == "D":
+                dynamic_groundings[pred_info["instance"]] = \
+                    self.ground_predicate(pred_info, world_matrix, intersect_matrix, agents)
+        return dynamic_groundings
 
+    def ground_predicate(self, pred_info, world_matrix, intersect_matrix, agents):
+        # Generic method to ground a predicate
+        groundings = {}
+        predicate_function = pred_info["instance"]
+        arity = pred_info["arity"]
 
+        # Import the grounding method
+        method_full_name = pred_info["function"]
+        if method_full_name == "None":
+            return groundings
+        module_name, method_name = method_full_name.rsplit('.', 1)
+        module = importlib.import_module(module_name)
+        method = getattr(module, method_name)
+
+        if arity == 1:
+            # Unary predicate grounding
+            for entity in self.entities[predicate_function.domain().name()]:
+                value = method(world_matrix, intersect_matrix, agents, entity)
+                groundings[entity] = value
+        elif arity == 2:
+            # Binary predicate grounding
+            for entity1 in self.entities[predicate_function.domain(0).name()]:
+                for entity2 in self.entities[predicate_function.domain(1).name()]:
+                    value = method(world_matrix, intersect_matrix, agents, entity1, entity2)
+                    groundings[(entity1, entity2)] = value
+        return groundings
 
     def plan(self, world_matrix, intersect_matrix, agents):
-        for model in self.model_dict.values():
-            model.flush()
-        # Add the world data to the predicates, this may need enumerate all groundings
-        if len(self.entity_list) == 0:
-            # initialize the entity list
+        # 1. Init solver and entities
+        s = Solver()
+        # Check if entities have not been initialized or if they need to be updated
+        if not self.entities:
             self.world2entity(world_matrix, intersect_matrix, agents)
-        self.add_world_data(world_matrix, intersect_matrix, agents)
-        for model in self.model_dict.values():
-            model.infer(Direction.UPWARD)
-            model.infer(Direction.DOWNWARD)
-        # use LNN to get the action distribution
-        agents_actions = {}
-        for agent in agents:
-            entity_name = find_entity(agent)
-            agent_name = "{}_{}".format(agent.type, agent.layer_id)
-            action_mapping = agent.action_mapping
-            action_dist = torch.zeros_like(agent.action_dist)
-            for key in self.predicates.keys():
-                action = []
-                for action_id, action_name in action_mapping.items():
-                    if key in action_name:
-                        action.append(action_id)
-                if len(action)>0:
-                    for a in action:
-                        action_dist[a] = self.convert(key, entity_name)
-            # No action specified, use the default action, Normal
-            if action_dist.sum() == 0:
-                for action_id, action_name in action_mapping.items():
-                    if "Normal" in action_name:
-                        action_dist[action_id] = 1.0
-            agents_actions[agent_name] = action_dist
+
+        # 2. Add the grounded predicates as facts to the model
+        self.add_world_data(s, world_matrix, intersect_matrix, agents)
+
+        # 3. Solve the FOL problem
+        if s.check() == sat:
+            m = s.model()
+        else:
+            raise ValueError("No solution found!")
+
+        # 4. Convert the solution to actions
+        agents_actions = self.interpret_solution(m, agents)
         return agents_actions
-
-    def convert(self, key_name, agent_name):
-        pred_list = []
-        pred_list.append(self.predicates[key_name]["instance"].get_data(agent_name))
-        LU_bound = torch.cat(pred_list, dim=0)
-
-        value = torch.avg_pool1d(LU_bound, kernel_size=2)
-        value[value==0.5] = 0.0
-        value = torch.clip(value.sum(), 0.0, 1.0)
-        return value
     
     def world2entity(self, world_matrix, intersect_matrix, agents):
-        for entity_type in self.entity_types:
-            if entity_type == 'Agents':
-                entity_name = "Agents_{}_{}"
+        self.entities = {}
+        for entity_type in self.entity_types.keys():
+            self.entities[entity_type] = []
+            # For Agents
+            if entity_type == "Agent":
                 for agent in agents:
-                    agent_name = find_entity(agent)
-                    self.entity_list.append(agent_name)
-            elif entity_type == 'Intersections':
+                    agent_id = agent.layer_id
+                    agent_type = agent.type
+                    agent_name = f"Agent_{agent_type}_{agent_id}"
+                    # Create a Z3 constant for the agent
+                    agent_entity = Const(agent_name, self.entity_types['Agent'])
+                    self.entities[entity_type].append(agent_entity)
+            elif entity_type == "Intersection":
+                # For Intersections
                 unique_intersections = np.unique(intersect_matrix[0])
                 unique_intersections = unique_intersections[unique_intersections != 0]
-                for i in unique_intersections:
-                    entity_name = "{}_{}".format(entity_type, i)
-                    self.entity_list.append(entity_name)
+                for intersection_id in unique_intersections:
+                    intersection_name = f"intersection_{intersection_id}"
+                    # Create a Z3 constant for the intersection
+                    intersection_entity = Const(intersection_name, self.entity_types['Intersection'])
+                    self.entities[entity_type].append(intersection_entity)
                 assert len(unique_intersections) == NUM_INTERSECTIONS_BLOCKS
+        assert "Agent" in self.entities.keys() and "Intersection" in self.entities.keys()
