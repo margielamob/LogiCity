@@ -99,7 +99,7 @@ class Z3Planner(LocalPlanner):
             return []
     
     # Process world matrix to ground the world state predicates
-    def add_world_data(self, world_matrix, intersect_matrix, agents):
+    def add_world_data(self, world_matrix, intersect_matrix, agents, delete_default=[]):
         # Check if static predicates have been grounded, if not, ground them
         if not hasattr(self, 'static_groundings'):
             self.static_groundings = {}
@@ -125,6 +125,14 @@ class Z3Planner(LocalPlanner):
                 else:
                     # Unary predicate, false case
                     self.solver.add(Not(predicate(false_entity)))
+
+        # Add soft constraints for default values
+        for agent_entity in self.entities["Agent"]:
+            # Add a soft default for the 'Stop' predicate, for example, to be False
+            if "Stop" in self.predicates:
+                default_stop = Not(self.predicates["Stop"]["instance"](agent_entity))
+                if "default_stop_{}".format(agent_entity) not in delete_default:
+                    self.solver.assert_and_track(default_stop, "default_stop_{}".format(agent_entity))
     
     def ground_static_predicates(self, world_matrix, intersect_matrix, agents):
         # Ground static predicates
@@ -190,22 +198,37 @@ class Z3Planner(LocalPlanner):
             self.world2entity(world_matrix, intersect_matrix, agents)
 
         # 2. Add the grounded predicates as facts to the model
-        self.add_world_data(world_matrix, intersect_matrix, agents)
+        self.add_world_data(world_matrix, intersect_matrix, agents, delete_default=[])
         # 3. Add Rule as known truth to the model
         for rule_name, rule in self.rules.items():
             self.solver.add(rule)
 
         # 3. Solve the FOL problem
         if self.solver.check() == sat:
-            m = self.solver.model()
+            # SAT means all the action are False
+            # Pass, just like human think fast
+            return self.interpret_solution(None, agents, True)
         else:
-            raise ValueError("No solution found!")
+            # Get the unsatisfiable core
+            unsat_core = self.solver.unsat_core()
+            unsat_core_names = [str(c) for c in unsat_core]
+            
+            # Check if the unsatisfiable core contains any of the soft constraints
+            if any("default" in name for name in unsat_core_names):
+                self.solver = Solver()
+                # Add the grounded predicates as facts to the model
+                self.add_world_data(world_matrix, intersect_matrix, agents, add_default=False)
+
+                # Handle the case where unsatisfiability is due to soft constraints
+                # This could involve modifying or removing some soft constraints
+                # and re-running the solver
+                pass  # Replace this with your handling logic
 
         # 4. Convert the solution to actions
         agents_actions = self.interpret_solution(m, agents)
         return agents_actions
     
-    def interpret_solution(self, model, agents):
+    def interpret_solution(self, model, agents, skip=False):
         # Interpret the solution to the FOL problem
         agents_actions = {}
         for agent_entity in self.entities["Agent"]:
@@ -215,15 +238,16 @@ class Z3Planner(LocalPlanner):
             action_mapping = agent.action_mapping
             action_dist = torch.zeros_like(agent.action_dist)
 
-            for key in self.predicates.keys():
-                action = []
-                for action_id, action_name in action_mapping.items():
-                    if key in action_name:
-                        action.append(action_id)
-                if len(action)>0:
-                    for a in action:
-                        if is_true(model.evaluate(self.predicates[key]["instance"](agent_entity))):
-                            action_dist[a] = 1.0
+            if not skip:
+                for key in self.predicates.keys():
+                    action = []
+                    for action_id, action_name in action_mapping.items():
+                        if key in action_name:
+                            action.append(action_id)
+                    if len(action)>0:
+                        for a in action:
+                            if is_true(model.evaluate(self.predicates[key]["instance"](agent_entity))):
+                                action_dist[a] = 1.0
             # No action specified, use the default action, Normal
             if action_dist.sum() == 0:
                 for action_id, action_name in action_mapping.items():
