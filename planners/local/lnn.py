@@ -1,5 +1,5 @@
-from lnn import Model, Predicate, Variables, Implies, And, Or, Not, Exists, Forall, World, Direction
-from yaml import load, FullLoader
+from lnn import *
+from planners.local.basic import LocalPlanner
 from core.config import *
 from utils.find import find_entity
 from utils.check import check_fol_rule_syntax
@@ -7,16 +7,9 @@ import importlib
 import numpy as np
 import torch
 
-class LNNPlanner:
+class LNNPlanner(LocalPlanner):
     def __init__(self, yaml_path):        
-        # Load the yaml file
-        with open(yaml_path, 'r') as file:
-            self.data = load(file, Loader=FullLoader)
-        
-        self._create_predicates()
-        self._create_rules()
-        self.entity_types = self.data["entity"]
-        self.entity_list = []
+        super().__init__(yaml_path)
         
     def _create_predicates(self):
         # Using a dictionary to store the arity as well
@@ -69,6 +62,11 @@ class LNNPlanner:
                 model_pred.append(local_model.nodes[key])
             self.model_preds[rule_name] = model_pred
     
+    def _create_entities(self):
+        # Create the entities
+        self.entity_types = self.data["entities"]
+        self.entity_list = []
+    
     # Process world matrix to ground the world state predicates
     def add_world_data(self, world_matrix, intersect_matrix, agents):
         # 1. Convert the world to predicates, symbolic grounding
@@ -107,7 +105,6 @@ class LNNPlanner:
             model.add_data(model_dict)
             # 3. Add the rule as known truth to the model
             model.add_knowledge(self.rule_dict[rule_name], world=World.AXIOM)
-
 
 
     def plan(self, world_matrix, intersect_matrix, agents):

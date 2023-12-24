@@ -10,15 +10,11 @@ logger = logging.getLogger(__name__)
 
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
-def true(world_matrix, intersect_matrix, agents, entity):
-    return torch.tensor([1.0, 1.0])
-
 def IsAt(world_matrix, intersect_matrix, agents, entity1, entity2):
     # Must be "Agents" at "Intersections"
-    if "Agents" not in entity1:
-        return torch.tensor([0.0, 0.0])
-    if "Intersections" not in entity2:
-        return torch.tensor([0.0, 0.0])
+    assert "Agent" in entity1
+    assert "Intersection" in entity2
+
     agent = find_agent(agents, entity1)
     agent_layer = world_matrix[agent.layer_id]
     agent_position = (agent_layer == TYPE_MAP[agent.type]).nonzero()[0]
@@ -26,24 +22,17 @@ def IsAt(world_matrix, intersect_matrix, agents, entity1, entity2):
     _, inter_id = entity2.split("_")
     if agent.type == "Car":
         if intersect_matrix[0, agent_position[0], agent_position[1]] == int(inter_id):
-            return torch.tensor([1.0, 1.0])
+            return 1
         else:
-            return torch.tensor([0.0, 0.0])
+            return 0
     else:
         if intersect_matrix[1, agent_position[0], agent_position[1]] == int(inter_id):
-            return torch.tensor([1.0, 1.0])
+            return 1
         else:
-            return torch.tensor([0.0, 0.0])
-        
-def is_intersection(world_matrix, intersect_matrix, agents, entity):
-    if "Intersections" in entity:
-        return torch.tensor([1.0, 1.0])
-    else:
-        return torch.tensor([0.0, 0.0])
+            return 0
 
-def is_inter_carempty(world_matrix, intersect_matrix, agents, entity):
-    if "Intersections" not in entity:
-        return torch.tensor([0.0, 0.0])
+def IsInterCarEmpty(world_matrix, intersect_matrix, agents, entity):
+    assert "Intersection" in entity
     _, inter_id = entity.split("_")
     inter_id = int(inter_id)
     # check if there is a car in the intersection, use block
@@ -63,9 +52,9 @@ def is_inter_carempty(world_matrix, intersect_matrix, agents, entity):
     partial_world[float_mask] = 0
 
     if partial_world.any():
-        return torch.tensor([0.0, 0.0])
+        return 0
     else:
-        return torch.tensor([1.0, 1.0])
+        return 1
 
 def check_is_in_intersection(world, agent_id, agent_type, intersect_matrix, agents):
     agent_layer = world[agent_id]
@@ -198,11 +187,12 @@ def previous_cars(world, agent_id, agent_type, intersect_matrix, agents):
     return bounds
 
 
-def is_pedestrian(world_matrix, intersect_matrix, agents, entity):
+def IsPed(world_matrix, intersect_matrix, agents, entity):
+    assert "Agent" in entity
     if "Pedestrian" in entity:
-        return torch.tensor([1.0, 1.0])
+        return 1
     else:
-        return torch.tensor([0.0, 0.0])
+        return 0
 
 def is_ambulance(world, agent_id, agent_type, intersect_matrix, agents):
     if agent_type == "Car":

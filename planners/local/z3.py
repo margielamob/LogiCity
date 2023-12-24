@@ -1,24 +1,19 @@
 import re
+import torch
 import logging
 import importlib
 import numpy as np
 from z3 import *
-from yaml import load, FullLoader
 from core.config import *
+from utils.find import find_agent
+from planners.local.basic import LocalPlanner
 
 
 logger = logging.getLogger(__name__)
 
-class Z3Planner:
+class Z3Planner(LocalPlanner):
     def __init__(self, yaml_path):        
-        # Load the yaml file, create the predicates and rules
-        logger.info("Using Z3 solver as local planner")
-        with open(yaml_path, 'r') as file:
-            self.data = load(file, Loader=FullLoader)
-        
-        self._create_entities()
-        self._create_predicates()
-        self._create_rules()
+        super().__init__(yaml_path)
 
     def _create_entities(self):
         # Create Z3 sorts for each entity type
@@ -28,6 +23,7 @@ class Z3Planner:
             self.entity_types[entity_type] = DeclareSort(entity_type)
         # Print the entity types
         entity_types_info = "\n".join(["- {}: {}".format(entity, sort) for entity, sort in self.entity_types.items()])
+        self.entities = {}
         logger.info("Number of Entity Types: {}\nEntity Types:\n{}".format(len(self.entity_types), entity_types_info))
 
     def _create_predicates(self):
@@ -59,7 +55,7 @@ class Z3Planner:
         logger.info("Number of Predicates: {}\nPredicates:\n{}".format(len(self.predicates), predicates_info))
 
     def _create_rules(self):
-        self.rules = []
+        self.rules = {}
         for rule_dict in self.data["Rules"]:
             (rule_name, rule_info), = rule_dict.items()
             # Check if the rule is valid
@@ -82,11 +78,13 @@ class Z3Planner:
 
             # Evaluate the modified formula string to create the Z3 expression
             z3_formula = eval(formula)  # Still using eval(), but with a controlled environment
-            self.rules.append(z3_formula)
+            self.rules[rule_name] = z3_formula
+        rule_info = "\n".join(["- {}: {}".format(rule, details) for rule, details in self.rules.items()])
+        logger.info("Number of Rules: {}\nRules:\n{}".format(len(self.rules), rule_info))
 
     def _extract_variables(self, formula):
         # Find the variable declaration part of the formula (after 'Forall([' or 'Exists([')
-        match = re.search(r'Forall\(\[([^\]]*)\]', formula)
+        match = re.search(r'ForAll\(\[([^\]]*)\]', formula)
         if not match:
             match = re.search(r'Exists\(\[([^\]]*)\]', formula)
         
@@ -111,15 +109,14 @@ class Z3Planner:
         dynamic_groundings = self.ground_dynamic_predicates(world_matrix, intersect_matrix, agents)
 
         # Add the grounded predicates as facts to the solver
-        for predicate, groundings in {**self.static_groundings, **dynamic_groundings}.items():
-            for entities, value in groundings.items():
-                if value:
-                    if isinstance(entities, tuple):
-                        # Binary predicate
-                        self.solver.add(predicate(*entities))
-                    else:
-                        # Unary predicate
-                        self.solver.add(predicate(entities))
+        for predicate, grounding_list in {**self.static_groundings, **dynamic_groundings}.items():
+            for grounding in grounding_list:
+                if isinstance(grounding, tuple):
+                    # Binary predicate
+                    self.solver.add(predicate(*grounding))
+                else:
+                    # Unary predicate
+                    self.solver.add(predicate(grounding))
     
     def ground_static_predicates(self, world_matrix, intersect_matrix, agents):
         # Ground static predicates
@@ -138,8 +135,9 @@ class Z3Planner:
         return dynamic_groundings
 
     def ground_predicate(self, pred_info, world_matrix, intersect_matrix, agents):
+        # Return the groundings that satisfy the predicate
         # Generic method to ground a predicate
-        groundings = {}
+        groundings = []
         predicate_function = pred_info["instance"]
         arity = pred_info["arity"]
 
@@ -153,30 +151,35 @@ class Z3Planner:
 
         if arity == 1:
             # Unary predicate grounding
-            for entity in self.entities[predicate_function.domain().name()]:
-                value = method(world_matrix, intersect_matrix, agents, entity)
-                groundings[entity] = value
+            for entity in self.entities[predicate_function.domain(0).name()]:
+                entity_name = entity.decl().name()
+                value = method(world_matrix, intersect_matrix, agents, entity_name)
+                if value:
+                    groundings.append(entity)
         elif arity == 2:
             # Binary predicate grounding
             for entity1 in self.entities[predicate_function.domain(0).name()]:
                 for entity2 in self.entities[predicate_function.domain(1).name()]:
-                    value = method(world_matrix, intersect_matrix, agents, entity1, entity2)
-                    groundings[(entity1, entity2)] = value
+                    entity1_name = entity1.decl().name()
+                    entity2_name = entity2.decl().name()
+                    value = method(world_matrix, intersect_matrix, agents, entity1_name, entity2_name)
+                    if value:
+                        groundings.append((entity1, entity2))
         return groundings
 
     def plan(self, world_matrix, intersect_matrix, agents):
         # 1. Init solver and entities
-        s = Solver()
+        self.solver = Solver()
         # Check if entities have not been initialized or if they need to be updated
         if not self.entities:
             self.world2entity(world_matrix, intersect_matrix, agents)
 
         # 2. Add the grounded predicates as facts to the model
-        self.add_world_data(s, world_matrix, intersect_matrix, agents)
+        self.add_world_data(world_matrix, intersect_matrix, agents)
 
         # 3. Solve the FOL problem
-        if s.check() == sat:
-            m = s.model()
+        if self.solver.check() == sat:
+            m = self.solver.model()
         else:
             raise ValueError("No solution found!")
 
@@ -184,8 +187,35 @@ class Z3Planner:
         agents_actions = self.interpret_solution(m, agents)
         return agents_actions
     
+    def interpret_solution(self, model, agents):
+        # Interpret the solution to the FOL problem
+        agents_actions = {}
+        for agent_entity in self.entities["Agent"]:
+            entity_name = agent_entity.decl().name()
+            agent = find_agent(agents, entity_name)
+            agent_name = "{}_{}".format(agent.type, agent.layer_id)
+            action_mapping = agent.action_mapping
+            action_dist = torch.zeros_like(agent.action_dist)
+
+            for key in self.predicates.keys():
+                action = []
+                for action_id, action_name in action_mapping.items():
+                    if key in action_name:
+                        action.append(action_id)
+                if len(action)>0:
+                    for a in action:
+                        if is_true(model.evaluate(self.predicates[key]["instance"](agent_entity))):
+                            action_dist[a] = 1.0
+            # No action specified, use the default action, Normal
+            if action_dist.sum() == 0:
+                for action_id, action_name in action_mapping.items():
+                    if "Normal" in action_name:
+                        action_dist[action_id] = 1.0
+
+            agents_actions[agent_name] = action_dist
+        return agents_actions
+    
     def world2entity(self, world_matrix, intersect_matrix, agents):
-        self.entities = {}
         for entity_type in self.entity_types.keys():
             self.entities[entity_type] = []
             # For Agents
@@ -202,7 +232,7 @@ class Z3Planner:
                 unique_intersections = np.unique(intersect_matrix[0])
                 unique_intersections = unique_intersections[unique_intersections != 0]
                 for intersection_id in unique_intersections:
-                    intersection_name = f"intersection_{intersection_id}"
+                    intersection_name = f"Intersection_{intersection_id}"
                     # Create a Z3 constant for the intersection
                     intersection_entity = Const(intersection_name, self.entity_types['Intersection'])
                     self.entities[entity_type].append(intersection_entity)
@@ -212,15 +242,25 @@ class Z3Planner:
     def format_rule_string(self, rule_str):
         indent_level = 0
         formatted_str = ""
+        bracket_stack = []  # Stack to keep track of brackets
+
         for char in rule_str:
             if char == ',':
                 formatted_str += ',\n' + ' ' * 4 * indent_level
             elif char == '(':
+                bracket_stack.append('(')
                 formatted_str += '(\n' + ' ' * 4 * (indent_level + 1)
                 indent_level += 1
             elif char == ')':
+                if not bracket_stack or bracket_stack[-1] != '(':
+                    raise ValueError("Unmatched closing bracket detected.")
+                bracket_stack.pop()
                 indent_level -= 1
                 formatted_str += '\n' + ' ' * 4 * indent_level + ')'
             else:
                 formatted_str += char
+
+        if bracket_stack:
+            raise ValueError("Unmatched opening bracket detected.")
+
         return formatted_str
