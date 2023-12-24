@@ -118,21 +118,22 @@ class Z3Planner(LocalPlanner):
                     # Unary predicate, true case
                     self.solver.add(predicate(true_entity))
 
-            for false_entity in groundings["False"]:
-                if isinstance(false_entity, tuple):
-                    # Binary predicate, false case
-                    self.solver.add(Not(predicate(*false_entity)))
-                else:
-                    # Unary predicate, false case
-                    self.solver.add(Not(predicate(false_entity)))
+            # If we used assertion default, then do not need the negtive facts
+            # for false_entity in groundings["False"]:
+            #     if isinstance(false_entity, tuple):
+            #         # Binary predicate, false case
+            #         self.solver.add(Not(predicate(*false_entity)))
+            #     else:
+            #         # Unary predicate, false case
+            #         self.solver.add(Not(predicate(false_entity)))
 
         # Add soft constraints for default values
         for agent_entity in self.entities["Agent"]:
             # Add a soft default for the 'Stop' predicate, for example, to be False
             if "Stop" in self.predicates:
-                default_stop = Not(self.predicates["Stop"]["instance"](agent_entity))
-                if "default_stop_{}".format(agent_entity) not in delete_default:
-                    self.solver.assert_and_track(default_stop, "default_stop_{}".format(agent_entity))
+                if "Default_{}_{}".format("Stop", agent_entity) not in delete_default:
+                    default_stop = Not(self.predicates["Stop"]["instance"](agent_entity))
+                    self.solver.assert_and_track(default_stop, "Default_Stop_{}".format(agent_entity))
     
     def ground_static_predicates(self, world_matrix, intersect_matrix, agents):
         # Ground static predicates
@@ -198,7 +199,8 @@ class Z3Planner(LocalPlanner):
             self.world2entity(world_matrix, intersect_matrix, agents)
 
         # 2. Add the grounded predicates as facts to the model
-        self.add_world_data(world_matrix, intersect_matrix, agents, delete_default=[])
+        world_matrix_clone = world_matrix.clone()
+        self.add_world_data(world_matrix_clone, intersect_matrix, agents, delete_default=[])
         # 3. Add Rule as known truth to the model
         for rule_name, rule in self.rules.items():
             self.solver.add(rule)
@@ -214,15 +216,17 @@ class Z3Planner(LocalPlanner):
             unsat_core_names = [str(c) for c in unsat_core]
             
             # Check if the unsatisfiable core contains any of the soft constraints
-            if any("default" in name for name in unsat_core_names):
+            if any("Default" in name for name in unsat_core_names):
                 self.solver = Solver()
                 # Add the grounded predicates as facts to the model
-                self.add_world_data(world_matrix, intersect_matrix, agents, add_default=False)
-
-                # Handle the case where unsatisfiability is due to soft constraints
-                # This could involve modifying or removing some soft constraints
-                # and re-running the solver
-                pass  # Replace this with your handling logic
+                world_matrix_clone = world_matrix.clone()
+                self.add_world_data(world_matrix_clone, intersect_matrix, agents, delete_default=unsat_core_names)
+                if self.solver.check() == sat:
+                    m = self.solver.model()
+                else:
+                    raise ValueError("Unsatisfiable core can't be resolved.")
+            else:
+                raise ValueError("Unsatisfiable core does not contain any soft constraints.")
 
         # 4. Convert the solution to actions
         agents_actions = self.interpret_solution(m, agents)
