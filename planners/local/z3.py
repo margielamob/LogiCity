@@ -118,14 +118,14 @@ class Z3Planner(LocalPlanner):
                     # Unary predicate, true case
                     self.solver.add(predicate(true_entity))
 
-            # If we used assertion default, then do not need the negtive facts
-            # for false_entity in groundings["False"]:
-            #     if isinstance(false_entity, tuple):
-            #         # Binary predicate, false case
-            #         self.solver.add(Not(predicate(*false_entity)))
-            #     else:
-            #         # Unary predicate, false case
-            #         self.solver.add(Not(predicate(false_entity)))
+            # If we used assertion default, then may do not need the negtive facts
+            for false_entity in groundings["False"]:
+                if isinstance(false_entity, tuple):
+                    # Binary predicate, false case
+                    self.solver.add(Not(predicate(*false_entity)))
+                else:
+                    # Unary predicate, false case
+                    self.solver.add(Not(predicate(false_entity)))
 
         # Add soft constraints for default values
         for agent_entity in self.entities["Agent"]:
