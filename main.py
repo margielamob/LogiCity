@@ -15,7 +15,7 @@ def parse_arguments():
     parser.add_argument('--map', type=str, default="config/maps/v1.1.yaml", help='YAML path to the map.')
     parser.add_argument('--agents', type=str, default="config/agents/debug.yaml", help='YAML path to the agent definition.')
     parser.add_argument('--rule_type', type=str, default="Z3", help='We support ["LNN", "Z3"].')
-    parser.add_argument('--rules', type=str, default="config/rules/Z3/easy/easy_rule_debug.yaml", help='YAML path to the rule definition.')
+    parser.add_argument('--rules', type=str, default="config/rules/Z3/easy/easy_rule.yaml", help='YAML path to the rule definition.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log")
     parser.add_argument('--exp', type=str, default="med_2000")

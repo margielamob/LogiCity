@@ -233,6 +233,8 @@ class City:
         # Label the intersection matrix, they share the same ID
         labeled_matrix_line = intersection_matrix[0].numpy().astype(labeled_matrix_block.dtype) * labeled_matrix_block
         labeled_matrix_line_ped = intersection_matrix[1].numpy().astype(labeled_matrix_block.dtype) * labeled_matrix_block
+        # Important: Exclude the intersection lines in the blocks, so that the agent AT intersetion is not counted as IN the intersection
+        labeled_matrix_block[labeled_matrix_line_ped!=0] = 0
         intersection_matrix = np.array([labeled_matrix_line, labeled_matrix_line_ped, labeled_matrix_block])
         self.intersection_matrix = torch.tensor(intersection_matrix)
 
