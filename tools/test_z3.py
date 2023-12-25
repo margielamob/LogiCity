@@ -22,16 +22,23 @@ def logicity_demo():
     s = Solver()
 
     # Define the rule
-    # rule = ForAll([dummyAgent], Stop(dummyAgent) == Exists([dummyIntersection], \
-    #                 And(IsPedestrian(dummyAgent), Not(IsInterCarEmpty(dummyIntersection)), IsAt(dummyAgent, dummyIntersection)), \
-    #                     patterns=[MultiPattern(IsInterCarEmpty(dummyIntersection), IsAt(dummyAgent, dummyIntersection))]), \
-    #                         patterns=[MultiPattern(Stop(dummyAgent), IsPedestrian(dummyAgent), IsAt(dummyAgent, dummyIntersection))] \
-    #                             )
-    rule = ForAll([dummyAgent, dummyIntersection], \
-                  Implies(And(IsPedestrian(dummyAgent), Not(IsInterCarEmpty(dummyIntersection)), IsAt(dummyAgent, dummyIntersection)), \
-                          Stop(dummyAgent)
-                         )
-                 )
+    for agent in agents:
+        rule = Exists([dummyIntersection], \
+                        And(IsPedestrian(agent), Not(IsInterCarEmpty(dummyIntersection)), IsAt(agent, dummyIntersection))
+                                    ) == Stop(agent)
+        s.add(rule)
+    # rule = ForAll([dummyAgent, dummyIntersection], \
+    #               Implies(And(IsPedestrian(dummyAgent), Not(IsInterCarEmpty(dummyIntersection)), IsAt(dummyAgent, dummyIntersection)), \
+    #                       Stop(dummyAgent)
+    #                      )
+    #              )
+
+    # rule = ForAll([dummyAgent, dummyIntersection], \
+    #               Exists([dummyIntersection], \
+    #                         And(IsPedestrian(dummyAgent), Not(IsInterCarEmpty(dummyIntersection)), IsAt(dummyAgent, dummyIntersection)) == \
+    #                         Stop(dummyAgent)
+    #                         )
+    #                 )
     print("Time: ", time.time() - strt)
     s.add(rule)
     # Specify conditions, IsPedestrian, IsIntersect, IsInterCarEmpty
@@ -47,15 +54,13 @@ def logicity_demo():
     s.add(Not(IsInterCarEmpty(intersections[31])))  # Intersections 32 is not empty
 
     # Specify IsAt
-    s.add(IsAt(agents[0], intersections[0]))
-    s.add(IsAt(agents[1], intersections[31]))
-    s.add(IsAt(agents[2], intersections[31]))
-    s.add(IsAt(agents[3], intersections[31]))
-    s.add(IsAt(agents[4], intersections[5]))
-    s.add(IsAt(agents[5], intersections[6]))
-    s.add(IsAt(agents[6], intersections[7]))
-    s.add(IsAt(agents[7], intersections[31]))
+    for agent in agents[1:]:
+        for intersection in intersections:
+            s.add(Not(IsAt(agent, intersection)))
 
+    s.add(IsAt(agents[0], intersections[31]))
+    for intersection in intersections[:-1]:
+        s.add(Not(IsAt(agents[0], intersection)))
     # s.add(Not(Stop(agents[2])))
     # s.add(Stop(agents[0]))
     # Check if there is a solution
@@ -157,19 +162,29 @@ def learn_z3():
 
     
     s.add(IsAt(agents[0], intersections[0]))
-    s.add(IsAt(agents[1], intersections[0]))
+    s.add(IsAt(agents[1], intersections[1]))
     s.add(Not(IsAt(agents[0], intersections[1])))
-    s.add(Not(IsAt(agents[1], intersections[1])))
+    s.add(Not(IsAt(agents[1], intersections[0])))
     # s.add(Not(Stop(agents[1])))
     # s.add(Not(IsAt(agents[1], intersections[1])))
 
-    s.add(ForAll([dummyAgent, dummyIntersection], \
-                 Implies(And(IsPedestrian(dummyAgent), IsAt(dummyAgent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection))
-                             )
-                         , Stop(dummyAgent)
-                        )   
+    # 1. Forall + Implies
+    # s.add(ForAll([dummyAgent, dummyIntersection], \
+    #              Implies(And(IsPedestrian(dummyAgent), IsAt(dummyAgent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection))
+    #                          )
+    #                      , Stop(dummyAgent)
+    #                     )   
+    #              )
+    #      )
+    
+    # 2. Exists + ==
+    s.add(ForAll([dummyAgent], \
+                 Stop(dummyAgent) == Exists([dummyIntersection], \
+                                            And(IsPedestrian(dummyAgent), IsAt(dummyAgent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection)))
+                                            )
                  )
          )
+    
     
     if s.check() == sat:
         m = s.model()
