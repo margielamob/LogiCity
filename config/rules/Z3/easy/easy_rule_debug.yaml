@@ -30,5 +30,5 @@ Predicates:
 
 Rules:
   - PedestrianStop:
-      formula: ForAll([dummyAgent, dummyIntersection], Implies(And(IsPedestrian(dummyAgent), IsAt(dummyAgent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection))), Stop(dummyAgent)))
+      formula: Exists([dummyIntersection], And(IsPedestrian(agent), IsAt(agent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection)))) == Stop(agent)
       description: pedestrians at intersection, not intersection empty with cars, stop

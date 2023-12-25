@@ -56,6 +56,7 @@ class Z3Planner(LocalPlanner):
 
     def _create_rules(self):
         self.rules = {}
+        self.rule_tem = {}
         for rule_dict in self.data["Rules"]:
             (rule_name, rule_info), = rule_dict.items()
             # Check if the rule is valid
@@ -65,7 +66,7 @@ class Z3Planner(LocalPlanner):
 
             # Create Z3 variables based on the formula
             var_names = self._extract_variables(formula)
-            z3_vars = {var_name: Const(var_name, self.entity_types[var_name.replace('dummy', '')]) \
+            self.z3_vars = {var_name: Const(var_name, self.entity_types[var_name.replace('dummy', '')]) \
                        for var_name in var_names}
 
             # Substitute predicate names in the formula with Z3 function instances
@@ -73,14 +74,14 @@ class Z3Planner(LocalPlanner):
                 formula = formula.replace(method_name, f'self.predicates["{method_name}"]["instance"]')
 
             # Now replace the variable names in the formula with their Z3 counterparts
-            for var_name, z3_var in z3_vars.items():
-                formula = formula.replace(var_name, f'z3_vars["{var_name}"]')
+            for var_name, z3_var in self.z3_vars.items():
+                formula = formula.replace(var_name, f'self.z3_vars["{var_name}"]')
 
             # Evaluate the modified formula string to create the Z3 expression
-            z3_formula = eval(formula)  # Still using eval(), but with a controlled environment
-            self.rules[rule_name] = z3_formula
-        rule_info = "\n".join(["- {}: {}".format(rule, details) for rule, details in self.rules.items()])
-        logger.info("Number of Rules: {}\nRules:\n{}".format(len(self.rules), rule_info))
+            self.rule_tem[rule_name] = formula
+        rule_info = "\n".join(["- {}: {}".format(rule, details) for rule, details in self.rule_tem.items()])
+        logger.info("Number of Rules: {}\nRules:\n{}".format(len(self.rule_tem), rule_info))
+        logger.info("Rules will be grounded later...")
 
     def _extract_variables(self, formula):
         # Find the variable declaration part of the formula (after 'Forall([' or 'Exists([')
@@ -98,8 +99,16 @@ class Z3Planner(LocalPlanner):
             # If no match, return an empty list
             return []
     
+    def instaniate_rules(self):
+        for rule_name, rule_template in self.rule_tem.items():
+            self.rules[rule_name] = []
+            for agent in self.entities["Agent"]:
+                # Replace placeholder in the rule template with the actual agent entity
+                instantiated_rule = eval(rule_template)
+                self.rules[rule_name].append(instantiated_rule)
+
     # Process world matrix to ground the world state predicates
-    def add_world_data(self, world_matrix, intersect_matrix, agents, delete_default=[]):
+    def add_world_data(self, world_matrix, intersect_matrix, agents):
         # Check if static predicates have been grounded, if not, ground them
         if not hasattr(self, 'static_groundings'):
             self.static_groundings = {}
@@ -126,14 +135,6 @@ class Z3Planner(LocalPlanner):
                 else:
                     # Unary predicate, false case
                     self.solver.add(Not(predicate(false_entity)))
-
-        # Add soft constraints for default values
-        for agent_entity in self.entities["Agent"]:
-            # Add a soft default for the 'Stop' predicate, for example, to be False
-            if "Stop" in self.predicates:
-                if "Default_{}_{}".format("Stop", agent_entity) not in delete_default:
-                    default_stop = Not(self.predicates["Stop"]["instance"](agent_entity))
-                    self.solver.assert_and_track(default_stop, "Default_Stop_{}".format(agent_entity))
     
     def ground_static_predicates(self, world_matrix, intersect_matrix, agents):
         # Ground static predicates
@@ -197,42 +198,25 @@ class Z3Planner(LocalPlanner):
         # Check if entities have not been initialized or if they need to be updated
         if not self.entities:
             self.world2entity(world_matrix, intersect_matrix, agents)
+        # Check if rules have not been initialized or if they need to be updated
+        if not self.rules:
+            self.instaniate_rules()
 
         # 2. Add the grounded predicates as facts to the model
         world_matrix_clone = world_matrix.clone()
-        self.add_world_data(world_matrix_clone, intersect_matrix, agents, delete_default=[])
+        self.add_world_data(world_matrix_clone, intersect_matrix, agents)
         # 3. Add Rule as known truth to the model
-        for rule_name, rule in self.rules.items():
-            self.solver.add(rule)
+        for rule_name, rule_list in self.rules.items():
+            for rule in rule_list:
+                self.solver.add(rule)
 
         # 3. Solve the FOL problem
         if self.solver.check() == sat:
-            # SAT means all the local actions are False, just move normal
-            # Pass, just like human think fast
-            return self.interpret_solution(None, agents, True)
+            m = self.solver.model()
+            # 4. Interpret the solution
+            return self.interpret_solution(m, agents)
         else:
-            # Get the unsatisfiable core
-            unsat_core = self.solver.unsat_core()
-            unsat_core_names = [str(c) for c in unsat_core]
-            
-            # Check if the unsatisfiable core contains any of the soft constraints
-            if any("Default" in name for name in unsat_core_names):
-                self.solver = Solver()
-                # Add the grounded predicates as facts to the model
-                world_matrix_clone = world_matrix.clone()
-                self.add_world_data(world_matrix_clone, intersect_matrix, agents, delete_default=unsat_core_names)
-                for rule_name, rule in self.rules.items():
-                    self.solver.add(rule)
-                if self.solver.check() == sat:
-                    m = self.solver.model()
-                else:
-                    raise ValueError("Unsatisfiable core can't be resolved.")
-            else:
-                raise ValueError("Unsatisfiable core does not contain any soft constraints.")
-
-        # 4. Convert the solution to actions
-        agents_actions = self.interpret_solution(m, agents)
-        return agents_actions
+            raise ValueError("No solution found!")
     
     def interpret_solution(self, model, agents, skip=False):
         # Interpret the solution to the FOL problem

@@ -42,10 +42,10 @@ def logicity_demo():
     print("Time: ", time.time() - strt)
     s.add(rule)
     # Specify conditions, IsPedestrian, IsIntersect, IsInterCarEmpty
-    for i in range(4):
+    for i in range(3):
         s.add(IsPedestrian(agents[i]))  # Agents 1-3 are pedestrians
 
-    for i in range(4, 8):
+    for i in range(3, 8):
         s.add(Not(IsPedestrian(agents[i])))  # Agents 3-8 are not pedestrians
 
     for i in range(31):
