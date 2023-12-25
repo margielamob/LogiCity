@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from core.config import *
-from utils.find import find_agent
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,6 +13,8 @@ def IsAt(world_matrix, intersect_matrix, agents, entity1, entity2):
     # Must be "Agents" at "Intersections"
     assert "Agent" in entity1
     assert "Intersection" in entity2
+    if ("dummy" in entity1) or ("dummy" in entity2):
+        return 0
 
     _, agent_type, layer_id = entity1.split("_")
     layer_id = int(layer_id)
@@ -34,6 +35,8 @@ def IsAt(world_matrix, intersect_matrix, agents, entity1, entity2):
 
 def IsInterCarEmpty(world_matrix, intersect_matrix, agents, entity):
     assert "Intersection" in entity
+    if "dummy" in entity:
+        return 0
     _, inter_id = entity.split("_")
     inter_id = int(inter_id)
     # check if there is a car in the intersection, use block
@@ -59,6 +62,8 @@ def IsInterCarEmpty(world_matrix, intersect_matrix, agents, entity):
 
 def IsInterEmpty(world_matrix, intersect_matrix, agents, entity):
     assert "Intersection" in entity
+    if "dummy" in entity:
+        return 0
     _, inter_id = entity.split("_")
     inter_id = int(inter_id)
     # check if there is an agent in the intersection, use block
@@ -115,6 +120,8 @@ def check_is_ambulance_in_intersection(world, agent_id, agent_type, intersect_ma
 
 def IsCar(world_matrix, intersect_matrix, agents, entity):
     assert "Agent" in entity
+    if "dummy" in entity:
+        return 0
     if "Car" in entity:
         return 1
     else:
@@ -189,8 +196,11 @@ def HigherPri(world_matrix, intersect_matrix, agents, entity1, entity2):
     assert "Agent" in entity2
     if ("Car" not in entity1) or ("Car" not in entity2):
         return 0
+    if "dummy" in entity1 or "dummy" in entity2:
+        return 0
     if entity1 == entity2:
         return 0
+    
     _, _, other_agent_layer = entity1.split("_")
     _, _, ego_agent_layer = entity2.split("_")
     ego_agent_layer = int(ego_agent_layer)
@@ -229,6 +239,8 @@ def HigherPri(world_matrix, intersect_matrix, agents, entity1, entity2):
 
 def IsPed(world_matrix, intersect_matrix, agents, entity):
     assert "Agent" in entity
+    if "dummy" in entity:
+        return 0
     if "Pedestrian" in entity:
         return 1
     else:

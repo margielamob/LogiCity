@@ -222,6 +222,8 @@ class Z3Planner(LocalPlanner):
         # Interpret the solution to the FOL problem
         agents_actions = {}
         for agent_entity in self.entities["Agent"]:
+            if "dummy" in agent_entity.decl().name():
+                continue
             entity_name = agent_entity.decl().name()
             agent = find_agent(agents, entity_name)
             agent_name = "{}_{}".format(agent.type, agent.layer_id)
@@ -270,6 +272,9 @@ class Z3Planner(LocalPlanner):
                     self.entities[entity_type].append(intersection_entity)
                 assert len(unique_intersections) == NUM_INTERSECTIONS_BLOCKS
         assert "Agent" in self.entities.keys() and "Intersection" in self.entities.keys()
+        # dummy is also part of entity
+        for var_name, z3_var in self.z3_vars.items():
+            self.entities[var_name.replace('dummy', '')].append(z3_var)
 
     def format_rule_string(self, rule_str):
         indent_level = 0
