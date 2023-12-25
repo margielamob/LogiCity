@@ -139,17 +139,19 @@ class Z3Planner(LocalPlanner):
     def ground_static_predicates(self, world_matrix, intersect_matrix, agents):
         # Ground static predicates
         for pred_name, pred_info in self.predicates.items():
+            world_matrix_clone = world_matrix.clone()
             if pred_info["type"] == "S":
                 self.static_groundings[pred_info["instance"]] = \
-                    self.ground_predicate(pred_info, world_matrix, intersect_matrix, agents)
+                    self.ground_predicate(pred_info, world_matrix_clone, intersect_matrix, agents)
 
     def ground_dynamic_predicates(self, world_matrix, intersect_matrix, agents):
         # Ground dynamic predicates
         dynamic_groundings = {}
         for pred_name, pred_info in self.predicates.items():
+            world_matrix_clone = world_matrix.clone()
             if pred_info["type"] == "D":
                 dynamic_groundings[pred_info["instance"]] = \
-                    self.ground_predicate(pred_info, world_matrix, intersect_matrix, agents)
+                    self.ground_predicate(pred_info, world_matrix_clone, intersect_matrix, agents)
         return dynamic_groundings
 
     def ground_predicate(self, pred_info, world_matrix, intersect_matrix, agents):
