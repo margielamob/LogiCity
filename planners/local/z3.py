@@ -207,7 +207,7 @@ class Z3Planner(LocalPlanner):
 
         # 3. Solve the FOL problem
         if self.solver.check() == sat:
-            # SAT means all the action are False
+            # SAT means all the local actions are False, just move normal
             # Pass, just like human think fast
             return self.interpret_solution(None, agents, True)
         else:
@@ -221,6 +221,8 @@ class Z3Planner(LocalPlanner):
                 # Add the grounded predicates as facts to the model
                 world_matrix_clone = world_matrix.clone()
                 self.add_world_data(world_matrix_clone, intersect_matrix, agents, delete_default=unsat_core_names)
+                for rule_name, rule in self.rules.items():
+                    self.solver.add(rule)
                 if self.solver.check() == sat:
                     m = self.solver.model()
                 else:
