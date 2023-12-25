@@ -68,7 +68,7 @@ def IsInterEmpty(world_matrix, intersect_matrix, agents, entity):
     ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
     partial_world = world_matrix[BASIC_LAYER:, ymin:ymax+1, xmin:xmax+1]
     # Create mask for integer values (except 0)
-    int_mask = (partial_world == TYPE_MAP["Car"] | partial_world == TYPE_MAP["Pedestrian"])
+    int_mask = torch.logical_or(partial_world == TYPE_MAP["Car"], partial_world == TYPE_MAP["Pedestrian"])
 
     # Create mask for float values and zero
     float_mask = partial_world != TYPE_MAP["Car"]
@@ -189,15 +189,19 @@ def HigherPri(world_matrix, intersect_matrix, agents, entity1, entity2):
     assert "Agent" in entity2
     if ("Car" not in entity1) or ("Car" not in entity2):
         return 0
+    if entity1 == entity2:
+        return 0
     _, _, other_agent_layer = entity1.split("_")
     _, _, ego_agent_layer = entity2.split("_")
+    ego_agent_layer = int(ego_agent_layer)
+    other_agent_layer = int(other_agent_layer)
 
     ego_agent_layer = world_matrix[ego_agent_layer]
     ego_agent_position = (ego_agent_layer == TYPE_MAP["Car"]).nonzero()[0]
     if not intersect_matrix[0, ego_agent_position[0], ego_agent_position[1]]:
         return 0
     else:
-        other_agent_layer = world_matrix[ego_agent_layer]
+        other_agent_layer = world_matrix[other_agent_layer]
         other_agent_position = (other_agent_layer == TYPE_MAP["Car"]).nonzero()[0]
         if not intersect_matrix[0, other_agent_position[0], other_agent_position[1]] == \
             intersect_matrix[0, ego_agent_position[0], ego_agent_position[1]]:
@@ -215,7 +219,7 @@ def HigherPri(world_matrix, intersect_matrix, agents, entity1, entity2):
         # higher priority lines
         my_id = torch.all(((priority_list == ego_agent_position).sum(dim=1)) > 0, dim=1).nonzero()[0].item()
         other_groups = priority_list[my_id+1:, :, :].reshape(-1, 2)
-        higher = torch.any(((other_groups == other_agent_position).sum(dim=1)) > 0, dim=1)
+        higher = torch.any(torch.all(other_groups == other_agent_position, dim=1))
 
         if higher:
             return 1
