@@ -73,6 +73,76 @@ def logicity_demo():
     else:
         print("No solution found")
 
+def logicity_easy():
+    Agent = DeclareSort('Agents')
+    Intersection = DeclareSort('Intersections')
+
+    agents = [Const(f'agent_{i}', Agent) for i in range(3)]
+    intersections = [Const(f'intersection_{i}', Intersection) for i in range(2)]
+
+    dummyAgent = Const('dummyAgent', Agent)
+    dummyIntersection = Const('dummyIntersection', Intersection)
+
+    IsAt = Function('IsAt', Agent, Intersection, BoolSort())
+    IsPedestrian = Function('IsPedestrian', Agent, BoolSort())
+    IsCar = Function('IsCar', Agent, BoolSort())
+    IsInterCarEmpty = Function('IsInterCarEmpty', Intersection, BoolSort())
+    IsInterEmpty = Function('IsInterEmpty', Intersection, BoolSort())
+    Stop = Function('Stop', Agent, BoolSort())
+
+    s = Solver()
+    # Ped and Car
+    s.add(IsPedestrian(agents[0]))
+    s.add(Not(IsPedestrian(agents[1])))
+    s.add(Not(IsPedestrian(agents[2])))
+    # s.add(Not(IsPedestrian(dummyAgent)))
+
+    s.add(IsCar(agents[1]))
+    s.add(Not(IsCar(agents[0])))
+    s.add(Not(IsCar(agents[2])))
+    # s.add(Not(IsCar(dummyAgent)))
+
+    # Intersections
+    s.add(IsInterCarEmpty(intersections[0]))
+    s.add(IsInterCarEmpty(intersections[1]))
+    s.add(Not(IsInterCarEmpty(dummyIntersection)))
+
+    s.add(Not(IsInterEmpty(intersections[0])))
+    s.add(IsInterEmpty(intersections[1]))
+    s.add(Not(IsInterEmpty(dummyIntersection)))
+
+    # At
+    s.add(IsAt(agents[0], intersections[0]))
+    s.add(IsAt(agents[1], intersections[0]))
+    # s.add(Not(IsAt(dummyAgent, intersections[0])))
+    # s.add(Not(IsAt(dummyAgent, intersections[1])))
+    s.add(Not(IsAt(agents[0], dummyIntersection)))
+    s.add(Not(IsAt(agents[1], dummyIntersection)))
+    s.add(Not(IsAt(agents[2], dummyIntersection)))
+    # s.add(Not(IsAt(dummyAgent, dummyIntersection)))
+
+    s.add(Not(IsAt(agents[0], intersections[1])))
+    s.add(Not(IsAt(agents[1], intersections[1])))
+    s.add(Not(IsAt(agents[2], intersections[0])))
+    s.add(Not(IsAt(agents[2], intersections[1])))
+
+    for agent in agents:
+        s.add(Stop(agent) == \
+              Exists([dummyIntersection], \
+                     Or(And(IsPedestrian(agent), IsAt(agent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection))), \
+                        And(IsCar(agent), IsAt(agent, dummyIntersection), Not(IsInterEmpty(dummyIntersection)))
+                        )
+                    )
+              )
+    
+    if s.check() == sat:
+        m = s.model()
+        for agent in agents:
+            if m.evaluate(Stop(agent)):
+                print(f"Agent {agent} must stop")
+    else:
+        print("No solution found")
+
 def stack_demo():
     A = DeclareSort('A')
     B = DeclareSort('B')
@@ -196,6 +266,6 @@ def learn_z3():
 
 
 if __name__ == '__main__':
-    logicity_demo()
+    logicity_easy()
     # stack_demo()
     # stack_demo_extended()

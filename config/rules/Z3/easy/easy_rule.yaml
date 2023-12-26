@@ -48,13 +48,13 @@ Predicates:
 
 Rules:
   - Stop:
-      formula: Stop(agent) == Exists([dummyIntersection], Or(And(IsPedestrian(agent), IsAt(agent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection))), And(IsCar(agent), IsAt(agent, dummyIntersection), Not(And(IsInterEmpty(dummyIntersection), IsInterCarEmpty(dummyIntersection))))))
+      formula: Stop(agent) == Exists([dummyIntersection, dummyAgent], Or(And(IsCar(agent), IsAt(agent, dummyIntersection), IsAt(dummyAgent, dummyIntersection), IsInterEmpty(dummyIntersection), HigherPri(dummyAgent, agent)), And(IsPedestrian(agent), IsAt(agent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection))), And(IsCar(agent), IsAt(agent, dummyIntersection), Not(And(IsInterEmpty(dummyIntersection), IsInterCarEmpty(dummyIntersection))))))
       description: Or version of the following 3 stop rule.
 #   - Cars_Stop1:
-#       formula: And(IsCar(agent), IsAt(agent, dummyIntersection), Not(And(IsInterEmpty(dummyIntersection), IsInterCarEmpty(dummyIntersection)))) == Stop(agent)
+#       formula: And(IsCar(agent), IsAt(agent, dummyIntersection), Not(IsInterEmpty(dummyIntersection)))) == Stop(agent)
 #       description: cars at intersection, not intersection empty, stop
 #   - Cars_Stop2:
-#       formula: And(IsCar(agent), IsAt(agent, dummyIntersection), IsAt(dummyAgent, dummyIntersection), IsInterEmpty(dummyIntersection), IsInterCarEmpty(dummyIntersection), HigherPri(dummyAgent, agent)) == Stop(agent)
+#       formula: And(IsCar(agent), IsAt(agent, dummyIntersection), IsAt(dummyAgent, dummyIntersection), IsInterEmpty(dummyIntersection), HigherPri(dummyAgent, agent)) == Stop(agent)
 #       description: cars at intersection, intersection empty, previous car, stop
 #   - Pedestrians_Stop1:
 #       formula: And(IsPedestrian(agent), IsAt(agent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection)))) == Stop(agent)

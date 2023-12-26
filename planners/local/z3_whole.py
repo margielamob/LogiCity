@@ -11,7 +11,7 @@ from planners.local.basic import LocalPlanner
 
 logger = logging.getLogger(__name__)
 
-class Z3Planner(LocalPlanner):
+class Z3PlannerWhole(LocalPlanner):
     def __init__(self, yaml_path):        
         super().__init__(yaml_path)
 
@@ -106,12 +106,6 @@ class Z3Planner(LocalPlanner):
                 # Replace placeholder in the rule template with the actual agent entity
                 instantiated_rule = eval(rule_template)
                 self.rules[rule_name].append(instantiated_rule)
-        # **Important: Closed world quantifier rule, to ensure z3 do not add new entity to satisfy the rule and "dummy" is not part of the world**
-        self.rules["ClosedWorld"] = []
-        for var_name, z3_var in self.z3_vars.items():
-            entity_list = self.entities[var_name.replace('dummy', '')]
-            constraint = Or([z3_var == entity for entity in entity_list])
-            self.rules["ClosedWorld"].append(ForAll([z3_var], constraint))
 
     # Process world matrix to ground the world state predicates
     def add_world_data(self, world_matrix, intersect_matrix, agents):
@@ -273,16 +267,16 @@ class Z3Planner(LocalPlanner):
                 # For Intersections
                 unique_intersections = np.unique(intersect_matrix[0])
                 unique_intersections = unique_intersections[unique_intersections != 0]
-                for intersection_id in unique_intersections:
+                for intersection_id in unique_intersections[:7]:
                     intersection_name = f"Intersection_{intersection_id}"
                     # Create a Z3 constant for the intersection
                     intersection_entity = Const(intersection_name, self.entity_types['Intersection'])
                     self.entities[entity_type].append(intersection_entity)
                 assert len(unique_intersections) == NUM_INTERSECTIONS_BLOCKS
         assert "Agent" in self.entities.keys() and "Intersection" in self.entities.keys()
-        # dummy is NOT part of the entity, and we will need a constraint to ensure z3 do not add new entity to satisfy the rule
-        # for var_name, z3_var in self.z3_vars.items():
-        #     self.entities[var_name.replace('dummy', '')].append(z3_var)
+        # dummy is also part of entity
+        for var_name, z3_var in self.z3_vars.items():
+            self.entities[var_name.replace('dummy', '')].append(z3_var)
 
     def format_rule_string(self, rule_str):
         indent_level = 0
