@@ -1,6 +1,8 @@
 from .building import Building
 from planners import LPlanner_mapper
+import time
 import numpy as np
+import logging
 import random
 from skimage.draw import line, polygon
 from scipy.ndimage import label
@@ -10,6 +12,8 @@ from core.config import *
 from utils.vis import visualize_intersections
 from utils.find import find_midroad_segments
 from utils.gen import gen_occ
+
+logger = logging.getLogger(__name__)
 
 class City:
     def __init__(self, grid_size, local_planner, rule_file=None):
@@ -40,8 +44,11 @@ class City:
 
         new_matrix = torch.zeros_like(self.city_grid)
         current_world = self.city_grid.clone()
+        s = time.time()
         # first do local planning based on city rules, use the current world state, don't update the city matrix
         agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents)
+        e = time.time()
+        logger.info("Time spent on local planning, Total: {}".format(e-s))
         # Then do global action taking acording to the local planning results
         # get occupancy map
         for agent in self.agents:

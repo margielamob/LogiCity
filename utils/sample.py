@@ -116,3 +116,20 @@ def sample_determine_start_goal(agent_type, id):
         }
     }
     return start_goal_dict[agent_type][id]
+
+def split_into_subsets(items, num_subsets):
+    """
+    Splits a list of items into a specified number of subsets.
+    
+    :param items: A list of items to be split.
+    :param num_subsets: The number of subsets to create.
+    :return: A list of subsets (each subset is a list of items).
+    """
+    # Determine the size of each subset
+    subset_size = len(items) // num_subsets
+
+    # Create subsets
+    subsets = [items[i * subset_size:(i + 1) * subset_size] for i in range(num_subsets - 1)]
+    subsets.append(items[(num_subsets - 1) * subset_size:])  # Add the remaining items to the last subset
+
+    return subsets
