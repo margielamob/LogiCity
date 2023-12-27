@@ -13,16 +13,16 @@ def parse_arguments():
 
     # Add arguments for grid size, agent start and goal positions, etc.
     parser.add_argument('--map', type=str, default="config/maps/v1.1.yaml", help='YAML path to the map.')
-    parser.add_argument('--agents', type=str, default="config/agents/debug.yaml", help='YAML path to the agent definition.')
+    parser.add_argument('--agents', type=str, default="config/agents/v0.yaml", help='YAML path to the agent definition.')
     parser.add_argument('--rule_type', type=str, default="Z3", help='We support ["LNN", "Z3"].')
     parser.add_argument('--rules', type=str, default="config/rules/Z3/easy/easy_rule.yaml", help='YAML path to the rule definition.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log")
-    parser.add_argument('--exp', type=str, default="med_2000")
-    parser.add_argument('--vis', type=bool, default=True, help='Visualize the city.')
-    parser.add_argument('--max-steps', type=int, default=100, help='Maximum number of steps for the simulation.')
+    parser.add_argument('--exp', type=str, default="easy_2k_z3")
+    parser.add_argument('--vis', type=bool, default=False, help='Visualize the city.')
+    parser.add_argument('--max-steps', type=int, default=2000, help='Maximum number of steps for the simulation.')
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
-    parser.add_argument('--debug', type=bool, default=True, help='In debug mode, the agents are in defined positions.')
+    parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
 
     return parser.parse_args()
 
@@ -49,8 +49,8 @@ def main(args, logger):
         cached_observation["Time_Obs"][steps] = time_obs
 
     # Save the cached observation for better rendering
-    # with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
-    #     pkl.dump(cached_observation, f)
+    with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
+        pkl.dump(cached_observation, f)
 
 if __name__ == '__main__':
     args = parse_arguments()

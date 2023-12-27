@@ -6,7 +6,7 @@ import pickle
 import numpy as np
 from tqdm import tqdm
 from core.config import *
-from tools.pkl2city import PATH_DICT, SCALE, ICON_SIZE_DICT, resize_with_aspect_ratio, gridmap2img_static
+from pkl2city import PATH_DICT, SCALE, ICON_SIZE_DICT, resize_with_aspect_ratio, gridmap2img_static
 
 np.random.seed(0)
 
