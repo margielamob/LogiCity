@@ -48,14 +48,7 @@ def IsInterCarEmpty(world_matrix, intersect_matrix, agents, entity):
     # Create mask for integer values (except 0)
     int_mask = partial_world == TYPE_MAP["Car"]
 
-    # Create mask for float values and zero
-    float_mask = partial_world != TYPE_MAP["Car"]
-
-    # Update values using masks
-    partial_world[int_mask] = 1
-    partial_world[float_mask] = 0
-
-    if partial_world.any():
+    if int_mask.any():
         return 0
     else:
         return 1
@@ -75,14 +68,7 @@ def IsInterEmpty(world_matrix, intersect_matrix, agents, entity):
     # Create mask for integer values (except 0)
     int_mask = torch.logical_or(partial_world == TYPE_MAP["Car"], partial_world == TYPE_MAP["Pedestrian"])
 
-    # Create mask for float values and zero
-    float_mask = partial_world != TYPE_MAP["Car"]
-
-    # Update values using masks
-    partial_world[int_mask] = 1
-    partial_world[float_mask] = 0
-
-    if partial_world.any():
+    if int_mask.any():
         return 0
     else:
         return 1

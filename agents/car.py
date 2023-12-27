@@ -224,7 +224,7 @@ class Car(Agent):
         on_line = (area == 0)
 
         # Check if points are on the segment AB (between A and B)
-        on_segment = (torch.matmul(AP, AB.unsqueeze(1)).squeeze() >= 0) & (torch.matmul(BP, BA.unsqueeze(1)).squeeze() >= 0)
+        on_segment = (torch.matmul(AP, AB.unsqueeze(1)).squeeze() > 0) & (torch.matmul(BP, BA.unsqueeze(1)).squeeze() > 0)
 
         # Final mask where both conditions are true
         on_line_segment = on_line & on_segment
