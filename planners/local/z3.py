@@ -273,7 +273,7 @@ class Z3Planner(LocalPlanner):
                 # For Intersections
                 unique_intersections = np.unique(intersect_matrix[0])
                 unique_intersections = unique_intersections[unique_intersections != 0]
-                for intersection_id in unique_intersections[5:7]:
+                for intersection_id in unique_intersections:
                     intersection_name = f"Intersection_{intersection_id}"
                     # Create a Z3 constant for the intersection
                     intersection_entity = Const(intersection_name, self.entity_types['Intersection'])
