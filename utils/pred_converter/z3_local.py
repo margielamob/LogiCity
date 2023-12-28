@@ -42,6 +42,8 @@ def IsInterCarEmpty(world_matrix, intersect_matrix, agents, entity):
     # check if there is a car in the intersection, use block
     local_intersection = intersect_matrix[2] == inter_id
     intersection_positions = (local_intersection).nonzero()
+    if intersection_positions.shape[0] == 0:
+        return 1
     xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
     ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
     partial_world = world_matrix[BASIC_LAYER:, ymin:ymax+1, xmin:xmax+1]
@@ -62,6 +64,8 @@ def IsInterEmpty(world_matrix, intersect_matrix, agents, entity):
     # check if there is an agent in the intersection, use block
     local_intersection = intersect_matrix[2] == inter_id
     intersection_positions = (local_intersection).nonzero()
+    if intersection_positions.shape[0] == 0:
+        return 1
     xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
     ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
     partial_world = world_matrix[BASIC_LAYER:, ymin:ymax+1, xmin:xmax+1]
@@ -205,6 +209,8 @@ def HigherPri(world_matrix, intersect_matrix, agents, entity1, entity2):
         
         local_intersection = intersect_matrix[0] == intersect_matrix[0, ego_agent_position[0], ego_agent_position[1]]
         intersection_positions = (local_intersection).nonzero()
+        if intersection_positions.shape[0] == 0:
+            return 0
         xmin, xmax = min(intersection_positions[:, 1]), max(intersection_positions[:, 1])
         ymin, ymax = min(intersection_positions[:, 0]), max(intersection_positions[:, 0])
         # T junctions, no previous cars
