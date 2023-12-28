@@ -7,37 +7,37 @@ Predicates:
       type: D
       arity: 2
       method: IsAt(Agent, Intersection)
-      function: utils.pred_converter.z3.IsAt
+      function: utils.pred_converter.z3_global.IsAt
       description: Checks if agent x is at intersection y.
   - IsPedestrian:
       type: S
       arity: 1
       method: IsPed(Agent)
-      function: utils.pred_converter.z3.IsPed
+      function: utils.pred_converter.z3_global.IsPed
       description: Checks if agent x is a pedestrian.
   - IsCar:
       type: S
       arity: 1
       method: IsCar(Agent)
-      function: utils.pred_converter.z3.IsCar
+      function: utils.pred_converter.z3_global.IsCar
       description: Checks if agent x is a car.
   - IsInterEmpty:
       type: D
       arity: 1
       method: IsInterEmpty(Intersection)
-      function: utils.pred_converter.z3.IsInterEmpty
+      function: utils.pred_converter.z3_global.IsInterEmpty
       description: Checks if the intersection x is empty.
   - IsInterCarEmpty:
       type: D
       arity: 1
       method: IsInterCarEmpty(Intersection)
-      function: utils.pred_converter.z3.IsInterCarEmpty
+      function: utils.pred_converter.z3_global.IsInterCarEmpty
       description: Checks if the intersection x is empty with cars.
   - HigherPri:
       type: D
       arity: 2
       method: HigherPri(Agent, Agent)
-      function: utils.pred_converter.z3.HigherPri
+      function: utils.pred_converter.z3_global.HigherPri
       description: Checks if agent x, x has higher priority to y.
   - Stop:
       type: S
