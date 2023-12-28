@@ -1,6 +1,3 @@
 [submodule "src/lnn"]
 	path = src/lnn
 	url = https://github.com/Jaraxxus-Me/LNN.git
-[submodule "src/pyreason"]
-	path = src/pyreason
-	url = https://github.com/Jaraxxus-Me/pyreason.git
