@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 def ground_predicate_worker(method, world_matrix, intersect_matrix, agents, entity_subset):
     groundings = {"True": [], "False": []}
     for entity_pair in entity_subset:
-        entity1_name, entity2_name = entity_pair
+        entity1, entity2 = entity_pair
+        entity1_name = entity1.decl().name()
+        entity2_name = entity2.decl().name()
         value = method(world_matrix, intersect_matrix, agents, entity1_name, entity2_name)
         if value:
             groundings["True"].append(entity_pair)
@@ -25,7 +27,7 @@ def ground_predicate_worker(method, world_matrix, intersect_matrix, agents, enti
             groundings["False"].append(entity_pair)
     return groundings
 
-class Z3Planner(LocalPlanner):
+class Z3PlannerGlobal(LocalPlanner):
     def __init__(self, yaml_path):        
         super().__init__(yaml_path)
 
@@ -203,14 +205,15 @@ class Z3Planner(LocalPlanner):
                     groundings["False"].append(entity)
         elif arity == 2:
             grounding_list = self.entity_pairs[pred_name]
-            entity_name_list = [(entity1.decl().name(), entity2.decl().name()) \
-                        for (entity1, entity2) in grounding_list]
-            subsets = split_into_subsets(entity_name_list, 32)
-            # Binary predicate grounding
-            with Pool(processes=NUM_PROCESS) as pool:
-                results = pool.starmap(ground_predicate_worker, 
-                                    [(method, world_matrix, intersect_matrix, agents, subset) for subset in subsets])
-            for result in results:
+            subsets = split_into_subsets(grounding_list, 32)
+            # Binary predicate grounding, multi-processing can't work now:
+            # 1. world_matrix is too big to be pickled
+            # 2. z3-objects are not picklable
+            # with Pool(processes=NUM_PROCESS) as pool:
+            #     results = pool.starmap(ground_predicate_worker, 
+            #                         [(method, world_matrix, intersect_matrix, agents, subset) for subset in subsets])
+            for subset in subsets:
+                result = ground_predicate_worker(method, world_matrix, intersect_matrix, agents, subset)
                 groundings["True"].extend(result["True"])
                 groundings["False"].extend(result["False"])
         return groundings

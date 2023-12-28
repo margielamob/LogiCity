@@ -1,8 +1,10 @@
 from .lnn import LNNPlanner
-from .z3 import Z3Planner
+from .z3_global import Z3PlannerGlobal
+from .z3_local import Z3PlannerLocal
 from .basic import LocalPlanner
 
 LPlanner_mapper = {
     'LNN': LNNPlanner,
-    'Z3': Z3Planner
+    'Z3_Global': Z3PlannerGlobal,
+    'Z3_Local': Z3PlannerLocal,
 }
