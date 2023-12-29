@@ -179,7 +179,13 @@ def inter2priority_list(intersection_positions):
         elif y == ymax and xmin < x < xmax:  # Bottom side
             priority_list[3].append(point.tolist())
 
-    return torch.tensor(priority_list)
+    # Find the length of the longest list
+    max_len = max(len(lst) for lst in priority_list)
+
+    # Pad shorter lists with a placeholder (e.g., [-1, -1])
+    padded_priority_list = [lst + [[-1, -1]] * (max_len - len(lst)) for lst in priority_list]
+
+    return torch.tensor(padded_priority_list)
 
 def HigherPri(world_matrix, intersect_matrix, agents, entity1, entity2):
     assert "Agent" in entity1
