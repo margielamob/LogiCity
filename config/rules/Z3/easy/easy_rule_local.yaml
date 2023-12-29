@@ -41,7 +41,37 @@ Predicates:
 
 Rules:
   - Stop:
-      formula: Stop(agent) == Exists([dummyIntersection, dummyAgent], Or(And(IsCar(agent), IsAt(agent, dummyIntersection), IsAt(dummyAgent, dummyIntersection), IsInterEmpty(dummyIntersection), Or(HigherPri(dummyAgent, agent), IsPedestrian(dummyAgent))), And(IsPedestrian(agent), IsAt(agent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection))), And(IsCar(agent), IsAt(agent, dummyIntersection), Not(And(IsInterEmpty(dummyIntersection), IsInterCarEmpty(dummyIntersection))))))
+      formula: |
+        Stop(agent) == Exists(
+          [dummyIntersection, dummyAgent], 
+          Or(
+            And(
+              IsCar(agent), 
+              IsAt(agent, dummyIntersection), 
+              IsAt(dummyAgent, dummyIntersection), 
+              IsInterEmpty(dummyIntersection), 
+              Or(
+                HigherPri(dummyAgent, agent), 
+                IsPedestrian(dummyAgent)
+              )
+            ),
+            And(
+              IsPedestrian(agent), 
+              IsAt(agent, dummyIntersection), 
+              Not(IsInterCarEmpty(dummyIntersection))
+            ),
+            And(
+              IsCar(agent), 
+              IsAt(agent, dummyIntersection), 
+              Not(
+                And(
+                  IsInterEmpty(dummyIntersection), 
+                  IsInterCarEmpty(dummyIntersection)
+                )
+              )
+            )
+          )
+        )
       description: Or version of the following 3 stop rule.
 #   - Cars_Stop1:
 #       formula: And(IsCar(agent), IsAt(agent, dummyIntersection), Not(IsInterEmpty(dummyIntersection)))) == Stop(agent)
