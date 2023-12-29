@@ -1,4 +1,5 @@
 import re
+import gc
 import time
 import copy
 import torch
@@ -120,18 +121,20 @@ class Z3PlannerLocal(LocalPlanner):
         # Get the list of keys (agent names) and split them into batches
         agent_keys = list(partial_agents.keys())
         agent_batches = split_into_batches(agent_keys, NUM_PROCESS)
-        # Process each batch in a loop
-        for batch_keys in agent_batches:
-            with Pool(processes=NUM_PROCESS) as pool:
+        # Create the pool once
+        with Pool(processes=NUM_PROCESS) as pool:
+            for batch_keys in agent_batches:
                 batch_results = pool.starmap(solve_sub_problem, 
                                             [(ego_name, ego_agent[ego_name].action_mapping, ego_agent[ego_name].action_dist,
                                             self.rule_tem, self.entity_types, self.predicates, self.z3_vars,
                                             partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name])
                                             for ego_name in batch_keys])
+                
+                for result in batch_results:
+                    combined_results.update(result)
 
-            # Combine results from this batch
-            for result in batch_results:
-                combined_results.update(result)
+                # Optional: Manual garbage collection
+                gc.collect()
         e2 = time.time()
         print("Solve sub-problem time: {}".format(e2-e))
         return combined_results

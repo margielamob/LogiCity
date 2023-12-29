@@ -6,6 +6,7 @@ import os
 from tqdm import tqdm
 from scipy.ndimage import label
 from core.config import *
+import argparse
 
 IMAGE_BASE_PATH = "./imgs"
 SCALE = 4
@@ -250,7 +251,7 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
     else:
         return current_map, icon_dict_local
 
-def main():
+def main(pkl_path):
     icon_dict = {}
     for key in PATH_DICT.keys():
         if isinstance(PATH_DICT[key], list):
@@ -262,7 +263,7 @@ def main():
             resized_img = resize_with_aspect_ratio(raw_img, ICON_SIZE_DICT[key])
             icon_dict[key] = resized_img
 
-    with open("log/easy_2k_z3.pkl", "rb") as f:
+    with open(pkl_path, "rb") as f:
         data = pkl.load(f)
         obs = data["Time_Obs"]
         agents = data["Static Info"]["Agents"]
@@ -280,5 +281,12 @@ def main():
 
     return
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Create an animated GIF from a sequence of images.")
+    parser.add_argument("pkl_file", help="Path to the folder containing image files.")
+    
+    args = parser.parse_args()
+
+    # Call the function with provided arguments
+    main(args.pkl_file)

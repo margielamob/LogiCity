@@ -85,5 +85,5 @@ BUS_PASSENGER_NUM = 3
 TIRO_SEEK_RANGE = 8 # the first and second cloeset walking street grids
 TIRO_PED_NUM = 3
 # solver processer
-NUM_PROCESS = 32
+NUM_PROCESS = 8
 AGENT_FOV = 25 # better be larger than intersection width
