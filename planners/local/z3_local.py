@@ -111,19 +111,27 @@ class Z3PlannerLocal(LocalPlanner):
         local_world_matrix = world_matrix.clone()
         local_intersections = intersect_matrix.clone()
         s = time.time()
-        ego_agent, partial_agents, partial_world, partial_intersections = self.break_world_matrix(local_world_matrix, agents, local_intersections)
+        ego_agent, partial_agents, partial_world, partial_intersections = \
+            self.break_world_matrix(local_world_matrix, agents, local_intersections)
         e = time.time()
         print("Break world matrix time: {}".format(e-s))
         # 2. multi-processing to solve each sub-problem
         combined_results = {}
-        with Pool(processes=NUM_PROCESS) as pool:
-            results = pool.starmap(solve_sub_problem, 
-                                [(ego_name, ego_agent[ego_name].action_mapping, ego_agent[ego_name].action_dist, \
-                                  self.rule_tem, self.entity_types, self.predicates, self.z3_vars, \
-                                  partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name]) \
-                                    for ego_name in partial_agents.keys()])
-        for result in results:
-            combined_results.update(result)
+        # Get the list of keys (agent names) and split them into batches
+        agent_keys = list(partial_agents.keys())
+        agent_batches = split_into_batches(agent_keys, NUM_PROCESS)
+        # Process each batch in a loop
+        for batch_keys in agent_batches:
+            with Pool(processes=NUM_PROCESS) as pool:
+                batch_results = pool.starmap(solve_sub_problem, 
+                                            [(ego_name, ego_agent[ego_name].action_mapping, ego_agent[ego_name].action_dist,
+                                            self.rule_tem, self.entity_types, self.predicates, self.z3_vars,
+                                            partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name])
+                                            for ego_name in batch_keys])
+
+            # Combine results from this batch
+            for result in batch_results:
+                combined_results.update(result)
         e2 = time.time()
         print("Solve sub-problem time: {}".format(e2-e))
         return combined_results
@@ -138,14 +146,15 @@ class Z3PlannerLocal(LocalPlanner):
             ego_agent[ego_name] = agent
             ego_layer = world_matrix[agent.layer_id]
             ego_position = (ego_layer == TYPE_MAP[agent.type]).nonzero()[0]
-                # Calculate the region of the city image that falls within the UAV's field of view
+            # Calculate the region of the city image that falls within the ego agent's field of view
             x_start = max(ego_position[0]-AGENT_FOV, 0)
             y_start = max(ego_position[1]-AGENT_FOV, 0)
             x_end = min(ego_position[0]+AGENT_FOV+1, world_matrix.shape[1])
             y_end = min(ego_position[1]+AGENT_FOV+1, world_matrix.shape[2])
             partial_world_all = world_matrix[:, x_start:x_end, y_start:y_end]
             partial_intersections = intersect_matrix[:, x_start:x_end, y_start:y_end]
-            partial_world_nonzero_int = torch.logical_and(partial_world_all != 0, partial_world_all == partial_world_all.to(torch.int64))
+            partial_world_nonzero_int = torch.logical_and(partial_world_all != 0, \
+                                                          partial_world_all == partial_world_all.to(torch.int64))
             # Apply torch.any across dimensions 1 and 2 sequentially
             non_zero_layers = partial_world_nonzero_int.any(dim=1).any(dim=1)
             non_zero_layer_indices = torch.where(non_zero_layers)[0]
@@ -292,8 +301,22 @@ def solve_sub_problem(ego_name,
         agents_actions = {ego_name: action_dist}
         return agents_actions
     else:
-        raise ValueError("No solution found for the local problem.")
+        # No solution means do not exist intersection/agent in the field of view, Normal
+        # Interpret the solution to the FOL problem
+        action_mapping = ego_action_mapping
+        action_dist = torch.zeros_like(ego_action_dist)
 
+        for action_id, action_name in action_mapping.items():
+            if "Normal" in action_name:
+                action_dist[action_id] = 1.0
+
+        agents_actions = {ego_name: action_dist}
+        return agents_actions
+
+def split_into_batches(keys, batch_size):
+    """Split keys into batches of a given size."""
+    for i in range(0, len(keys), batch_size):
+        yield keys[i:i + batch_size]
 
 def world2entity(entity_sorts, partial_intersect, partial_agents):
     assert "Agent" in entity_sorts.keys() and "Intersection" in entity_sorts.keys()

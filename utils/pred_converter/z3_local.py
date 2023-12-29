@@ -170,13 +170,13 @@ def inter2priority_list(intersection_positions):
     for point in intersection_positions:
         y, x = point
         
-        if x == xmin and ymin < y < ymax:  # Left side
+        if x == xmin and ymin <= y < ymax:  # Left side
             priority_list[0].append(point.tolist())
-        elif y == ymin and xmin < x < xmax:  # Top side
+        elif y == ymin and xmin < x <= xmax:  # Top side
             priority_list[1].append(point.tolist())
-        elif x == xmax and ymin < y < ymax:  # Right side
+        elif x == xmax and ymin < y <= ymax:  # Right side
             priority_list[2].append(point.tolist())
-        elif y == ymax and xmin < x < xmax:  # Bottom side
+        elif y == ymax and xmin <= x < xmax:  # Bottom side
             priority_list[3].append(point.tolist())
 
     # Find the length of the longest list
