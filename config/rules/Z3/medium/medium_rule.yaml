@@ -2,7 +2,7 @@ EntityTypes:
   - Agent
   - Intersection
 
-predicates:
+Predicates:
   - IsPedestrian:
       arity: 1
       method: IsPed(Agent)
@@ -53,10 +53,10 @@ predicates:
       method: IsAt(Agent, Intersection)
       function: utils.pred_converter.z3_local.IsAt
       description: Checks if agent x is at intersection y.
-  - IsIn:
+  - IsInInter:
       arity: 2
-      method: IsIn(Agent, Intersection)
-      function: utils.pred_converter.z3_local.IsIn
+      method: IsInInter(Agent, Intersection)
+      function: utils.pred_converter.z3_local.IsInInter
       description: Checks if agent x is in intersection y.
   - HigherPri:
       arity: 2
@@ -81,70 +81,76 @@ predicates:
   - Slow:
       arity: 1
       method: Slow(Agent)
-      method: Slow
+      function: None
       description: Slow action.
 
 Rules:
   - Stop:
       formula: |
-        Or(
-          And(
-            Not(IsAmbulance(agent)), 
-            IsCar(agent), 
-            IsAt(agent, dummyIntersection), 
-            Not(IsInterEmpty(dummyIntersection))
-          ),
-          And(
-            Not(IsAmbulance(agent)), 
-            IsCar(agent), 
-            IsAt(agent, dummyIntersection), 
-            IsAt(dummyAgent, dummyIntersection), 
-            Or(
-              HigherPri(dummyAgent, agent), 
-              IsPedestrian(dummyAgent)
+        Stop(agent) == Exists(
+          [dummyIntersection, dummyAgent], 
+          Or(
+            And(
+              Not(IsAmbulance(agent)), 
+              IsCar(agent), 
+              IsAt(agent, dummyIntersection), 
+              Not(IsInterEmpty(dummyIntersection))
+            ),
+            And(
+              Not(IsAmbulance(agent)), 
+              IsCar(agent), 
+              IsAt(agent, dummyIntersection), 
+              IsAt(dummyAgent, dummyIntersection), 
+              Or(
+                HigherPri(dummyAgent, agent), 
+                IsPedestrian(dummyAgent)
+              )
+            ),
+            And(
+              IsBus(agent), 
+              IsOld(dummyAgent), 
+              IsClose(agent, dummyAgent)
+            ),
+            And(
+              IsPedestrian(agent), 
+              IsAt(agent, dummyIntersection), 
+              Not(IsInterCarEmpty(dummyIntersection))
+            ),
+            And(
+              IsPedestrian(agent), 
+              IsOld(dummyAgent), 
+              IsClose(agent, dummyAgent)
+            ),
+            And(
+              Not(IsAmbulance(agent)), 
+              IsIn(agent, dummyIntersection), 
+              IsIn(dummyAgent, dummyIntersection), 
+              IsAmbulance(dummyAgent)
             )
-          ),
-          And(
-            IsBus(agent), 
-            IsOld(dummyAgent), 
-            IsClose(agent, dummyAgent)
-          ),
-          And(
-            IsPedestrian(agent), 
-            IsAt(agent, dummyIntersection), 
-            Not(IsInterCarEmpty(dummyIntersection))
-          ),
-          And(
-            IsPedestrian(agent), 
-            IsOld(dummyAgent), 
-            IsClose(agent, dummyAgent)
-          ),
-          And(
-            Not(IsAmbulance(agent)), 
-            IsIn(agent, dummyIntersection), 
-            IsIn(dummyAgent, dummyIntersection), 
-            IsAmbulance(dummyAgent)
           )
-        ) == Stop(agent)
+        )
       description: Combined Or version of the 6 stop rules with improved readability.
   - Fast:
-      formula: And(Not(Stop(agent)), IsBus(agent)) == Fast(agent)
+      formula: Fast(agent) == And(Not(Stop(agent)), IsBus(agent))
       description: If not stop, bus moves fast.
   - Slow:
       formula: |
-        Or(
-          And(
-            Not(Stop(agent)), 
-            IsTiro(agent), 
-            IsOld(dummyAgent), 
-            IsClose(agent, dummyAgent)
-          ),
-          And(
-            Not(Stop(agent)), 
-            IsCar(agent), 
-            IsIn(agent, dummyIntersection)
+        Slow(agent) == Exists(
+          [dummyIntersection, dummyAgent], 
+          Or(
+            And(
+              Not(Stop(agent)), 
+              IsTiro(agent), 
+              IsOld(dummyAgent), 
+              IsClose(agent, dummyAgent)
+            ),
+            And(
+              Not(Stop(agent)), 
+              IsCar(agent), 
+              IsIn(agent, dummyIntersection)
+            )
           )
-        ) == Slow(agent)
+        )
       description: Combined Or version of the Slow rules for vehicles.
 
 # Stop Rules:

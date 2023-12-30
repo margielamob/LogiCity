@@ -27,6 +27,7 @@ class City:
         self.city_grid = torch.zeros((self.layers, grid_size[0], grid_size[1]))
         self.buildings = []
         self.streets = []
+        self.layer_id2agent_list_id = {}
         self.agents = []
         self.label2type = LABEL_MAP
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
@@ -46,7 +47,8 @@ class City:
         current_world = self.city_grid.clone()
         s = time.time()
         # first do local planning based on city rules, use the current world state, don't update the city matrix
-        agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents)
+        agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents, \
+                                                    self.layer_id2agent_list_id)
         e = time.time()
         logger.info("Time spent on local planning, Total: {}".format(e-s))
         # Then do global action taking acording to the local planning results
@@ -262,6 +264,7 @@ class City:
                 continue
             agent_layer[0][way_points[0], way_points[1]] = agent_code + AGENT_GLOBAL_PATH_PLUS
         agent.layer_id = self.city_grid.shape[0]
+        self.layer_id2agent_list_id[agent.layer_id] = len(self.agents)-1
         self.city_grid = torch.concat([self.city_grid, agent_layer], dim=0)
         self.layers += 1
         agent_color = [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)]

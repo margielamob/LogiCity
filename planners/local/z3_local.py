@@ -17,9 +17,11 @@ logger = logging.getLogger(__name__)
 
 # used for grounding
 class PesudoAgent:
-    def __init__(self, type, layer_id):
+    def __init__(self, type, layer_id, concepts):
         self.type = type
         self.layer_id = layer_id
+        self.type = concepts["type"]
+        self.concepts = concepts
 
 class Z3PlannerLocal(LocalPlanner):
     def __init__(self, yaml_path):        
@@ -91,29 +93,30 @@ class Z3PlannerLocal(LocalPlanner):
         logger.info("Rules will be grounded later...")
 
     def _extract_variables(self, formula):
-        # Find the variable declaration part of the formula (after 'Forall([' or 'Exists([')
-        match = re.search(r'ForAll\(\[([^\]]*)\]', formula)
-        if not match:
-            match = re.search(r'Exists\(\[([^\]]*)\]', formula)
-        
-        if match:
-            # Extract variable names from the matched string
-            var_section = match.group(1)
-            # Remove whitespace and split by commas
-            variables = [var.strip() for var in var_section.split(',')]
-            return variables
-        else:
-            # If no match, return an empty list
-            return []
+        variables = []
 
-    def plan(self, world_matrix, intersect_matrix, agents):
+        # Pattern to match 'Forall([...])' or 'Exists([...])' with different case combinations
+        pattern = re.compile(r'(Forall|ForAll|forall|Exists|exists)\(\[([^\]]*)\]', re.IGNORECASE)
+
+        # Find all matches in the formula
+        matches = pattern.findall(formula)
+
+        for match in matches:
+            # Extract variable names from the matched string
+            var_section = match[1]
+            # Split by comma and strip whitespace, then add to the variables list
+            variables.extend([var.strip() for var in var_section.split(',')])
+
+        return variables
+
+    def plan(self, world_matrix, intersect_matrix, agents, layerid2listid):
         # 1. Break the global world matrix into local world matrix and split the agents and intersections
         # Note that the local ones will have different size and agent id
         local_world_matrix = world_matrix.clone()
         local_intersections = intersect_matrix.clone()
         s = time.time()
         ego_agent, partial_agents, partial_world, partial_intersections = \
-            self.break_world_matrix(local_world_matrix, agents, local_intersections)
+            self.break_world_matrix(local_world_matrix, agents, local_intersections, layerid2listid)
         e = time.time()
         print("Break world matrix time: {}".format(e-s))
         # 2. multi-processing to solve each sub-problem
@@ -139,7 +142,7 @@ class Z3PlannerLocal(LocalPlanner):
         print("Solve sub-problem time: {}".format(e2-e))
         return combined_results
     
-    def break_world_matrix(self, world_matrix, agents, intersect_matrix):
+    def break_world_matrix(self, world_matrix, agents, intersect_matrix, layerid2listid):
         ego_agent = {}
         partial_agents = {}
         partial_world = {}
@@ -154,8 +157,8 @@ class Z3PlannerLocal(LocalPlanner):
             y_start = max(ego_position[1]-AGENT_FOV, 0)
             x_end = min(ego_position[0]+AGENT_FOV+1, world_matrix.shape[1])
             y_end = min(ego_position[1]+AGENT_FOV+1, world_matrix.shape[2])
-            partial_world_all = world_matrix[:, x_start:x_end, y_start:y_end]
-            partial_intersections = intersect_matrix[:, x_start:x_end, y_start:y_end]
+            partial_world_all = world_matrix[:, x_start:x_end, y_start:y_end].clone()
+            partial_intersections = intersect_matrix[:, x_start:x_end, y_start:y_end].clone()
             partial_world_nonzero_int = torch.logical_and(partial_world_all != 0, \
                                                           partial_world_all == partial_world_all.to(torch.int64))
             # Apply torch.any across dimensions 1 and 2 sequentially
@@ -173,11 +176,16 @@ class Z3PlannerLocal(LocalPlanner):
                     continue
                 non_zero_values = int(layer[layer_nonzero_int.nonzero()[0][0], layer_nonzero_int.nonzero()[0][1]])
                 agent_type = LABEL_MAP[non_zero_values]
+                # find this agent
+                other_agent_layer_id = int(non_zero_layer_indices[layer_id])
+                other_agent = agents[layerid2listid[other_agent_layer_id]]
+                assert other_agent.type == agent_type
                 # ego agent is the first
-                if non_zero_layer_indices[layer_id] == agent.layer_id:
-                    ego_agent_.append(PesudoAgent(agent_type, layer_id))
+                if other_agent_layer_id == agent.layer_id:
+                    ego_agent_.append(PesudoAgent(agent_type, layer_id, other_agent.concepts))
                 else:
-                    partial_agent.append(PesudoAgent(agent_type, layer_id))
+                    partial_agent.append(PesudoAgent(agent_type, layer_id, other_agent.concepts))
+            assert len(ego_agent_) == 1
             partial_agents[ego_name] = ego_agent_ + partial_agent
         return ego_agent, partial_agents, partial_world, partial_intersection
             

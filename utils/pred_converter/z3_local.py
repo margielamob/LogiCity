@@ -77,7 +77,7 @@ def IsInterEmpty(world_matrix, intersect_matrix, agents, entity):
     else:
         return 1
 
-def IsIn(world_matrix, intersect_matrix, agents, entity1, entity2):
+def IsInInter(world_matrix, intersect_matrix, agents, entity1, entity2):
     # TODO: add "In"
     return 0
 
@@ -184,6 +184,10 @@ def IsPed(world_matrix, intersect_matrix, agents, entity):
 
 def IsAmb(world_matrix, intersect_matrix, agents, entity):
     # TODO: add "Amb"
+    return 0
+
+def IsBus(world_matrix, intersect_matrix, agents, entity):
+    # TODO: add "bus"
     return 0
 
 def IsTiro(world_matrix, intersect_matrix, agents, entity):
