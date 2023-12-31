@@ -123,8 +123,8 @@ Rules:
             ),
             And(
               Not(IsAmbulance(agent)), 
-              IsIn(agent, dummyIntersection), 
-              IsIn(dummyAgent, dummyIntersection), 
+              IsInInter(agent, dummyIntersection), 
+              IsInInter(dummyAgent, dummyIntersection), 
               IsAmbulance(dummyAgent)
             )
           )
@@ -147,7 +147,7 @@ Rules:
             And(
               Not(Stop(agent)), 
               IsCar(agent), 
-              IsIn(agent, dummyIntersection)
+              IsInInter(agent, dummyIntersection)
             )
           )
         )

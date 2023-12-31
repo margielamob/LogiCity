@@ -6,7 +6,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
-    mayor: 1.0
+    old: 1.0
 
 - class: Pedestrian
   id: 2

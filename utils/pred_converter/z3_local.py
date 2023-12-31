@@ -13,8 +13,6 @@ def IsAt(world_matrix, intersect_matrix, agents, entity1, entity2):
     # Must be "Agents" at "Intersections"
     assert "Agent" in entity1
     assert "Intersection" in entity2
-    if ("dummy" in entity1) or ("dummy" in entity2):
-        return 0
 
     _, agent_type, layer_id = entity1.split("_")
     layer_id = int(layer_id)
@@ -78,12 +76,38 @@ def IsInterEmpty(world_matrix, intersect_matrix, agents, entity):
         return 1
 
 def IsInInter(world_matrix, intersect_matrix, agents, entity1, entity2):
-    # TODO: add "In"
-    return 0
+    # Must be "Agents" in "Intersections"
+    assert "Agent" in entity1
+    assert "Intersection" in entity2
+    _, agent_type, layer_id = entity1.split("_")
+    layer_id = int(layer_id)
+    agent_layer = world_matrix[layer_id]
+    agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
+    # at intersection needs to care if the car is "entering" or "leaving", so use intersect_matrix[0]
+    _, inter_id = entity2.split("_")
+
+    if intersect_matrix[2, agent_position[0], agent_position[1]] == int(inter_id):
+        return 1
+    else:
+        return 0
 
 def IsClose(world_matrix, intersect_matrix, agents, entity1, entity2):
-    # TODO: add "IsClose"
-    return 0
+    # Must be "Agents" close to "Agents"
+    assert "Agent" in entity1
+    assert "Agent" in entity2
+    _, agent_type1, layer_id1 = entity1.split("_")
+    _, agent_type2, layer_id2 = entity2.split("_")
+    layer_id1 = int(layer_id1)
+    layer_id2 = int(layer_id2)
+    agent_layer1 = world_matrix[layer_id1]
+    agent_layer2 = world_matrix[layer_id2]
+    agent_position1 = (agent_layer1 == TYPE_MAP[agent_type1]).nonzero()[0]
+    agent_position2 = (agent_layer2 == TYPE_MAP[agent_type2]).nonzero()[0]
+    eudis = torch.sqrt(torch.sum((agent_position1 - agent_position2)**2))
+    if eudis <= CLOSE_RANGE:
+        return 1
+    else:
+        return 0
 
 def IsCar(world_matrix, intersect_matrix, agents, entity):
     assert "Agent" in entity
@@ -183,17 +207,45 @@ def IsPed(world_matrix, intersect_matrix, agents, entity):
         return 0
 
 def IsAmb(world_matrix, intersect_matrix, agents, entity):
-    # TODO: add "Amb"
-    return 0
+    assert "Agent" in entity
+    if "Pedestrian" in entity:
+        return 0
+    _, _, layer_id = entity.split("_")
+    agent_concept = agents[layer_id].concepts
+    if "ambulance" in agent_concept:
+        return 1
+    else:
+        return 0
 
 def IsBus(world_matrix, intersect_matrix, agents, entity):
-    # TODO: add "bus"
-    return 0
+    assert "Agent" in entity
+    if "Pedestrian" in entity:
+        return 0
+    _, _, layer_id = entity.split("_")
+    agent_concept = agents[layer_id].concepts
+    if "bus" in agent_concept:
+        return 1
+    else:
+        return 0
 
 def IsTiro(world_matrix, intersect_matrix, agents, entity):
-    # TODO: add "tyro"
-    return 0
+    assert "Agent" in entity
+    if "Pedestrian" in entity:
+        return 0
+    _, _, layer_id = entity.split("_")
+    agent_concept = agents[layer_id].concepts
+    if "tiro" in agent_concept:
+        return 1
+    else:
+        return 0
 
 def IsOld(world_matrix, intersect_matrix, agents, entity):
-    # TODO: add "tyro"
-    return 0
+    assert "Agent" in entity
+    if "Car" in entity:
+        return 0
+    _, _, layer_id = entity.split("_")
+    agent_concept = agents[layer_id].concepts
+    if "old" in agent_concept:
+        return 1
+    else:
+        return 0

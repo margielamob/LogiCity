@@ -71,8 +71,7 @@ class Z3PlannerLocal(LocalPlanner):
             (rule_name, rule_info), = rule_dict.items()
             # Check if the rule is valid
             formula = rule_info["formula"]
-            formatted_string = self.format_rule_string(rule_info["formula"])
-            logger.info("Rule: {} -> \n {}".format(rule_name, formatted_string))
+            logger.info("Rule: {} -> \n {}".format(rule_name, formula))
 
             # Create Z3 variables based on the formula
             var_names = self._extract_variables(formula)
@@ -93,21 +92,16 @@ class Z3PlannerLocal(LocalPlanner):
         logger.info("Rules will be grounded later...")
 
     def _extract_variables(self, formula):
-        variables = []
-
-        # Pattern to match 'Forall([...])' or 'Exists([...])' with different case combinations
-        pattern = re.compile(r'(Forall|ForAll|forall|Exists|exists)\(\[([^\]]*)\]', re.IGNORECASE)
+        # Regular expression to find words that start with 'dummy'
+        pattern = re.compile(r'\bdummy\w*\b')
 
         # Find all matches in the formula
         matches = pattern.findall(formula)
 
-        for match in matches:
-            # Extract variable names from the matched string
-            var_section = match[1]
-            # Split by comma and strip whitespace, then add to the variables list
-            variables.extend([var.strip() for var in var_section.split(',')])
+        # Remove duplicates by converting the list to a set, then back to a list
+        unique_variables = list(set(matches))
 
-        return variables
+        return unique_variables
 
     def plan(self, world_matrix, intersect_matrix, agents, layerid2listid):
         # 1. Break the global world matrix into local world matrix and split the agents and intersections
@@ -167,8 +161,7 @@ class Z3PlannerLocal(LocalPlanner):
             partial_world_squeezed = partial_world_all[non_zero_layers]
             partial_world[ego_name] = partial_world_squeezed
             partial_intersection[ego_name] = partial_intersections
-            ego_agent_ = []
-            partial_agent = []
+            partial_agent = {}
             for layer_id in range(partial_world_squeezed.shape[0]):
                 layer = partial_world_squeezed[layer_id]
                 layer_nonzero_int = torch.logical_and(layer != 0, layer == layer.to(torch.int64))
@@ -182,11 +175,9 @@ class Z3PlannerLocal(LocalPlanner):
                 assert other_agent.type == agent_type
                 # ego agent is the first
                 if other_agent_layer_id == agent.layer_id:
-                    ego_agent_.append(PesudoAgent(agent_type, layer_id, other_agent.concepts))
-                else:
-                    partial_agent.append(PesudoAgent(agent_type, layer_id, other_agent.concepts))
-            assert len(ego_agent_) == 1
-            partial_agents[ego_name] = ego_agent_ + partial_agent
+                    partial_agent["ego"] = PesudoAgent(agent_type, layer_id, other_agent.concepts)
+                partial_agent[str(layer_id)] = PesudoAgent(agent_type, layer_id, other_agent.concepts)
+            partial_agents[ego_name] = partial_agent
         return ego_agent, partial_agents, partial_world, partial_intersection
             
 
@@ -337,7 +328,9 @@ def world2entity(entity_sorts, partial_intersect, partial_agents):
         entities[entity_type] = []
         # For Agents
         if entity_type == "Agent":
-            for agent in partial_agents:
+            for key, agent in partial_agents.items():
+                if key == "ego":
+                    continue
                 agent_id = agent.layer_id
                 agent_type = agent.type
                 agent_name = f"Agent_{agent_type}_{agent_id}"
