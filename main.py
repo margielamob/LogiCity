@@ -21,7 +21,7 @@ def parse_arguments():
     parser.add_argument('--log_dir', type=str, default="./log")
     parser.add_argument('--exp', type=str, default="easy_2k_z3_local")
     parser.add_argument('--vis', type=bool, default=True, help='Visualize the city.')
-    parser.add_argument('--max-steps', type=int, default=100, help='Maximum number of steps for the simulation.')
+    parser.add_argument('--max-steps', type=int, default=200, help='Maximum number of steps for the simulation.')
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
     parser.add_argument('--debug', type=bool, default=True, help='In debug mode, the agents are in defined positions.')
 

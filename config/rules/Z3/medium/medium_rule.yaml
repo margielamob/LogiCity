@@ -117,6 +117,7 @@ Rules:
               Not(IsInterCarEmpty(dummyIntersection))
             ),
             And(
+              Not(IsOld(agent)),
               IsPedestrian(agent), 
               IsOld(dummyAgent), 
               IsClose(agent, dummyAgent)

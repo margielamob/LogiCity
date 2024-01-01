@@ -211,7 +211,11 @@ def IsAmb(world_matrix, intersect_matrix, agents, entity):
     if "Pedestrian" in entity:
         return 0
     _, _, layer_id = entity.split("_")
-    agent_concept = agents[layer_id].concepts
+    if layer_id in agents.keys():
+        agent_concept = agents[layer_id].concepts
+    else:
+        assert "ego_{}".format(layer_id) in agents.keys()
+        agent_concept = agents["ego_{}".format(layer_id)].concepts
     if "ambulance" in agent_concept:
         return 1
     else:
@@ -222,7 +226,11 @@ def IsBus(world_matrix, intersect_matrix, agents, entity):
     if "Pedestrian" in entity:
         return 0
     _, _, layer_id = entity.split("_")
-    agent_concept = agents[layer_id].concepts
+    if layer_id in agents.keys():
+        agent_concept = agents[layer_id].concepts
+    else:
+        assert "ego_{}".format(layer_id) in agents.keys()
+        agent_concept = agents["ego_{}".format(layer_id)].concepts
     if "bus" in agent_concept:
         return 1
     else:
@@ -233,7 +241,11 @@ def IsTiro(world_matrix, intersect_matrix, agents, entity):
     if "Pedestrian" in entity:
         return 0
     _, _, layer_id = entity.split("_")
-    agent_concept = agents[layer_id].concepts
+    if layer_id in agents.keys():
+        agent_concept = agents[layer_id].concepts
+    else:
+        assert "ego_{}".format(layer_id) in agents.keys()
+        agent_concept = agents["ego_{}".format(layer_id)].concepts
     if "tiro" in agent_concept:
         return 1
     else:
@@ -244,7 +256,11 @@ def IsOld(world_matrix, intersect_matrix, agents, entity):
     if "Car" in entity:
         return 0
     _, _, layer_id = entity.split("_")
-    agent_concept = agents[layer_id].concepts
+    if layer_id in agents.keys():
+        agent_concept = agents[layer_id].concepts
+    else:
+        assert "ego_{}".format(layer_id) in agents.keys()
+        agent_concept = agents["ego_{}".format(layer_id)].concepts
     if "old" in agent_concept:
         return 1
     else:

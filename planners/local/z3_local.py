@@ -175,8 +175,9 @@ class Z3PlannerLocal(LocalPlanner):
                 assert other_agent.type == agent_type
                 # ego agent is the first
                 if other_agent_layer_id == agent.layer_id:
-                    partial_agent["ego"] = PesudoAgent(agent_type, layer_id, other_agent.concepts)
-                partial_agent[str(layer_id)] = PesudoAgent(agent_type, layer_id, other_agent.concepts)
+                    partial_agent["ego_{}".format(layer_id)] = PesudoAgent(agent_type, layer_id, other_agent.concepts)
+                else:
+                    partial_agent[str(layer_id)] = PesudoAgent(agent_type, layer_id, other_agent.concepts)
             partial_agents[ego_name] = partial_agent
         return ego_agent, partial_agents, partial_world, partial_intersection
             
@@ -329,7 +330,8 @@ def world2entity(entity_sorts, partial_intersect, partial_agents):
         # For Agents
         if entity_type == "Agent":
             for key, agent in partial_agents.items():
-                if key == "ego":
+                if "ego" in key:
+                    ego_agent = agent
                     continue
                 agent_id = agent.layer_id
                 agent_type = agent.type
@@ -337,6 +339,13 @@ def world2entity(entity_sorts, partial_intersect, partial_agents):
                 # Create a Z3 constant for the agent
                 agent_entity = Const(agent_name, entity_sorts['Agent'])
                 entities[entity_type].append(agent_entity)
+            agent_id = ego_agent.layer_id
+            agent_type = ego_agent.type
+            agent_name = f"Agent_{agent_type}_{agent_id}"
+            # Create a Z3 constant for the agent
+            agent_entity = Const(agent_name, entity_sorts['Agent'])
+            # ego agent is the first
+            entities[entity_type] = [agent_entity] + entities[entity_type]
         elif entity_type == "Intersection":
             # For Intersections
             unique_intersections = np.unique(partial_intersect[0])

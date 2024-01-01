@@ -44,7 +44,6 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
-    ambulance: 1.0
 
 - class: Private_car
   id: 3
