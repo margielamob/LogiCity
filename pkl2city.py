@@ -189,7 +189,7 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
             is_ambulance = False
             is_bus = False
             is_tiro = False
-            is_mayor = False
+            is_old = False
             if "tiro" in concepts.keys():
                 if concepts["tiro"] == 1.0:
                     is_tiro = True
@@ -199,16 +199,16 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
             if "ambulance" in concepts.keys():
                 if concepts["ambulance"] == 1.0:
                     is_ambulance = True
-            if "mayor" in concepts.keys():
-                if concepts["mayor"] == 1.0:
-                    is_mayor = True
+            if "old" in concepts.keys():
+                if concepts["old"] == 1.0:
+                    is_old = True
             if is_ambulance:
                 icon = icon_dict[agent_type][3]
             elif is_bus:
                 icon = icon_dict[agent_type][4]
             elif is_tiro:
                 icon = icon_dict[agent_type][2]
-            elif is_mayor:
+            elif is_old:
                 icon = icon_dict[agent_type][1]
             else:
                 if agent_type == "Pedestrian":
