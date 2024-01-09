@@ -93,6 +93,11 @@ python3 logic_main.py
 python3 nav_main.py
 ```
 
+### Train RL Agents
+
+```shell
+python main.py --rules config/rules/LNN/easy/easy_rule.yaml --agents config/agents/debug.yaml --use_gym True --exp debug_gym
+```
 
 ## Branches
 
@@ -106,3 +111,4 @@ Let Bowen know if you opened a new branch.
   is the data collection branch for Bowen. It is used to collect a 42 agent simulation data on Pittsburgh Super Computing (PSC) Center.
 - `marl`
   is the dev branch for Haohong. He is developing fully observable RL-based navigator.
+
