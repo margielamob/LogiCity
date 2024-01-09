@@ -74,7 +74,7 @@ class Agent:
 
     def move(self, action, ped_layer):
         curr_pos = torch.nonzero((ped_layer==TYPE_MAP[self.type]).float())[0]
-        assert torch.all(self.pos == curr_pos)
+        assert torch.all(self.pos == curr_pos), (self.pos, curr_pos)
         next_pos = self.pos.clone()
         # becomes walked grid
         ped_layer[self.pos[0], self.pos[1]] += AGENT_WALKED_PATH_PLUS
@@ -85,7 +85,7 @@ class Agent:
         ped_layer[self.goal[0], self.goal[1]] = TYPE_MAP[self.type] + AGENT_GOAL_PLUS
         ped_layer[self.pos[0], self.pos[1]] = TYPE_MAP[self.type]
         return ped_layer
-
+    
     def get_global_action(self):
         global_action_dist = torch.zeros_like(self.action_space).float()
         current_pos = torch.all((self.global_traj == self.pos), dim=1).nonzero()[0]

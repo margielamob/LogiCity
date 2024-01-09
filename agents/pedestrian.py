@@ -35,7 +35,7 @@ class Pedestrian(Agent):
         self.move_to_action = {
             self.action_to_move[k]: k for k in self.action_to_move
         }
-
+    
     def init(self, world_state_matrix, debug=False):
         WALKING_STREET = TYPE_MAP['Walking Street']
         CROSSING_STREET = TYPE_MAP['Overlap']
@@ -65,14 +65,14 @@ class Pedestrian(Agent):
 
         # Return the indices of the desired locations
         return start_point
-
+    
     def get_goal(self, world_state_matrix, start_point):
         # Define the labels for different entities
         building = [TYPE_MAP[b] for b in PEDES_GOAL_START]
         # Find cells that are walking streets and have a house or office around them
         self.desired_locations = sample_start_goal(world_state_matrix, TYPE_MAP['Walking Street'], building, kernel_size=PED_GOAL_START_INCLUDE_KERNEL)
         desired_locations = self.desired_locations.detach().clone()
-
+        
         # Determine the nearest building to the start point
         nearest_building = find_nearest_building(world_state_matrix, start_point)
         start_block = world_state_matrix[BLOCK_ID][nearest_building[0], nearest_building[1]]
@@ -96,7 +96,7 @@ class Pedestrian(Agent):
 
         # Return the indices of the desired locations
         return goal_point
-
+    
     def get_next_action(self, world_state_matrix, local_action_dist):
         # for now, just reckless take the global traj
         # reached goal
@@ -149,5 +149,5 @@ class Pedestrian(Agent):
                 world_state_matrix[self.layer_id][way_points[0], way_points[1]] \
                     = TYPE_MAP[self.type] + AGENT_GLOBAL_PATH_PLUS
             world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
-
+            
             return self.get_action(local_action_dist), world_state_matrix[self.layer_id]

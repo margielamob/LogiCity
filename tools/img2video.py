@@ -11,7 +11,7 @@ n_images = len(image_files)
 from PIL import Image
 
 # set the file names and output file name
-output_file = "vis_easy.gif"
+output_file = "vis_gym.gif"
 
 # open the first image
 with Image.open(image_files[0]) as im:

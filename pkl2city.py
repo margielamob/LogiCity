@@ -262,11 +262,11 @@ def main():
             resized_img = resize_with_aspect_ratio(raw_img, ICON_SIZE_DICT[key])
             icon_dict[key] = resized_img
 
-    with open("log/debug_gym.pkl", "rb") as f:
+    with open("log/ppo_episode_20.pkl", "rb") as f:
         data = pkl.load(f)
         obs = data["Time_Obs"]
         agents = data["Static Info"]["Agents"]
-
+    
     print(obs.keys())
     static_map = gridmap2img_static(obs[1]["World"].numpy(), icon_dict)
     cv2.imwrite("vis_city/static_layout.png", static_map)

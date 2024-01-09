@@ -13,3 +13,5 @@ debug_traj/
 *.log
 *.tar
 *.pkl
+*.npy
+*.zip
