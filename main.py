@@ -33,6 +33,7 @@ def parse_arguments():
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
     parser.add_argument('--use_gym', type=bool, default=False, help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
+    parser.add_argument('--eval', type=bool, default=False, help='In eval mode, we will load the PPO checkpoints.')
 
     return parser.parse_args()
 
@@ -64,7 +65,7 @@ def main(args, logger):
 
 
 
-def main_gym(args, logger): 
+def main_gym(args, logger, train=True): 
     def make_envs(): 
         city, cached_observation = CityLoader_Gym.from_yaml(args.map, args.agents, args.rules, args.rule_type, args.debug)
         env = GymCityWrapper(city)
@@ -75,32 +76,37 @@ def main_gym(args, logger):
     env = SubprocVecEnv([make_envs for i in range(4)])
     
     # data rollouts
-    # env = make_envs()
-    # print(env.reset())
-    # t0 = time.time()
-    # for steps in range(1000):
-    #     action = np.array([[0, 0, 0, 1, 0]]*4)
-    #     o, r, d, i = env.step(action)
-    #     print(o[0].shape)
-        # print(r, d)
-        # if d.any(): 
-        #     input("done")
-    #     cached_observation["Time_Obs"][steps] = o
-    # with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
-    #     pkl.dump(cached_observation, f)
+    if train: 
+        env = make_envs()
+        env.reset()
 
-    # RL training mode
-    # checkpoint_callback = CheckpointCallback(save_freq=5000, save_path='./checkpoints/', name_prefix='ppo_model')
 
-    # # model = PPO('CnnPolicy', env, policy_kwargs=policy_kwargs, verbose=1)
-    # model = PPO("MlpPolicy", env, verbose=1)
-    # # Train the model
-    # model.learn(total_timesteps=1000_0000, callback=checkpoint_callback)
-    # # Save the model
-    # model.save("ppo_custommlp")
+        # RL training mode
+        checkpoint_callback = CheckpointCallback(save_freq=5000, save_path='./checkpoints/', name_prefix='ppo_model')
+
+        # model = PPO('CnnPolicy', env, policy_kwargs=policy_kwargs, verbose=1)
+        model = PPO("MlpPolicy", env, verbose=1)
+        # Train the model
+        model.learn(total_timesteps=1000_0000, callback=checkpoint_callback)
+        # Save the model
+        model.save("ppo_custommlp")
+    
+    else: 
+        print(env.reset())
+        t0 = time.time()
+        for steps in range(1000):
+            action = np.array([[0, 0, 0, 1, 0]]*4)
+            o, r, d, i = env.step(action)
+            print(o[0].shape)
+            print(r, d)
+            if d.any(): 
+                input("done")
+            cached_observation["Time_Obs"][steps] = o
+        with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
+            pkl.dump(cached_observation, f)
     
     # Checkpoint evaluation
-
+    
     rew_list = []
     for ts in range(1, 21): 
         city, cached_observation = CityLoader_Gym.from_yaml(args.map, args.agents, args.rules, args.rule_type, args.debug)
@@ -138,6 +144,6 @@ if __name__ == '__main__':
     args = parse_arguments()
     logger = setup_logger(log_dir=args.log_dir, log_name=args.exp)
     if args.use_gym:
-        main_gym(args, logger)
+        main_gym(args, logger, train=args.eval)
     else:
         main(args, logger)
