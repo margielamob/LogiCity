@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 import pickle as pkl
-from utils.load import CityLoader, CityLoader_Gym
+from utils.load import CityLoader
 from utils.logger import setup_logger
 from utils.vis import visualize_city
 from core.config import *
@@ -22,16 +22,16 @@ def parse_arguments():
 
     # Add arguments for grid size, agent start and goal positions, etc.
     parser.add_argument('--map', type=str, default="config/maps/v1.1.yaml", help='YAML path to the map.')
-    parser.add_argument('--agents', type=str, default="config/agents/v0.yaml", help='YAML path to the agent definition.')
+    parser.add_argument('--agents', type=str, default="config/agents/debug.yaml", help='YAML path to the agent definition.')
     parser.add_argument('--rule_type', type=str, default="Z3_Local", help='We support ["LNN", "Z3_Global", "Z3_Local"].')
-    parser.add_argument('--rules', type=str, default="config/rules/Z3/medium/medium_rule.yaml", help='YAML path to the rule definition.')
+    parser.add_argument('--rules', type=str, default="config/rules/Z3/easy/easy_rule_local.yaml", help='YAML path to the rule definition.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log")
-    parser.add_argument('--exp', type=str, default="medium_2k_z3_local")
+    parser.add_argument('--exp', type=str, default="rl_debug")
     parser.add_argument('--vis', type=bool, default=False, help='Visualize the city.')
     parser.add_argument('--max-steps', type=int, default=1000, help='Maximum number of steps for the simulation.')
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
-    parser.add_argument('--use_gym', type=bool, default=False, help='In gym mode, we can use RL alg. to control certain agents.')
+    parser.add_argument('--use_gym', type=bool, default=True, help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
     parser.add_argument('--eval', type=bool, default=False, help='In eval mode, we will load the PPO checkpoints.')
 
@@ -67,7 +67,7 @@ def main(args, logger):
 
 def main_gym(args, logger, train=True): 
     def make_envs(): 
-        city, cached_observation = CityLoader_Gym.from_yaml(args.map, args.agents, args.rules, args.rule_type, args.debug)
+        city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, True, args.debug)
         env = GymCityWrapper(city)
         return env
     logger.info("Starting city simulation with random seed {}... Debug mode: {}".format(args.seed, args.debug))
@@ -144,6 +144,8 @@ if __name__ == '__main__':
     args = parse_arguments()
     logger = setup_logger(log_dir=args.log_dir, log_name=args.exp)
     if args.use_gym:
+        # RL mode, will use gym wrapper to learn and test an agent
         main_gym(args, logger, train=args.eval)
     else:
+        # Sim mode, will use the logic-based simulator to run a simulation (no learning)
         main(args, logger)

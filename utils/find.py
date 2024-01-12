@@ -3,8 +3,8 @@ import torch.nn.functional as F
 from core.config import *
 
 def find_nearest_building(world_state_matrix, start_point):
-    start_point = torch.tensor(start_point)
-    buildings_layer = world_state_matrix[BLOCK_ID]
+    start_point = start_point.clone().detach()
+    buildings_layer = world_state_matrix[BLOCK_ID].clone().detach()
     
     building_positions = torch.nonzero(buildings_layer)
     distances = torch.abs(building_positions - start_point).sum(dim=1)
