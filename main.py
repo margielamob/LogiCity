@@ -79,8 +79,6 @@ def main_gym(args, logger, train=True):
     if train: 
         env = make_envs()
         env.reset()
-
-
         # RL training mode
         checkpoint_callback = CheckpointCallback(save_freq=5000, save_path='./checkpoints/', name_prefix='ppo_model')
 
