@@ -81,5 +81,5 @@ AT_INTERSECTION_OFFSET = 1
 
 CLOSE_RANGE = 5
 # solver processer
-NUM_PROCESS = 16
+NUM_PROCESS = 8
 AGENT_FOV = 25 # better be larger than intersection width
