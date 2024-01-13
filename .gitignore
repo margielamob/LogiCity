@@ -14,6 +14,5 @@ debug_traj/
 *.tar
 *.pkl
 *.png
-*.egg-info/
 checkpoints/
 
