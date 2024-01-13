@@ -1,7 +1,7 @@
 __pycache__/
 *.pyc
 .vscode/
-log/
+log*/
 *.gif
 vis/
 vis_city/
@@ -14,5 +14,6 @@ debug_traj/
 *.tar
 *.pkl
 *.png
+*.egg-info/
 checkpoints/
 

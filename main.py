@@ -2,17 +2,18 @@ import os
 import sys
 import argparse
 import pickle as pkl
-from utils.load import CityLoader
-from utils.logger import setup_logger
-from utils.vis import visualize_city
-from core.config import *
+from logicity.utils.load import CityLoader
+from logicity.utils.logger import setup_logger
+from logicity.utils.vis import visualize_city
+from logicity.core.config import *
 import torch
 import torch.nn as nn
 import time
 import numpy as np
-from utils.gym_wrapper import GymCityWrapper
+# RL
+from logicity.utils.gym_wrapper import GymCityWrapper
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecEnv
-from rl_agent.PPO_img import PPO, CustomCNN, policy_kwargs
+from logicity.rl_agent.PPO_img import PPO, CustomCNN, policy_kwargs
 from stable_baselines3.common.callbacks import CheckpointCallback
 from tqdm import trange
 
@@ -26,14 +27,16 @@ def parse_arguments():
     parser.add_argument('--rule_type', type=str, default="Z3_Local", help='We support ["LNN", "Z3_Global", "Z3_Local"].')
     parser.add_argument('--rules', type=str, default="config/rules/Z3/easy/easy_rule_local.yaml", help='YAML path to the rule definition.')
     # logger
-    parser.add_argument('--log_dir', type=str, default="./log")
+    parser.add_argument('--log_dir', type=str, default="./log_rl")
     parser.add_argument('--exp', type=str, default="rl_debug")
     parser.add_argument('--vis', type=bool, default=False, help='Visualize the city.')
     parser.add_argument('--max-steps', type=int, default=1000, help='Maximum number of steps for the simulation.')
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
-    parser.add_argument('--use_gym', type=bool, default=True, help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
-    parser.add_argument('--eval', type=bool, default=True, help='In eval mode, we will load the PPO checkpoints.')
+    # RL
+    parser.add_argument('--use_gym', type=bool, default=True, help='In gym mode, we can use RL alg. to control certain agents.')
+    parser.add_argument('--train', type=bool, default=True, help='In train mode, we will train the PPO model.')
+    parser.add_argument('--checkpoint', type=str, default="checkpoints/ppo_model_1.12_2500000_steps.zip", help='The checkpoint to load.')
 
     return parser.parse_args()
 
@@ -73,43 +76,25 @@ def main_gym(args, logger, train=True):
     logger.info("Starting city simulation with random seed {}... Debug mode: {}".format(args.seed, args.debug))
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
-    env = SubprocVecEnv([make_envs for i in range(8)])
-    # env = VecEnv([make_envs()])
     
     # data rollouts
     if train: 
-        env = make_envs()
+        env = SubprocVecEnv([make_envs for i in range(2)])
         env.reset()
+        model = PPO("MlpPolicy", env, verbose=1)
         # RL training mode
         checkpoint_callback = CheckpointCallback(save_freq=50000, save_path='./checkpoints/', name_prefix='ppo_model_1.12')
-
-        # model = PPO('CnnPolicy', env, policy_kwargs=policy_kwargs, verbose=1)
-        model = PPO("MlpPolicy", env, verbose=1)
         # Train the model
         model.learn(total_timesteps=1000_0000, callback=checkpoint_callback)
         # Save the model
         model.save("ppo_custommlp")
     
-    else: 
-        print(env.reset())
-        t0 = time.time()
-        for steps in range(1000):
-            action = np.array([[0, 0, 0, 1, 0]]*4)
-            o, r, d, i = env.step(action)
-            print(o[0].shape)
-            print(r, d)
-            if d.any(): 
-                input("done")
-            cached_observation["Time_Obs"][steps] = o
-        with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
-            pkl.dump(cached_observation, f)
-    
     # Checkpoint evaluation
     rew_list = []
     for ts in range(1, 21): 
-        city, cached_observation = CityLoader_Gym.from_yaml(args.map, args.agents, args.rules, args.rule_type, args.debug)
+        city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, True, args.debug)
         env = GymCityWrapper(city)
-        model = PPO.load("checkpoints/ppo_model_{}_steps".format(20*40000), env=env)
+        model = PPO.load(args.checkpoint, env=env)
         o = env.reset()
         action = model.predict(o)[0]
         sys.stdout = open(os.devnull, 'w')
@@ -134,7 +119,6 @@ def main_gym(args, logger, train=True):
         with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
             pkl.dump(cached_observation, f)
         print(rew_list)
-        # input("rew: {}".format(ts*40000))
         
     print(rew_list)
     # input("done")
@@ -143,7 +127,7 @@ if __name__ == '__main__':
     logger = setup_logger(log_dir=args.log_dir, log_name=args.exp)
     if args.use_gym:
         # RL mode, will use gym wrapper to learn and test an agent
-        main_gym(args, logger, train=args.eval)
+        main_gym(args, logger, train=args.train)
     else:
         # Sim mode, will use the logic-based simulator to run a simulation (no learning)
         main(args, logger)

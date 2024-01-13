@@ -29,10 +29,10 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
   cd src/lnn
   pip install -r requirements.txt
   pip install -e .
-  # requirements for pyreason
-  cd src/pyreason
-  pip install -r requirements.txt
-  python initialize.py
+  # install logicity-lib
+  cd ..
+  cd ..
+  pip install -v -e .
   ```
 - Using docker
   ```shell
@@ -108,7 +108,6 @@ python3 nav_main.py
 ```shell
 python main.py --rules config/rules/LNN/easy/easy_rule.yaml --agents config/agents/debug.yaml --use_gym True --exp debug_gym
 ```
-
 
 ## Branches
 

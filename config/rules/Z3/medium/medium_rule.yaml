@@ -6,62 +6,62 @@ Predicates:
   - IsPedestrian:
       arity: 1
       method: IsPed(Agent)
-      function: utils.pred_converter.z3_local.IsPed
+      function: logicity.utils.pred_converter.z3_local.IsPed
       description: Checks if agent x is a pedestrian.
   - IsCar:
       arity: 1
       method: IsCar(Agent)
-      function: utils.pred_converter.z3_local.IsCar
+      function: logicity.utils.pred_converter.z3_local.IsCar
       description: Checks if agent x is a car.
   - IsAmbulance:
       arity: 1
       method: IsAmb(Agent)
-      function: utils.pred_converter.z3_local.IsAmb
+      function: logicity.utils.pred_converter.z3_local.IsAmb
       description: Checks if the agent has concept "ambulance".
   - IsBus:
       arity: 1
       method: IsBus(Agent)
-      function: utils.pred_converter.z3_local.IsBus
+      function: logicity.utils.pred_converter.z3_local.IsBus
       description: Checks if the agent has concept "bus".
   - IsTiro:
       arity: 1
       method: IsTiro(Agent)
-      function: utils.pred_converter.z3_local.IsTiro
+      function: logicity.utils.pred_converter.z3_local.IsTiro
       description: Checks if the agent has concept "tiro".
   - IsOld:
       arity: 1
       method: IsOld(Agent)
-      function: utils.pred_converter.z3_local.IsOld
+      function: logicity.utils.pred_converter.z3_local.IsOld
       description: Checks if the agent has concept "old".
   - IsInterEmpty:
       arity: 1
       method: IsInterEmpty(Intersection)
-      function: utils.pred_converter.z3_local.IsInterEmpty
+      function: logicity.utils.pred_converter.z3_local.IsInterEmpty
       description: Checks if the intersection x is empty.
   - IsInterCarEmpty:
       arity: 1
       method: IsInterCarEmpty(Intersection)
-      function: utils.pred_converter.z3_local.IsInterCarEmpty
+      function: logicity.utils.pred_converter.z3_local.IsInterCarEmpty
       description: Checks if the intersection x is empty with cars.
   - IsClose:
       arity: 2
       method: IsClose(Agent, Agent)
-      function: utils.pred_converter.z3_local.IsClose
+      function: logicity.utils.pred_converter.z3_local.IsClose
       description: Checks if agent x close to agent y.
   - IsAt:
       arity: 2
       method: IsAt(Agent, Intersection)
-      function: utils.pred_converter.z3_local.IsAt
+      function: logicity.utils.pred_converter.z3_local.IsAt
       description: Checks if agent x is at intersection y.
   - IsInInter:
       arity: 2
       method: IsInInter(Agent, Intersection)
-      function: utils.pred_converter.z3_local.IsInInter
+      function: logicity.utils.pred_converter.z3_local.IsInInter
       description: Checks if agent x is in intersection y.
   - HigherPri:
       arity: 2
       method: HigherPri(Agent, Agent)
-      function: utils.pred_converter.z3_local.HigherPri
+      function: logicity.utils.pred_converter.z3_local.HigherPri
       description: Checks if agent x, x has higher priority to y.
   - Stop:
       arity: 1

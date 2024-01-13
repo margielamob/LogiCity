@@ -6,32 +6,32 @@ Predicates:
   - IsAt:
       arity: 2
       method: IsAt(Agent, Intersection)
-      function: utils.pred_converter.z3_local.IsAt
+      function: logicity.utils.pred_converter.z3_local.IsAt
       description: Checks if agent x is at intersection y.
   - IsPedestrian:
       arity: 1
       method: IsPed(Agent)
-      function: utils.pred_converter.z3_local.IsPed
+      function: logicity.utils.pred_converter.z3_local.IsPed
       description: Checks if agent x is a pedestrian.
   - IsCar:
       arity: 1
       method: IsCar(Agent)
-      function: utils.pred_converter.z3_local.IsCar
+      function: logicity.utils.pred_converter.z3_local.IsCar
       description: Checks if agent x is a car.
   - IsInterEmpty:
       arity: 1
       method: IsInterEmpty(Intersection)
-      function: utils.pred_converter.z3_local.IsInterEmpty
+      function: logicity.utils.pred_converter.z3_local.IsInterEmpty
       description: Checks if the intersection x is empty.
   - IsInterCarEmpty:
       arity: 1
       method: IsInterCarEmpty(Intersection)
-      function: utils.pred_converter.z3_local.IsInterCarEmpty
+      function: logicity.utils.pred_converter.z3_local.IsInterCarEmpty
       description: Checks if the intersection x is empty with cars.
   - HigherPri:
       arity: 2
       method: HigherPri(Agent, Agent)
-      function: utils.pred_converter.z3_local.HigherPri
+      function: logicity.utils.pred_converter.z3_local.HigherPri
       description: Checks if agent x, x has higher priority to y.
   - Stop:
       arity: 1

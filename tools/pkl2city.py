@@ -3,9 +3,9 @@ import numpy as np
 import pickle as pkl
 import torch
 import os
-from tqdm import tqdm
+from tqdm import trange
 from scipy.ndimage import label
-from core.config import *
+from logicity.core.config import *
 import argparse
 
 IMAGE_BASE_PATH = "./imgs"
@@ -272,7 +272,7 @@ def main(pkl_path):
     static_map = gridmap2img_static(obs[1]["World"].numpy(), icon_dict)
     cv2.imwrite("vis_city/static_layout.png", static_map)
     last_icons = None
-    for key in tqdm(obs.keys()):
+    for key in trange(obs.keys()-1):
         grid = obs[key]["World"].numpy()
         grid_ = obs[key+1]["World"].numpy()
         img, last_icons = gridmap2img_agents(grid, grid_, icon_dict, static_map, last_icons, agents)
