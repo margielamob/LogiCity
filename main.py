@@ -81,7 +81,7 @@ def main_gym(args, logger, train=True):
     if train: 
         env = SubprocVecEnv([make_envs for i in range(2)])
         env.reset()
-        model = PPO("MlpPolicy", env, verbose=1)
+        model = PPO("CnnPolicy", env, verbose=1)
         # RL training mode
         checkpoint_callback = CheckpointCallback(save_freq=50000, save_path='./checkpoints/', name_prefix='ppo_model_1.12')
         # Train the model
