@@ -104,8 +104,7 @@ class GymCityWrapper(gym.core.Env):
         self.agent.init(self.env.city_grid, rl_agent=True)
         self.reinit()
         print("=============")
-        # print("Reset Agent")
-        logger.info("{}_{} initialization done!".format(self.agent.type, self.agent.id))
+        print("Reset Agent")
         ob_dict = self.env.update(torch.from_numpy(np.array([0, 0, 0, 0, 1])), self.agent_id)
         obs = self._flatten_obs(ob_dict)
         # ob_dict = {"World": self.env.city_grid.clone()}

@@ -81,7 +81,7 @@ def main_gym(args, logger, train=True):
         env = make_envs()
         env.reset()
         # RL training mode
-        checkpoint_callback = CheckpointCallback(save_freq=5000, save_path='./checkpoints/', name_prefix='ppo_model')
+        checkpoint_callback = CheckpointCallback(save_freq=50000, save_path='./checkpoints/', name_prefix='ppo_model_1.12')
 
         # model = PPO('CnnPolicy', env, policy_kwargs=policy_kwargs, verbose=1)
         model = PPO("MlpPolicy", env, verbose=1)
