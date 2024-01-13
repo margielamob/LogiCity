@@ -1,6 +1,7 @@
-import numpy as np
 import gym
 import torch
+import numpy as np
+from gym.spaces import Box, Dict
 import torch.nn.functional as F
 
 from ..core.config import *
@@ -24,8 +25,11 @@ class GymCityWrapper(gym.core.Env):
         :param int agent_id: the agent id
         '''        
         self.env = env
-        # self.observation_space = gym.spaces.Box(low=0, high=1, shape=(35, 241, 241), dtype=np.float32)
-        self.observation_space = gym.spaces.Box(low=-.0, high=1., shape=(33, ), dtype=np.float32)
+        self.fov = AGENT_FOV*2
+        self.observation_space = Dict({
+            "map": Box(low=-1.0, high=1.0, shape=(3, 50, 50), dtype=np.float32),  # Adjust the shape as needed
+            "position": Box(low=0.0, high=1.0, shape=(6,), dtype=np.float32)
+        })
         self.action_space = gym.spaces.Box(low=0, high=1, shape=(5, ), dtype=np.float32)
         self.n_agents = len(env.agents)
         self.ped_idx = [i+3 for i in range(self.n_agents) if env.agents[i].type == "Pedestrian"]
@@ -45,30 +49,37 @@ class GymCityWrapper(gym.core.Env):
         self.t = 0
         
     def _flatten_obs(self, obs_dict):
-        # print([np.unique(obs_dict["World"][i]) for i in range(4)])
-        # for i in range(4):
-        #     obs_dict["World"][i] = (obs_dict["World"][i]-self.mini_scale[i]) / self.scale[i]
-        # print([np.unique(obs_dict["World"][i]) for i in range(4)])
-        # print(self._get_easy_obs(obs_dict))
-        # return obs_dict["World"]
-        return self._get_easy_obs(obs_dict)
-    
-    def _get_easy_obs(self, obs_dict):
+        # Create a new image with a 0 background
+        # TODO: may need layers from other agents
+        neighborhood_obs = CPU(obs_dict["World"][0:3])
+        map_obs = np.ones((3, self.fov, self.fov), dtype=np.float32)
         start_pos = CPU(self.agent.start)
         cur_pos = CPU(self.agent.pos)
         goal_pos = CPU(self.agent.goal)
-        # TODO: the current obs is too small
-        neighborhood_obs = obs_dict["World"][0:3, cur_pos[0]-1:cur_pos[0]+2, cur_pos[1]-1:cur_pos[1]+2].reshape(-1)
-        # print(neighborhood_obs.shape, obs_dict["World"].shape)
+
+        # Calculate the region of the city image that falls within the agent's field of view
+        x_start = max(cur_pos[0] - self.fov//2, 0)
+        y_start = max(cur_pos[1] - self.fov//2, 0)
+        x_end = min(cur_pos[0] + self.fov//2, neighborhood_obs.shape[1])
+        y_end = min(cur_pos[1] + self.fov//2, neighborhood_obs.shape[2])
+
+        # Calculate where this region should be placed in the map_obs
+        new_x_start = max(self.fov//2 - cur_pos[0], 0)
+        new_y_start = max(self.fov//2 - cur_pos[1], 0)
+        new_x_end = new_x_start + (x_end - x_start)
+        new_y_end = new_y_start + (y_end - y_start)
+
+        # Place the part of the city image that's within the UAV's field of view into the map_obs
+        map_obs[:, new_x_start:new_x_end, new_y_start:new_y_end] = neighborhood_obs[:, x_start:x_end, y_start:y_end]
         start_pos = np.asarray(start_pos, dtype=np.float32) / 240.
         cur_pos = np.asarray(cur_pos, dtype=np.float32) / 240.
         goal_pos = np.asarray(goal_pos, dtype=np.float32) / 240.
-        obs = np.concatenate([start_pos, cur_pos, goal_pos, neighborhood_obs])
-        # print(obs.shape)
-        
-        return obs
-        
-        
+        pos_data = np.concatenate([start_pos, cur_pos, goal_pos])
+
+        return {
+                "map": map_obs,
+                "position": pos_data
+            }   
         
     def _get_reward(self, obs_dict):
         ''' Get the reward for the current step.
@@ -107,18 +118,9 @@ class GymCityWrapper(gym.core.Env):
         print("Reset Agent")
         ob_dict = self.env.update(torch.from_numpy(np.array([0, 0, 0, 0, 1])), self.agent_id)
         obs = self._flatten_obs(ob_dict)
-        # ob_dict = {"World": self.env.city_grid.clone()}
-        # info = {}
-        # info.update(ob_dict)
-        # info.update({'success': self.check_success()})
         self.last_dist = -1
         self.last_pos = None
-        
         return obs
-    
-        # if return_info:
-        #     return self._flatten_obs(ob_dict), info
-        # return self._flatten_obs(ob_dict)
     
     def reinit(self): 
         agent_code = self.type2label[self.agent.type]

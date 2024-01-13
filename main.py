@@ -13,8 +13,8 @@ import numpy as np
 # RL
 from logicity.utils.gym_wrapper import GymCityWrapper
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecEnv
-from logicity.rl_agent.PPO_img import PPO, CustomCNN, policy_kwargs
-from stable_baselines3.common.callbacks import CheckpointCallback
+from logicity.rl_agent.neural import PPO, NeuralNav
+from logicity.utils.gym_callback import EvalCheckpointCallback
 from tqdm import trange
 
 
@@ -23,7 +23,7 @@ def parse_arguments():
 
     # Add arguments for grid size, agent start and goal positions, etc.
     parser.add_argument('--map', type=str, default="config/maps/v1.1.yaml", help='YAML path to the map.')
-    parser.add_argument('--agents', type=str, default="config/agents/debug.yaml", help='YAML path to the agent definition.')
+    parser.add_argument('--agents', type=str, default="config/agents/v0.yaml", help='YAML path to the agent definition.')
     parser.add_argument('--rule_type', type=str, default="Z3_Local", help='We support ["LNN", "Z3_Global", "Z3_Local"].')
     parser.add_argument('--rules', type=str, default="config/rules/Z3/easy/easy_rule_local.yaml", help='YAML path to the rule definition.')
     # logger
@@ -34,7 +34,7 @@ def parse_arguments():
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
     parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
     # RL
-    parser.add_argument('--use_gym', type=bool, default=True, help='In gym mode, we can use RL alg. to control certain agents.')
+    parser.add_argument('--use_gym', type=bool, default=False, help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--train', type=bool, default=True, help='In train mode, we will train the PPO model.')
     parser.add_argument('--checkpoint', type=str, default="checkpoints/ppo_model_1.12_2500000_steps.zip", help='The checkpoint to load.')
 
@@ -67,7 +67,6 @@ def main(args, logger):
         pkl.dump(cached_observation, f)
 
 
-
 def main_gym(args, logger, train=True): 
     def make_envs(): 
         city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, True, args.debug)
@@ -76,18 +75,32 @@ def main_gym(args, logger, train=True):
     logger.info("Starting city simulation with random seed {}... Debug mode: {}".format(args.seed, args.debug))
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
+    policy_kwargs = dict(
+    features_extractor_class=NeuralNav,
+    features_extractor_kwargs=dict(features_dim=64),
+    )
     
     # data rollouts
     if train: 
-        env = SubprocVecEnv([make_envs for i in range(2)])
-        env.reset()
-        model = PPO("CnnPolicy", env, verbose=1)
+        train_env = SubprocVecEnv([make_envs for i in range(2)])
+        eval_env = make_envs()
+        train_env.reset()
+        model = PPO("MultiInputPolicy", train_env, policy_kwargs=policy_kwargs, verbose=1)
         # RL training mode
-        checkpoint_callback = CheckpointCallback(save_freq=50000, save_path='./checkpoints/', name_prefix='ppo_model_1.12')
+        # Create the custom checkpoint and evaluation callback
+        eval_checkpoint_callback = EvalCheckpointCallback(
+            eval_env=eval_env,
+            eval_freq=50000,
+            save_freq=100000,
+            save_path='./checkpoints/{}'.format(args.exp),
+            name_prefix='res18_model_50FOV',
+            log_dir='./{}/{}'.format(args.log_dir, args.exp),
+        )
         # Train the model
-        model.learn(total_timesteps=1000_0000, callback=checkpoint_callback)
+        model.learn(total_timesteps=1000_0000, callback=eval_checkpoint_callback)
         # Save the model
-        model.save("ppo_custommlp")
+        model.save("res18_model_50FOV")
+        return
     
     # Checkpoint evaluation
     rew_list = []
@@ -119,9 +132,7 @@ def main_gym(args, logger, train=True):
         with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
             pkl.dump(cached_observation, f)
         print(rew_list)
-        
-    print(rew_list)
-    # input("done")
+
 if __name__ == '__main__':
     args = parse_arguments()
     logger = setup_logger(log_dir=args.log_dir, log_name=args.exp)
