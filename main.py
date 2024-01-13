@@ -11,7 +11,7 @@ import torch.nn as nn
 import time
 import numpy as np
 from utils.gym_wrapper import GymCityWrapper
-from stable_baselines3.common.vec_env import SubprocVecEnv
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecEnv
 from rl_agent.PPO_img import PPO, CustomCNN, policy_kwargs
 from stable_baselines3.common.callbacks import CheckpointCallback
 from tqdm import trange
@@ -33,7 +33,7 @@ def parse_arguments():
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
     parser.add_argument('--use_gym', type=bool, default=True, help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
-    parser.add_argument('--eval', type=bool, default=False, help='In eval mode, we will load the PPO checkpoints.')
+    parser.add_argument('--eval', type=bool, default=True, help='In eval mode, we will load the PPO checkpoints.')
 
     return parser.parse_args()
 
@@ -73,7 +73,8 @@ def main_gym(args, logger, train=True):
     logger.info("Starting city simulation with random seed {}... Debug mode: {}".format(args.seed, args.debug))
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
-    env = SubprocVecEnv([make_envs for i in range(4)])
+    env = SubprocVecEnv([make_envs for i in range(8)])
+    # env = VecEnv([make_envs()])
     
     # data rollouts
     if train: 
@@ -104,7 +105,6 @@ def main_gym(args, logger, train=True):
             pkl.dump(cached_observation, f)
     
     # Checkpoint evaluation
-    
     rew_list = []
     for ts in range(1, 21): 
         city, cached_observation = CityLoader_Gym.from_yaml(args.map, args.agents, args.rules, args.rule_type, args.debug)

@@ -37,11 +37,6 @@ class GymCityWrapper(gym.core.Env):
                         else "Car_{}".format(agent_id)
         self.agent_id = agent_id
         self.agent = self.env.agents[self.agent_id-3]
-        # self.observation_space = gym.spaces.Box(low=0, high=1, shape=(4, 241, 241), dtype=np.float32)
-        self.observation_space = gym.spaces.Box(low=-0., high=1, shape=(33, ), dtype=np.float32)
-        
-        # self.action_space = gym.spaces.Box(low=0, high=1, shape=(5, ), dtype=np.float32)
-        self.action_space = gym.spaces.Discrete(5) # (low=0, high=1, shape=(5, ), dtype=np.float32)
         
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
         self.scale = [25, 7, 3.5, 8.3]
@@ -62,6 +57,7 @@ class GymCityWrapper(gym.core.Env):
         start_pos = CPU(self.agent.start)
         cur_pos = CPU(self.agent.pos)
         goal_pos = CPU(self.agent.goal)
+        # TODO: the current obs is too small
         neighborhood_obs = obs_dict["World"][0:3, cur_pos[0]-1:cur_pos[0]+2, cur_pos[1]-1:cur_pos[1]+2].reshape(-1)
         # print(neighborhood_obs.shape, obs_dict["World"].shape)
         start_pos = np.asarray(start_pos, dtype=np.float32) / 240.
@@ -105,18 +101,17 @@ class GymCityWrapper(gym.core.Env):
         # TODO: reset functions!
         WALKING_STREET = TYPE_MAP['Walking Street']
         CROSSING_STREET = TYPE_MAP['Overlap']
-        self.agent.init(self.env.city_grid)
+        self.agent.init(self.env.city_grid, rl_agent=True)
         self.reinit()
         print("=============")
         # print("Reset Agent")
         logger.info("{}_{} initialization done!".format(self.agent.type, self.agent.id))
-        # ob_dict = self.env.update()
-        ob_dict = self.env.update(torch.from_numpy(np.array([1, 0, 0, 0, 0])), self.agent_id)
+        ob_dict = self.env.update(torch.from_numpy(np.array([0, 0, 0, 0, 1])), self.agent_id)
         obs = self._flatten_obs(ob_dict)
         # ob_dict = {"World": self.env.city_grid.clone()}
-        info = {}
-        info.update(ob_dict)
-        info.update({'success': self.check_success()})
+        # info = {}
+        # info.update(ob_dict)
+        # info.update({'success': self.check_success()})
         self.last_dist = -1
         self.last_pos = None
         
@@ -133,16 +128,13 @@ class GymCityWrapper(gym.core.Env):
         agent_layer = torch.zeros((self.env.grid_size[0], self.env.grid_size[1]))
         agent_layer[self.agent.start[0], self.agent.start[1]] = agent_code
         agent_layer[self.agent.goal[0], self.agent.goal[1]] = agent_code + AGENT_GOAL_PLUS
-        for way_points in self.agent.global_traj[1:-1]:
-            if torch.all(way_points==self.agent.start) or torch.all(way_points==self.agent.goal):
-                continue
-            agent_layer[way_points[0], way_points[1]] = agent_code + AGENT_GLOBAL_PATH_PLUS
         self.env.city_grid[self.agent_id] = agent_layer
 
     def step(self, action):
         self.t += 1
-        one_hot_action = torch.zeros(self.action_space.n)
-        one_hot_action[action] = 1.
+        index = np.argmax(action) # if action is a numpy array
+        one_hot_action = torch.zeros(self.action_space.shape[0])
+        one_hot_action[index] = 1.
         one_hot_action = one_hot_action.float()
         # assert len(action.shape) == 1, "Action must be a 1D array!"
         info = {}
@@ -157,7 +149,7 @@ class GymCityWrapper(gym.core.Env):
         if done:
             info["succcess"] = True
             rew += 10
-            self.agent.init(self.env.city_grid)
+            self.agent.init(self.env.city_grid, rl_agent=True)
             self.reinit()
             print("Reset agent by success")
         if self.agent.pos[0] <= 0 or self.agent.pos[1] <= 0 or \
@@ -165,7 +157,7 @@ class GymCityWrapper(gym.core.Env):
             info["success"] = False
             done = True
             rew -= 10
-            self.agent.init(self.env.city_grid)
+            self.agent.init(self.env.city_grid, rl_agent=True)
             self.reinit()
             print("Reset agent by oor")
         
@@ -173,7 +165,7 @@ class GymCityWrapper(gym.core.Env):
             done = True
             info["success"] = False
             info["overtime"] = True
-            self.agent.init(self.env.city_grid)
+            self.agent.init(self.env.city_grid, rl_agent=True)
             self.reinit()
             print("Reset agent by overtime")
             

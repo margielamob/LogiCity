@@ -103,37 +103,42 @@ class Z3PlannerLocal(LocalPlanner):
 
         return unique_variables
 
-    def plan(self, world_matrix, intersect_matrix, agents, layerid2listid):
+    def plan(self, world_matrix, intersect_matrix, agents, layerid2listid, use_multiprocessing=True):
         # 1. Break the global world matrix into local world matrix and split the agents and intersections
         # Note that the local ones will have different size and agent id
         local_world_matrix = world_matrix.clone()
         local_intersections = intersect_matrix.clone()
-        s = time.time()
         ego_agent, partial_agents, partial_world, partial_intersections = \
             self.break_world_matrix(local_world_matrix, agents, local_intersections, layerid2listid)
-        e = time.time()
-        print("Break world matrix time: {}".format(e-s))
-        # 2. multi-processing to solve each sub-problem
-        combined_results = {}
-        # Get the list of keys (agent names) and split them into batches
-        agent_keys = list(partial_agents.keys())
-        agent_batches = split_into_batches(agent_keys, NUM_PROCESS)
-        # Create the pool once
-        with Pool(processes=NUM_PROCESS) as pool:
-            for batch_keys in agent_batches:
-                batch_results = pool.starmap(solve_sub_problem, 
-                                            [(ego_name, ego_agent[ego_name].action_mapping, ego_agent[ego_name].action_dist,
-                                            self.rule_tem, self.entity_types, self.predicates, self.z3_vars,
-                                            partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name])
-                                            for ego_name in batch_keys])
-                
-                for result in batch_results:
-                    combined_results.update(result)
 
-                # Optional: Manual garbage collection
-                gc.collect()
-        e2 = time.time()
-        print("Solve sub-problem time: {}".format(e2-e))
+        # 2. Choose between multi-processing and looping
+        combined_results = {}
+        agent_keys = list(partial_agents.keys())
+        
+        if use_multiprocessing:
+            # Multi-processing approach
+            agent_batches = split_into_batches(agent_keys, NUM_PROCESS)
+            with Pool(processes=NUM_PROCESS) as pool:
+                for batch_keys in agent_batches:
+                    batch_results = pool.starmap(solve_sub_problem, 
+                                                [(ego_name, ego_agent[ego_name].action_mapping, ego_agent[ego_name].action_dist,
+                                                self.rule_tem, self.entity_types, self.predicates, self.z3_vars,
+                                                partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name])
+                                                for ego_name in batch_keys])
+                    
+                    for result in batch_results:
+                        combined_results.update(result)
+                    gc.collect()
+        else:
+            # Looping approach
+            for ego_name in agent_keys:
+                result = solve_sub_problem(ego_name, ego_agent[ego_name].action_mapping, ego_agent[ego_name].action_dist,
+                                        self.rule_tem, self.entity_types, self.predicates, self.z3_vars,
+                                        partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name])
+                combined_results.update(result)
+
+        # e2 = time.time()
+        # print("Solve sub-problem time: {}".format(e2-e))
         return combined_results
     
     def break_world_matrix(self, world_matrix, agents, intersect_matrix, layerid2listid):

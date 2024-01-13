@@ -36,7 +36,7 @@ class Pedestrian(Agent):
             self.action_to_move[k]: k for k in self.action_to_move
         }
     
-    def init(self, world_state_matrix, debug=False):
+    def init(self, world_state_matrix, debug=False, rl_agent=False):
         WALKING_STREET = TYPE_MAP['Walking Street']
         CROSSING_STREET = TYPE_MAP['Overlap']
         if debug:
@@ -46,11 +46,15 @@ class Pedestrian(Agent):
             self.start = torch.tensor(self.get_start(world_state_matrix))
             self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
             self.pos = self.start.clone()
-        # specify the occupacy map
-        self.movable_region = (world_state_matrix[STREET_ID] == WALKING_STREET) | (world_state_matrix[STREET_ID] == CROSSING_STREET)
-        # get global traj on the occupacy map
-        self.global_traj = self.global_planner(self.movable_region, self.start, self.goal)
-        logger.info("{}_{} initialization done!".format(self.type, self.id))
+        if not rl_agent:
+            # specify the occupacy map
+            self.movable_region = (world_state_matrix[STREET_ID] == WALKING_STREET) | (world_state_matrix[STREET_ID] == CROSSING_STREET)
+            # get global traj on the occupacy map
+            self.global_traj = self.global_planner(self.movable_region, self.start, self.goal)
+            logger.info("{}_{} initialization done!".format(self.type, self.id))
+        else:
+            self.global_traj = None
+            logger.info("{}_{} (RL agent) reset done!".format(self.type, self.id))
 
     def get_start(self, world_state_matrix):
         # Define the labels for different entities

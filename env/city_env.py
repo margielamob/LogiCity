@@ -37,7 +37,7 @@ class CityEnv(City):
         current_world = self.city_grid.clone()
         # first do local planning based on city rules
         agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents, \
-                                                    self.layer_id2agent_list_id)
+                                                    self.layer_id2agent_list_id, use_multiprocessing=False)
         # Then do global action taking acording to the local planning results
         # input((action_idx, idx))
         
@@ -47,13 +47,14 @@ class CityEnv(City):
             empty_action = agent.action_dist.clone()
             # local reasoning-based action distribution
             local_action_dist = agent_action_dist[agent_name]
-            # get local occupancy map
-            local_world = self.city_grid[:, agent.pos[0]-OCC_CHECK_RANGE//2:agent.pos[0]+OCC_CHECK_RANGE//2, \
-                                            agent.pos[1]-OCC_CHECK_RANGE//2:agent.pos[1]+OCC_CHECK_RANGE//2].clone()
-            local_occ_map = gen_occ(torch.cat([local_world[BASIC_LAYER:agent.layer_id], local_world[agent.layer_id+1:]]))
+            # get local occupancy map if more than one agent
             occ_map = torch.zeros_like(self.city_grid[0])
-            occ_map[agent.pos[0]-OCC_CHECK_RANGE//2:agent.pos[0]+OCC_CHECK_RANGE//2, \
-                    agent.pos[1]-OCC_CHECK_RANGE//2:agent.pos[1]+OCC_CHECK_RANGE//2] = local_occ_map
+            if len(self.agents) > 1:
+                local_world = self.city_grid[:, agent.pos[0]-OCC_CHECK_RANGE//2:agent.pos[0]+OCC_CHECK_RANGE//2, \
+                                                agent.pos[1]-OCC_CHECK_RANGE//2:agent.pos[1]+OCC_CHECK_RANGE//2].clone()
+                local_occ_map = gen_occ(torch.cat([local_world[BASIC_LAYER:agent.layer_id], local_world[agent.layer_id+1:]]))
+                occ_map[agent.pos[0]-OCC_CHECK_RANGE//2:agent.pos[0]+OCC_CHECK_RANGE//2, \
+                        agent.pos[1]-OCC_CHECK_RANGE//2:agent.pos[1]+OCC_CHECK_RANGE//2] = local_occ_map
             # global trajectory-based action or sampling from local action distribution
             if action is not None and agent.layer_id == idx: 
                 current_obs["Agent_actions"].append(action)
