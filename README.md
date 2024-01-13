@@ -24,6 +24,9 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
   conda activate logicity
   git clone --recurse-submodules https://github.com/Jaraxxus-Me/LogiCity.git
   # requirements for logicity
+  # torch
+  pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu113
+  # others
   pip install -r requirements.txt
   # requirements for lnn
   cd src/lnn
