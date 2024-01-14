@@ -52,7 +52,7 @@ def resize_with_aspect_ratio(image, base_size):
     
     return resized_img
 
-def gridmap2img_static(gridmap, icon_dict):
+def gridmap2img_static(gridmap, icon_dict, ego_id):
     # step 1: get the size of the gridmap, create a blank image with size*SCALE
     height, width = gridmap.shape[1], gridmap.shape[2]
     img = np.ones((height*SCALE, width*SCALE, 3), np.uint8) * 255  # assuming white background
@@ -128,6 +128,18 @@ def gridmap2img_static(gridmap, icon_dict):
                 icon = building_icon
             icon_mask = np.sum(icon > 1, axis=2) > 0
             img[bottom-icon.shape[0]:bottom, left:left+icon.shape[1]][icon_mask] = icon[icon_mask]
+
+    # add ego agent start and goal
+    if ego_id > 0:
+        ego_map = gridmap[ego_id]
+        goal_pos = np.where(ego_map == ego_map.max())
+        goal_x, goal_y = goal_pos[0][0]*SCALE, goal_pos[1][0]*SCALE
+        int_mask = ego_map == ego_map.astype(np.int64)
+        filtered_mask = int_mask * (ego_map != 0)
+        start_pos = np.where(filtered_mask)
+        start_x, start_y = start_pos[0][0]*SCALE, start_pos[1][0]*SCALE
+        cv2.drawMarker(img, (goal_y, goal_x), (0, 0, 255), markerType=cv2.MARKER_STAR, markerSize=15, thickness=2)
+        cv2.drawMarker(img, (start_y, start_x), (255, 0, 0), markerType=cv2.MARKER_SQUARE, markerSize=15, thickness=2)
 
     return img
 
@@ -251,7 +263,7 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
     else:
         return current_map, icon_dict_local
 
-def main(pkl_path):
+def main(pkl_path, ego_id):
     icon_dict = {}
     for key in PATH_DICT.keys():
         if isinstance(PATH_DICT[key], list):
@@ -269,10 +281,10 @@ def main(pkl_path):
         agents = data["Static Info"]["Agents"]
 
     print(obs.keys())
-    static_map = gridmap2img_static(obs[1]["World"].numpy(), icon_dict)
+    static_map = gridmap2img_static(obs[0]["World"].numpy(), icon_dict, ego_id)
     cv2.imwrite("vis_city/static_layout.png", static_map)
     last_icons = None
-    for key in trange(obs.keys()-1):
+    for key in trange(len(obs.keys())-1):
         grid = obs[key]["World"].numpy()
         grid_ = obs[key+1]["World"].numpy()
         img, last_icons = gridmap2img_agents(grid, grid_, icon_dict, static_map, last_icons, agents)
@@ -284,9 +296,10 @@ def main(pkl_path):
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Create an animated GIF from a sequence of images.")
-    parser.add_argument("pkl_file", help="Path to the folder containing image files.")
+    parser.add_argument("--pkl_file", default='log_rl/rl_debug_3.pkl', help="Path to the folder containing image files.")
+    parser.add_argument("--ego_id", type=int, default=3, help="which agent is ego agent. Visualize the ego agent's start and goal. This is layer_id")
     
     args = parser.parse_args()
 
     # Call the function with provided arguments
-    main(args.pkl_file)
+    main(args.pkl_file, args.ego_id)
