@@ -25,22 +25,7 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
   git clone --recurse-submodules https://github.com/Jaraxxus-Me/LogiCity.git
   # requirements for logicity
   # torch
-  conda create -n logicity python=3.9
-conda activate logicity
-git clone --recurse-submodules https://github.com/Jaraxxus-Me/LogiCity.git
-# requirements for logicity
-# torch
-pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu113
-# others
-pip install -r requirements.txt
-# requirements for lnn
-cd src/lnn
-pip install -r requirements.txt
-pip install -e .
-# install logicity-lib
-cd ..
-cd ..
-pip install -v -e .
+  pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu116
   # others
   pip install -r requirements.txt
   # requirements for lnn
@@ -52,6 +37,7 @@ pip install -v -e .
   cd ..
   pip install -v -e .
   ```
+
 - Using docker
   ```shell
   docker pull bowenli1024/logicity:v3
