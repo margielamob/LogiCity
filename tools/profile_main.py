@@ -11,7 +11,7 @@ from main import parse_arguments, setup_logger, main_gym  # Import necessary fun
 def run_main_gym():
     args = parse_arguments()
     logger = setup_logger(log_dir=args.log_dir, log_name=args.exp)
-    main_gym(args, logger, train=args.train)
+    main_gym(args, logger)
 
 if __name__ == "__main__":
     profiler = cProfile.Profile()
