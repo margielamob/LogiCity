@@ -9,6 +9,7 @@ def setup_logger(log_dir='./logs', log_name='city_simulation'):
     log_filepath = os.path.join(log_dir, f"{log_name}.log")
 
     logging.basicConfig(filename=log_filepath,
+                        filemode='w',
                         level=logging.DEBUG,
                         format='%(asctime)s [%(levelname)s]: %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')

@@ -1,27 +1,30 @@
 import os
 import sys
+import time
 import yaml
+import torch
 import argparse
+import importlib
+import numpy as np
 import pickle as pkl
+from tqdm import trange
+from logicity.core.config import *
 from logicity.utils.load import CityLoader
 from logicity.utils.logger import setup_logger
 from logicity.utils.vis import visualize_city
-from logicity.core.config import *
-import torch
-import torch.nn as nn
-import time
-import numpy as np
 # RL
+from logicity.rl_agent.alg import *
 from logicity.utils.gym_wrapper import GymCityWrapper
-from stable_baselines3.common.vec_env import SubprocVecEnv, VecEnv
-from logicity.rl_agent.neural import PPO, NeuralNav
+from stable_baselines3.common.vec_env import SubprocVecEnv
 from logicity.utils.gym_callback import EvalCheckpointCallback
-from stable_baselines3.common.callbacks import CheckpointCallback
-from tqdm import trange
 
 def load_config(config_path):
     with open(config_path, 'r') as file:
         return yaml.safe_load(file)
+
+def dynamic_import(module_name, class_name):
+    module = importlib.import_module(module_name)
+    return getattr(module, class_name)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
@@ -84,32 +87,50 @@ def main_gym(args, logger):
     simulation_config = config["simulation"]
     logger.info("Simulation config: {}".format(simulation_config))
     # RL config
-    stable_baselines_config = config['stable_baselines']
-    policy_kwargs = stable_baselines_config['policy_kwargs']
-    train = stable_baselines_config["train"]
+    rl_config = config['stable_baselines']
+    logger.info("RL config: {}".format(rl_config))
+    # Dynamic import of the features extractor class
+    features_extractor_class = dynamic_import(
+        rl_config["policy_kwargs"]["features_extractor_module"],
+        rl_config["policy_kwargs"]["features_extractor_class"]
+    )
+    # Prepare policy_kwargs with the dynamically imported class
+    policy_kwargs = {
+        "features_extractor_class": features_extractor_class,
+        "features_extractor_kwargs": rl_config["policy_kwargs"]["features_extractor_kwargs"]
+    }
+    # Dynamic import of the RL algorithm
+    algorithm_class = dynamic_import(
+        "logicity.rl_agent.alg",  # Adjust the module path as needed
+        rl_config["algorithm"]
+    )
+    # Load the entire eval_checkpoint configuration as a dictionary
+    eval_checkpoint_config = config.get('eval_checkpoint', {})
+    # Hyperparameters
+    hyperparameters = rl_config["hyperparameters"]
+    train = rl_config["train"]
+    num_envs = rl_config["num_envs"]
+    total_timesteps = rl_config["total_timesteps"]
     
     # data rollouts
     if train: 
-        # train_env = SubprocVecEnv([make_envs for i in range(1)])
+        # train_env = SubprocVecEnv([make_envs for i in range(num_envs)])
         # debug
         train_env = make_envs(simulation_config)
         eval_env = make_envs(simulation_config)
         train_env.reset()
-        model = PPO("MultiInputPolicy", train_env, policy_kwargs=policy_kwargs, verbose=1)
+        model = algorithm_class("MultiInputPolicy", \
+                                train_env, \
+                                **hyperparameters, \
+                                policy_kwargs=policy_kwargs)
         # RL training mode
         # Create the custom checkpoint and evaluation callback
-        eval_checkpoint_callback = EvalCheckpointCallback(
-            eval_env=eval_env,
-            eval_freq=2000,
-            save_freq=2000,
-            save_path='./checkpoints/{}'.format(args.exp),
-            name_prefix='res18_model_50FOV',
-            log_dir='./{}/{}'.format(args.log_dir, args.exp),
-        )
+        eval_checkpoint_callback = EvalCheckpointCallback(eval_env=eval_env, \
+                                                          **eval_checkpoint_config)
         # Train the model
-        model.learn(total_timesteps=1000, callback=eval_checkpoint_callback)
+        model.learn(total_timesteps=total_timesteps, callback=eval_checkpoint_callback)
         # Save the model
-        model.save("res18_model_50FOV")
+        model.save(eval_checkpoint_config["name_prefix"])
         return
     
     # Checkpoint evaluation

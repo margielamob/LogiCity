@@ -8,9 +8,7 @@ from ..core.config import *
 from ..utils.find import find_nearest_building, find_building_mask
 
 import logging
-
 logger = logging.getLogger(__name__)
-TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
 def CPU(x):
     return x.cpu().numpy() if isinstance(x, torch.Tensor) else x
@@ -117,8 +115,8 @@ class GymCityWrapper(gym.core.Env):
         CROSSING_STREET = TYPE_MAP['Overlap']
         self.agent.init(self.env.city_grid, rl_agent=True)
         self.reinit()
-        print("=============")
-        print("Reset Agent")
+        logger.info("=============")
+        logger.info("Reset Agent")
         ob_dict = self.env.update(torch.from_numpy(np.array([0, 0, 0, 0, 1])), self.agent_layer_id)
         obs = self._flatten_obs(ob_dict)
         self.last_dist = -1
@@ -157,7 +155,7 @@ class GymCityWrapper(gym.core.Env):
             rew += 10
             self.agent.init(self.env.city_grid, rl_agent=True)
             self.reinit()
-            print("Reset agent by success")
+            logger.info("Reset agent by success")
         if self.agent.pos[0] <= 0 or self.agent.pos[1] <= 0 or \
             self.agent.pos[0] >= 240 or self.agent.pos[1] >= 240: 
             info["success"] = False
@@ -165,7 +163,7 @@ class GymCityWrapper(gym.core.Env):
             rew -= 10
             self.agent.init(self.env.city_grid, rl_agent=True)
             self.reinit()
-            print("Reset agent by oor")
+            logger.info("Reset agent by oor")
         
         if self.t >= self.horizon: 
             done = True

@@ -1,6 +1,8 @@
 from stable_baselines3.common.callbacks import CheckpointCallback
 import numpy as np
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 class EvalCheckpointCallback(CheckpointCallback):
     def __init__(self, eval_env, eval_freq=50000, log_dir='./log/', *args, **kwargs):
@@ -28,7 +30,7 @@ class EvalCheckpointCallback(CheckpointCallback):
                 rewards_list.append(episode_rewards)
 
             mean_reward = np.mean(rewards_list)
-            print(f"Step: {self.n_calls} - Mean Reward: {mean_reward}")
+            logger.info(f"Step: {self.n_calls} - Mean Reward: {mean_reward}")
 
             # Log the mean reward
             with open(os.path.join(self.log_dir, "eval_rewards.txt"), "a") as file:
