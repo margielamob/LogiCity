@@ -15,6 +15,7 @@ from logicity.utils.gym_wrapper import GymCityWrapper
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecEnv
 from logicity.rl_agent.neural import PPO, NeuralNav
 from logicity.utils.gym_callback import EvalCheckpointCallback
+from stable_baselines3.common.callbacks import CheckpointCallback
 from tqdm import trange
 
 
@@ -35,8 +36,8 @@ def parse_arguments():
     parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
     # RL
     parser.add_argument('--use_gym', type=bool, default=True, help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--train', type=bool, default=True, help='In train mode, we will train the PPO model.')
-    parser.add_argument('--checkpoint', type=str, default="checkpoints/ppo_model_1.12_2500000_steps.zip", help='The checkpoint to load.')
+    parser.add_argument('--train', type=bool, default=False, help='In train mode, we will train the PPO model.')
+    parser.add_argument('--checkpoint', type=str, default="log_rl/rl_debug/best_model.zip", help='The checkpoint to load.')
 
     return parser.parse_args()
 
@@ -82,7 +83,9 @@ def main_gym(args, logger, train=True):
     
     # data rollouts
     if train: 
-        train_env = SubprocVecEnv([make_envs for i in range(8)])
+        # train_env = SubprocVecEnv([make_envs for i in range(1)])
+        # debug
+        train_env = make_envs()
         eval_env = make_envs()
         train_env.reset()
         model = PPO("MultiInputPolicy", train_env, policy_kwargs=policy_kwargs, verbose=1)
@@ -90,8 +93,8 @@ def main_gym(args, logger, train=True):
         # Create the custom checkpoint and evaluation callback
         eval_checkpoint_callback = EvalCheckpointCallback(
             eval_env=eval_env,
-            eval_freq=50000,
-            save_freq=100000,
+            eval_freq=10000,
+            save_freq=500000,
             save_path='./checkpoints/{}'.format(args.exp),
             name_prefix='res18_model_50FOV',
             log_dir='./{}/{}'.format(args.log_dir, args.exp),
@@ -104,7 +107,7 @@ def main_gym(args, logger, train=True):
     
     # Checkpoint evaluation
     rew_list = []
-    for ts in range(1, 21): 
+    for ts in range(1, 11): 
         city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, True, args.debug)
         env = GymCityWrapper(city)
         model = PPO.load(args.checkpoint, env=env)
