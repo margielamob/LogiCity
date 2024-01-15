@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class CityLoader:
     @staticmethod
-    def from_yaml(map_yaml_file, agent_yaml_file, rule_yaml_file, rule_type, rl=False, debug=False):
+    def from_yaml(map_yaml_file, agent_yaml_file, rule_yaml_file, rule_type, rl=False, debug=False, rl_agent=None):
 
         cached_observation = {
                 "Time_Obs": {},
@@ -38,7 +38,10 @@ class CityLoader:
         # Create a city instance with the specified grid size
         logger.info("Get rules info from {}".format(rule_yaml_file))
         if rl:
-            city = CityEnv(grid_size=(WORLD_SIZE, WORLD_SIZE), local_planner=rule_type, rule_file=rule_yaml_file)
+            assert rl_agent is not None, "Please specify the RL agent! Use AgentType_ID format. \
+                See the agents file for options ({agent_yaml_file})."
+            city = CityEnv(grid_size=(WORLD_SIZE, WORLD_SIZE), local_planner=rule_type, \
+                           rule_file=rule_yaml_file, rl_agent=rl_agent)
         else:
             city = City(grid_size=(WORLD_SIZE, WORLD_SIZE), local_planner=rule_type, rule_file=rule_yaml_file)
         cached_observation["Static Info"]["Logic"]["Predicates"] = list(city.local_planner.predicates.keys())

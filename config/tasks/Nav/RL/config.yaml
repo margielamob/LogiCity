@@ -1,0 +1,33 @@
+# General simulation settings
+simulation:
+  map_yaml_file: "config/maps/v1.1.yaml"       # OpenAI Gym environment name
+  agent_yaml_file: "config/agents/debug.yaml" # Agents in the simulation
+  rule_type: "Z3_Local"               # Maximum steps in each episode
+  rule_yaml_file: "config/rules/Z3/easy/easy_rule_local.yaml"                 # Whether to render the environment
+  rl: true
+  debug: false
+  rl_agent: 
+    agent_name: "Pedestrian_1"               # ID of the RL agent, this is the agent id in the agent yaml file
+    horizon: 500                          # Maximum steps in each episode 
+
+# Logging and checkpoint settings
+logging:
+  save_freq: 10000              # Frequency to save the model
+  save_path: "./saved_models"   # Directory to save models
+
+# Stable Baselines specific settings
+stable_baselines:
+  algorithm: "PPO"              # RL algorithm, e.g., 'PPO', 'A2C', 'DQN'
+  policy_kwargs:
+    features_extractor_class: "NeuralNav" # Class name as string
+    features_extractor_kwargs:
+      features_dim: 64
+  learning_rate: 0.001          # Learning rate
+  gamma: 0.99                   # Discount factor
+  n_steps: 2048                 # Number of steps to run for each environment per update
+  ent_coef: 0.0                 # Entropy coefficient
+  verbose: 1                    # Verbosity level
+  tensorboard_log: "./tb_logs"  # Tensorboard log directory
+  full_tensorboard_log: true    # Whether to log to Tensorboard every episode
+  train: true                   # Whether to train the model
+  checkpoint_path: ""           # Path to a checkpoint to restore the model from

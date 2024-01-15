@@ -1,8 +1,0 @@
-model_type: "Symbolic_Decision_Tree"
-train_data_path: 'dataset/logic/med_42_11.17/train.pkl'
-test_data_path: 'dataset/logic/med_42_11.17/test.pkl'
-log_dir: 'log/logic'
-exp: 'medium_dt_uni_0.5'
-uni_boundary: 0.5
-w_bernoulli: False
-irr_c: 0

@@ -1,5 +1,6 @@
 import os
 import sys
+import yaml
 import argparse
 import pickle as pkl
 from logicity.utils.load import CityLoader
@@ -18,6 +19,9 @@ from logicity.utils.gym_callback import EvalCheckpointCallback
 from stable_baselines3.common.callbacks import CheckpointCallback
 from tqdm import trange
 
+def load_config(config_path):
+    with open(config_path, 'r') as file:
+        return yaml.safe_load(file)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
@@ -36,8 +40,7 @@ def parse_arguments():
     parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
     # RL
     parser.add_argument('--use_gym', type=bool, default=True, help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--train', type=bool, default=False, help='In train mode, we will train the PPO model.')
-    parser.add_argument('--checkpoint', type=str, default="log_rl/rl_debug/best_model.zip", help='The checkpoint to load.')
+    parser.add_argument('--rl_config', default='config/tasks/Nav/RL/config.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -68,39 +71,43 @@ def main(args, logger):
         pkl.dump(cached_observation, f)
 
 
-def main_gym(args, logger, train=True): 
-    def make_envs(): 
-        city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, True, args.debug)
+def main_gym(args, logger): 
+    def make_envs(simulation_config): 
+        # Unpack arguments from simulation_config and pass them to CityLoader
+        city, cached_observation = CityLoader.from_yaml(**simulation_config)
         env = GymCityWrapper(city)
         return env
-    logger.info("Starting city simulation with random seed {}... Debug mode: {}".format(args.seed, args.debug))
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
-    policy_kwargs = dict(
-    features_extractor_class=NeuralNav,
-    features_extractor_kwargs=dict(features_dim=64),
-    )
+    config = load_config(args.rl_config)
+    # simulation config
+    simulation_config = config["simulation"]
+    logger.info("Simulation config: {}".format(simulation_config))
+    # RL config
+    stable_baselines_config = config['stable_baselines']
+    policy_kwargs = stable_baselines_config['policy_kwargs']
+    train = stable_baselines_config["train"]
     
     # data rollouts
     if train: 
         # train_env = SubprocVecEnv([make_envs for i in range(1)])
         # debug
-        train_env = make_envs()
-        eval_env = make_envs()
+        train_env = make_envs(simulation_config)
+        eval_env = make_envs(simulation_config)
         train_env.reset()
         model = PPO("MultiInputPolicy", train_env, policy_kwargs=policy_kwargs, verbose=1)
         # RL training mode
         # Create the custom checkpoint and evaluation callback
         eval_checkpoint_callback = EvalCheckpointCallback(
             eval_env=eval_env,
-            eval_freq=10000,
-            save_freq=500000,
+            eval_freq=2000,
+            save_freq=2000,
             save_path='./checkpoints/{}'.format(args.exp),
             name_prefix='res18_model_50FOV',
             log_dir='./{}/{}'.format(args.log_dir, args.exp),
         )
         # Train the model
-        model.learn(total_timesteps=1000_0000, callback=eval_checkpoint_callback)
+        model.learn(total_timesteps=1000, callback=eval_checkpoint_callback)
         # Save the model
         model.save("res18_model_50FOV")
         return
@@ -140,8 +147,12 @@ if __name__ == '__main__':
     args = parse_arguments()
     logger = setup_logger(log_dir=args.log_dir, log_name=args.exp)
     if args.use_gym:
+        logger.info("Running in RL mode.")
+        assert args.rl_config is not None, "Please specify a config file for RL."
+        logger.info("Loading RL config from {}.".format(args.rl_config))
         # RL mode, will use gym wrapper to learn and test an agent
-        main_gym(args, logger, train=args.train)
+        main_gym(args, logger)
     else:
         # Sim mode, will use the logic-based simulator to run a simulation (no learning)
+        logger.info("Running in simulation mode.")
         main(args, logger)

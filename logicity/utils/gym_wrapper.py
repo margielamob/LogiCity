@@ -19,33 +19,36 @@ def CUDA(x):
     return x.cuda() if isinstance(x, torch.Tensor) else x
 
 class GymCityWrapper(gym.core.Env):
-    def __init__(self, env, agent_id: int=3, horizon: int=500, ped_idx=[3, 25], car_idx=[25, 35]):
+    def __init__(self, env):
         '''The Gym Wrapper of the CityEnv in single-agent mode.
         :param City env: the CityEnv instance
-        :param int agent_id: the agent id
         '''        
         self.env = env
         self.fov = AGENT_FOV*2
         self.observation_space = Dict({
-            "map": Box(low=-1.0, high=1.0, shape=(3, 50, 50), dtype=np.float32),  # Adjust the shape as needed
+            "map": Box(low=-1.0, high=1.0, shape=(3, self.fov, self.fov), dtype=np.float32),  # Adjust the shape as needed
             "position": Box(low=0.0, high=1.0, shape=(6,), dtype=np.float32)
         })
-        self.action_space = gym.spaces.Box(low=0, high=1, shape=(5, ), dtype=np.float32)
-        self.n_agents = len(env.agents)
-        self.ped_idx = [i+3 for i in range(self.n_agents) if env.agents[i].type == "Pedestrian"]
-        self.car_idx = [i+3 for i in range(self.n_agents) if env.agents[i].type == "Car"]
-        self.num_ped = len(self.ped_idx)
-        self.num_car = len(self.car_idx)
+        # self.n_agents = len(env.agents)
+        # self.ped_idx = [i+3 for i in range(self.n_agents) if env.agents[i].type == "Pedestrian"]
+        # self.car_idx = [i+3 for i in range(self.n_agents) if env.agents[i].type == "Car"]
+        # self.num_ped = len(self.ped_idx)
+        # self.num_car = len(self.car_idx)
         self.last_dist = -1
-        self.agent_name = "Pedestrian_{}".format(agent_id) if agent_id in self.ped_idx \
-                        else "Car_{}".format(agent_id)
-        self.agent_id = agent_id
-        self.agent = self.env.agents[self.agent_id-3]
-        
+        self.agent_name = env.rl_agent["agent_name"]
+        self.horizon = env.rl_agent["horizon"]
+        self.agent_type = self.agent_name.split("_")[0]
+        agent_id = self.agent_name.split("_")[1] # this is agent id in the yaml file
+        for agent in self.env.agents:
+            if agent.type == self.agent_type:
+                if agent.id == int(agent_id):
+                    self.agent = agent
+                    self.agent_layer_id = agent.layer_id
+        assert self.agent_layer_id is not None, "Agent not found! Recheck Your agent_name in the config file!"
+        self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.agent.action_space.shape[0], ), dtype=np.float32)
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
         self.scale = [25, 7, 3.5, 8.3]
         self.mini_scale = [0, 0, -1, 0]
-        self.horizon = horizon
         self.t = 0
         
     def _flatten_obs(self, obs_dict):
@@ -86,8 +89,8 @@ class GymCityWrapper(gym.core.Env):
         :param dict obs_dict: the observation dictionary
         :return: the reward
         '''
-        cur_pos = self.env.agents[self.agent_id-3].pos
-        goal_pos = self.env.agents[self.agent_id-3].goal
+        cur_pos = self.agent.pos
+        goal_pos = self.agent.goal
         
         dist_goal = np.linalg.norm(cur_pos - goal_pos, ord=1, axis=0)
         if self.last_dist == -1:
@@ -96,10 +99,10 @@ class GymCityWrapper(gym.core.Env):
         self.last_dist = dist_goal
         # print(cur_pos, goal_pos)
         # print(cur_pos, obs_dict["World"][2].shape, obs_dict["World"][2][cur_pos[0], cur_pos[1]])
-        if self.agent.type == 'Pedestrian':
+        if self.agent_type == 'Pedestrian':
             count_on_road = len(np.where(obs_dict["World"][2][cur_pos[0], cur_pos[1]] == 1.0)[0]) + \
                                 len(np.where(obs_dict["World"][2][cur_pos[0], cur_pos[1]] == -1)[0])
-        elif self.agent.type == 'Car':
+        elif self.agent_type == 'Car':
             count_on_road = len(np.where(obs_dict["World"][2][cur_pos[0], cur_pos[1]] == 2.0)[0]) + \
                                 len(np.where(obs_dict["World"][2][cur_pos[0], cur_pos[1]] == -1)[0])
         # print(rew, 1-count_on_road)
@@ -116,20 +119,22 @@ class GymCityWrapper(gym.core.Env):
         self.reinit()
         print("=============")
         print("Reset Agent")
-        ob_dict = self.env.update(torch.from_numpy(np.array([0, 0, 0, 0, 1])), self.agent_id)
+        ob_dict = self.env.update(torch.from_numpy(np.array([0, 0, 0, 0, 1])), self.agent_layer_id)
         obs = self._flatten_obs(ob_dict)
         self.last_dist = -1
         self.last_pos = None
         return obs
     
     def reinit(self): 
-        agent_code = self.type2label[self.agent.type]
+        agent_code = self.type2label[self.agent_type]
         # draw agent
         # print('start: ', self.agent.start, 'pos: ', self.agent.pos)
         agent_layer = torch.zeros((self.env.grid_size[0], self.env.grid_size[1]))
-        agent_layer[self.agent.start[0], self.agent.start[1]] = agent_code
-        agent_layer[self.agent.goal[0], self.agent.goal[1]] = agent_code + AGENT_GOAL_PLUS
-        self.env.city_grid[self.agent_id] = agent_layer
+        start = self.agent.start
+        goal = self.agent.goal
+        agent_layer[start[0], start[1]] = agent_code
+        agent_layer[goal[0], goal[1]] = agent_code + AGENT_GOAL_PLUS
+        self.env.city_grid[self.agent_layer_id] = agent_layer
 
     def step(self, action):
         self.t += 1
@@ -139,7 +144,7 @@ class GymCityWrapper(gym.core.Env):
         one_hot_action = one_hot_action.float()
         # assert len(action.shape) == 1, "Action must be a 1D array!"
         info = {}
-        ob_dict = self.env.update(one_hot_action, self.agent_id)
+        ob_dict = self.env.update(one_hot_action, self.agent_layer_id)
         # ob_dict = self.env.update()
         info.update(ob_dict)
         obs = self._flatten_obs(ob_dict)
@@ -179,7 +184,7 @@ class GymCityWrapper(gym.core.Env):
         return self.env.close()
 
     def check_success(self):
-        return self.env.agents[self.agent_id-3].reach_goal
+        return self.agent.reach_goal
     
     def seed(self, seed=None):
         if seed is not None:
