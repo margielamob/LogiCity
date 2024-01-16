@@ -35,10 +35,11 @@ class CityEnv(City):
             action_idx = torch.where(action)[0][0]
                 
         new_matrix = torch.zeros_like(self.city_grid)
-        current_world = self.city_grid.clone()
+        # current_world = self.city_grid.clone()
         # first do local planning based on city rules
-        agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents, \
-                                                    self.layer_id2agent_list_id, use_multiprocessing=False)
+        # rl debug, skip local planning
+        # agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents, \
+        #                                             self.layer_id2agent_list_id, use_multiprocessing=False)
         # Then do global action taking acording to the local planning results
         # input((action_idx, idx))
         
@@ -47,7 +48,8 @@ class CityEnv(City):
             agent_name = "{}_{}".format(agent.type, agent.layer_id)
             empty_action = agent.action_dist.clone()
             # local reasoning-based action distribution
-            local_action_dist = agent_action_dist[agent_name]
+            # rl debug, skip local planning
+            # local_action_dist = agent_action_dist[agent_name]
             # get local occupancy map if more than one agent
             occ_map = torch.zeros_like(self.city_grid[0])
             if len(self.agents) > 1:

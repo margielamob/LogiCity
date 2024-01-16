@@ -20,5 +20,10 @@ if __name__ == "__main__":
     run_main_gym()  # Run the main_gym function
 
     profiler.disable()
-    stats = pstats.Stats(profiler).sort_stats('cumtime')  # Sorting by cumulative time
-    stats.print_stats()
+    # Save the stats to a file
+    stats_file = 'profile_stats_z3.txt'
+    with open(stats_file, 'w') as f:
+        stats = pstats.Stats(profiler, stream=f).sort_stats('cumtime')
+        stats.print_stats()
+
+    print(f"Profiling stats saved to {stats_file}")

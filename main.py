@@ -43,7 +43,7 @@ def parse_arguments():
     parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
     # RL
     parser.add_argument('--use_gym', type=bool, default=True, help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--rl_config', default='config/tasks/Nav/RL/config.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--rl_config', default='config/tasks/Nav/RL/config_0.001.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -75,11 +75,24 @@ def main(args, logger):
 
 
 def main_gym(args, logger): 
-    def make_envs(simulation_config): 
+    def make_env(simulation_config): 
         # Unpack arguments from simulation_config and pass them to CityLoader
         city, cached_observation = CityLoader.from_yaml(**simulation_config)
         env = GymCityWrapper(city)
         return env
+    def make_envs(simulation_config, rank):
+        """
+        Utility function for multiprocessed env.
+        
+        :param simulation_config: The configuration for the simulation.
+        :param rank: Unique index for each environment to ensure different seeds.
+        :return: A function that creates a single environment.
+        """
+        def _init():
+            env = make_env(simulation_config)
+            env.seed(rank + 1000)  # Optional: set a unique seed for each environment
+            return env
+        return _init
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     config = load_config(args.rl_config)
@@ -114,10 +127,12 @@ def main_gym(args, logger):
     
     # data rollouts
     if train: 
-        # train_env = SubprocVecEnv([make_envs for i in range(num_envs)])
-        # debug
-        train_env = make_envs(simulation_config)
-        eval_env = make_envs(simulation_config)
+        if num_envs > 1:
+            logger.info("Running in RL mode with {} parallel environments.".format(num_envs))
+            train_env = SubprocVecEnv([make_envs(simulation_config, i) for i in range(num_envs)])
+        else:
+            train_env = make_env(simulation_config)
+        eval_env = make_env(simulation_config)
         train_env.reset()
         model = algorithm_class("MultiInputPolicy", \
                                 train_env, \
@@ -128,7 +143,8 @@ def main_gym(args, logger):
         eval_checkpoint_callback = EvalCheckpointCallback(eval_env=eval_env, \
                                                           **eval_checkpoint_config)
         # Train the model
-        model.learn(total_timesteps=total_timesteps, callback=eval_checkpoint_callback)
+        model.learn(total_timesteps=total_timesteps, callback=eval_checkpoint_callback\
+                    , tb_log_name=args.exp)
         # Save the model
         model.save(eval_checkpoint_config["name_prefix"])
         return
