@@ -1,1 +1,0 @@
-python3 main.py --rl_config config/tasks/Nav/RL/config_0.01.yaml --exp PPO_0.01

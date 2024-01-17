@@ -75,11 +75,14 @@ def main(args, logger):
 
 
 def main_gym(args, logger): 
-    def make_env(simulation_config): 
+    def make_env(simulation_config, return_cache=False): 
         # Unpack arguments from simulation_config and pass them to CityLoader
         city, cached_observation = CityLoader.from_yaml(**simulation_config)
         env = GymCityWrapper(city)
-        return env
+        if return_cache: 
+            return env, cached_observation
+        else:
+            return env
     def make_envs(simulation_config, rank):
         """
         Utility function for multiprocessed env.
@@ -152,17 +155,16 @@ def main_gym(args, logger):
     # Checkpoint evaluation
     rew_list = []
     for ts in range(1, 11): 
-        city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, True, args.debug)
-        env = GymCityWrapper(city)
-        model = PPO.load(args.checkpoint, env=env)
-        o = env.reset()
+        eval_env, cached_observation = make_env(simulation_config, True)
+        model = PPO.load(rl_config["checkpoint_path"], env=eval_env)
+        o = eval_env.reset()
         action = model.predict(o)[0]
         sys.stdout = open(os.devnull, 'w')
         ep_rew_list = []
         rew = 0        
         ep_rew = 0
         for steps in trange(500):
-            o, r, d, i = env.step(action)
+            o, r, d, i = eval_env.step(action)
             action = model.predict(o)[0]
             ep_rew_list.append(r)
             rew += r

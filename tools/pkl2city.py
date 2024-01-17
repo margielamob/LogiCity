@@ -263,7 +263,7 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
     else:
         return current_map, icon_dict_local
 
-def main(pkl_path, ego_id):
+def main(pkl_path, ego_id, output_folder):
     icon_dict = {}
     for key in PATH_DICT.keys():
         if isinstance(PATH_DICT[key], list):
@@ -282,13 +282,29 @@ def main(pkl_path, ego_id):
 
     print(obs.keys())
     static_map = gridmap2img_static(obs[0]["World"].numpy(), icon_dict, ego_id)
-    cv2.imwrite("vis_city/static_layout.png", static_map)
+    cv2.imwrite("{}/static_layout.png".format(output_folder), static_map)
     last_icons = None
     for key in trange(len(obs.keys())-1):
         grid = obs[key]["World"].numpy()
         grid_ = obs[key+1]["World"].numpy()
         img, last_icons = gridmap2img_agents(grid, grid_, icon_dict, static_map, last_icons, agents)
-        cv2.imwrite("vis_city/step_{}.png".format(key), img)
+        # Define the text to be added
+        text = "#{}".format(key)
+        
+        # Specify the position for the text (x, y coordinates)
+        position = (10, 30)  # 10 pixels from the left and 30 from the top
+        
+        # Define font type and scale
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 1
+        color = (255, 255, 255)  # White color
+        thickness = 2  # Thickness of the font
+
+        # Use cv2.putText() method to add text
+        cv2.putText(img, text, position, font, font_scale, color, thickness, cv2.LINE_AA)
+        
+        # Save the image
+        cv2.imwrite("{}/step_{}.png".format(output_folder, key), img)
     cv2.destroyAllWindows()
 
     return
@@ -298,8 +314,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create an animated GIF from a sequence of images.")
     parser.add_argument("--pkl_file", default='log_rl/rl_debug_3.pkl', help="Path to the folder containing image files.")
     parser.add_argument("--ego_id", type=int, default=3, help="which agent is ego agent. Visualize the ego agent's start and goal. This is layer_id")
+    parser.add_argument("--output_folder", default="vis_city", help="Output folder.")
     
     args = parser.parse_args()
 
     # Call the function with provided arguments
-    main(args.pkl_file, args.ego_id)
+    main(args.pkl_file, args.ego_id, args.output_folder)
