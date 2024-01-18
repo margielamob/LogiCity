@@ -112,7 +112,8 @@ def sample_determine_start_goal(agent_type, id):
             1: (torch.tensor([c1_s_x, c1_s_y]), torch.tensor([c1_g_x, c1_g_y])),
             2: (torch.tensor([c2_s_x, c2_s_y]), torch.tensor([c2_g_x-10, c2_g_y])),
             3: (torch.tensor([c3_s_x, c3_s_y]), torch.tensor([c3_g_x, c3_g_y])),
-            4: (torch.tensor([c4_s_x, c4_s_y]), torch.tensor([c4_g_x, c4_g_y]))
+            4: (torch.tensor([c4_s_x, c4_s_y]), torch.tensor([c4_g_x, c4_g_y])),
+            5: (torch.tensor([c1_s_x-12, c1_s_y]), torch.tensor([c1_g_x, c1_g_y])),
         }
     }
     return start_goal_dict[agent_type][id]

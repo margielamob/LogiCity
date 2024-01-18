@@ -37,12 +37,12 @@ def parse_arguments():
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
     parser.add_argument('--exp', type=str, default="rl_debug")
-    parser.add_argument('--vis', type=bool, default=False, help='Visualize the city.')
-    parser.add_argument('--max-steps', type=int, default=1000, help='Maximum number of steps for the simulation.')
+    parser.add_argument('--vis', type=bool, default=True, help='Visualize the city.')
+    parser.add_argument('--max-steps', type=int, default=200, help='Maximum number of steps for the simulation.')
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
-    parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
+    parser.add_argument('--debug', type=bool, default=True, help='In debug mode, the agents are in defined positions.')
     # RL
-    parser.add_argument('--use_gym', type=bool, default=True, help='In gym mode, we can use RL alg. to control certain agents.')
+    parser.add_argument('--use_gym', type=bool, default=False, help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--rl_config', default='config/tasks/Nav/RL/config_0.001.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
@@ -52,7 +52,7 @@ def main(args, logger):
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     # Create a city instance with a predefined grid
-    city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, args.debug)
+    city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, False, args.debug)
     visualize_city(city, 4*WORLD_SIZE, -1, "vis/init.png")
 
     # Main simulation loop
