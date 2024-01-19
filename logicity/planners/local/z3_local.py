@@ -17,11 +17,12 @@ logger = logging.getLogger(__name__)
 
 # used for grounding
 class PesudoAgent:
-    def __init__(self, type, layer_id, concepts):
+    def __init__(self, type, layer_id, concepts, moving_direction):
         self.type = type
         self.layer_id = layer_id
         self.type = concepts["type"]
         self.concepts = concepts
+        self.moving_direction = moving_direction
 
 class Z3PlannerLocal(LocalPlanner):
     def __init__(self, yaml_path):        
@@ -180,9 +181,9 @@ class Z3PlannerLocal(LocalPlanner):
                 assert other_agent.type == agent_type
                 # ego agent is the first
                 if other_agent_layer_id == agent.layer_id:
-                    partial_agent["ego_{}".format(layer_id)] = PesudoAgent(agent_type, layer_id, other_agent.concepts)
+                    partial_agent["ego_{}".format(layer_id)] = PesudoAgent(agent_type, layer_id, other_agent.concepts, other_agent.last_move_dir)
                 else:
-                    partial_agent[str(layer_id)] = PesudoAgent(agent_type, layer_id, other_agent.concepts)
+                    partial_agent[str(layer_id)] = PesudoAgent(agent_type, layer_id, other_agent.concepts, other_agent.last_move_dir)
             partial_agents[ego_name] = partial_agent
         return ego_agent, partial_agents, partial_world, partial_intersection
             

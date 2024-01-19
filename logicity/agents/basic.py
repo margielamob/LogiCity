@@ -19,6 +19,8 @@ class Agent:
             3: "Down_1", 
             4: "Stop"
             }
+        # move direction will be used to determine FOV and Spatial Predicates
+        self.last_move_dir = None
         self.start = None
         self.goal = None
         self.pos = None
@@ -84,6 +86,10 @@ class Agent:
         ped_layer[self.start[0], self.start[1]] = TYPE_MAP[self.type] + AGENT_START_PLUS
         ped_layer[self.goal[0], self.goal[1]] = TYPE_MAP[self.type] + AGENT_GOAL_PLUS
         ped_layer[self.pos[0], self.pos[1]] = TYPE_MAP[self.type]
+        # Update last move direction
+        move_dir = self.action_mapping[action.item()].split("_")[0]
+        if move_dir != "Stop":
+            self.last_move_dir = move_dir
         return ped_layer
 
     def get_global_action(self):

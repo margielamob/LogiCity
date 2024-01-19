@@ -31,6 +31,47 @@ def IsAt(world_matrix, intersect_matrix, agents, entity1, entity2):
         else:
             return 0
 
+def CollidingClose(world_matrix, intersect_matrix, agents, entity1, entity2):
+    assert "Agent" in entity1
+    assert "Agent" in entity2
+    if entity1 == entity2:
+        return 0
+    # TODO: Colliding close checker
+    # 1. Get the position of the two agents
+    _, agent_type1, layer_id1 = entity1.split("_")
+    _, agent_type2, layer_id2 = entity2.split("_")
+    agent_layer1 = world_matrix[int(layer_id1)]
+    agent_layer2 = world_matrix[int(layer_id2)]
+    agent_position1 = (agent_layer1 == TYPE_MAP[agent_type1]).nonzero()[0]
+    agent_position2 = (agent_layer2 == TYPE_MAP[agent_type2]).nonzero()[0]
+    # 2. Get the moving direction of the first agent
+    if layer_id1 in agents.keys():
+        agent1_dire = agents[layer_id1].moving_direction
+    else:
+        assert "ego_{}".format(layer_id1) in agents.keys()
+        agent1_dire = agents["ego_{}".format(layer_id1)].moving_direction
+    if agent1_dire == None:
+        return 0
+    else:
+        dist = torch.sqrt(torch.sum((agent_position1 - agent_position2)**2))
+        if dist > OCC_CHECK_RANGE[agent_type1]:
+            return 0
+        else:
+            agent1_dire_vec = torch.tensor(DIRECTION_VECTOR[agent1_dire])
+            angle = torch.acos(torch.dot(agent1_dire_vec, (agent_position2 - agent_position1)) / dist)
+            if angle < OCC_CHECK_ANGEL:
+                if agent_type1 == "Car":
+                    # Cars will definitely stop to avoid collide
+                    return 1
+                else:
+                    # Pedestrians will probably stop to avoid collide
+                    sample = np.random.rand()
+                    if sample < PED_AGGR:
+                        return 1
+                    else:
+                        return 0
+    return 0
+
 def IsInterCarEmpty(world_matrix, intersect_matrix, agents, entity):
     assert "Intersection" in entity
     if "dummy" in entity:
