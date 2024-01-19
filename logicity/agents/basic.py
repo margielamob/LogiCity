@@ -47,12 +47,12 @@ class Agent:
     def get_movable_area(self, world_state_matrix):
         pass
 
-    def get_action(self, local_action_dist, current_occupency):
+    def get_action(self, local_action_dist):
         if len(local_action_dist.nonzero()) == 1:
             # local planner is very strict, only one action is possible
             final_action_dist = local_action_dist
         else:
-            global_action = self.get_global_action(current_occupency)
+            global_action = self.get_global_action()
             if len(global_action.nonzero()) == 1:
             # local planner gives multiple actions, but global planner is very strict
                 final_action_dist = global_action
@@ -86,7 +86,7 @@ class Agent:
         ped_layer[self.pos[0], self.pos[1]] = TYPE_MAP[self.type]
         return ped_layer
 
-    def get_global_action(self, current_occupency):
+    def get_global_action(self):
         global_action_dist = torch.zeros_like(self.action_space).float()
         current_pos = torch.all((self.global_traj == self.pos), dim=1).nonzero()[0]
         next_pos = current_pos + 1 if current_pos < len(self.global_traj) - 1 else 0
@@ -95,11 +95,8 @@ class Agent:
             if torch.dot(del_pos.squeeze(), move) > 0:
                 next_point = self.pos + move
                 step = torch.max(torch.abs(move)).item()
-                # two metrics:
                 # 1. if the next point is on the global traj
                 if len(torch.all((self.global_traj[next_pos:next_pos+step] == next_point), dim=1).nonzero()) > 0:
-                    # 2. if the next point is not occupied
-                    # if not current_occupency[next_point[0], next_point[1]]:
                     global_action_dist[self.move_to_action[move]] = 1.0
         if torch.all(global_action_dist==0):
             global_action_dist[-1] = 1.0

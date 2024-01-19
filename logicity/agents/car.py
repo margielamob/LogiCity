@@ -130,11 +130,7 @@ class Car(Agent):
         # Return the indices of the desired locations
         return goal_point
 
-    def get_next_action(self, world_state_matrix, local_action_dist, occ_map):
-        # Ambulances negelct the collide
-        if "ambulance" in self.concepts.keys():
-            if self.concepts["ambulance"] == 1.0:
-                occ_map = torch.zeros_like(occ_map)
+    def get_next_action(self, world_state_matrix, local_action_dist):
         # reached goal
         if not self.reach_goal:
             if torch.all(self.pos == self.goal):
@@ -146,7 +142,7 @@ class Car(Agent):
                     logger.info("{}_{} reached goal! In Debug, it will stop".format(self.type, self.id))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
-                return self.get_action(local_action_dist, occ_map), world_state_matrix[self.layer_id]
+                return self.get_action(local_action_dist), world_state_matrix[self.layer_id]
         else:
             if self.reach_goal_buffer > 0:
                 self.reach_goal_buffer -= 1
@@ -185,9 +181,9 @@ class Car(Agent):
                 world_state_matrix[self.layer_id][way_points[0], way_points[1]] \
                     = TYPE_MAP[self.type] + AGENT_GLOBAL_PATH_PLUS
             world_state_matrix[self.layer_id][self.start[0], self.start[1]] = TYPE_MAP[self.type]
-            return self.get_action(local_action_dist, occ_map), world_state_matrix[self.layer_id]
+            return self.get_action(local_action_dist), world_state_matrix[self.layer_id]
 
-    def get_global_action(self, current_occupency):
+    def get_global_action(self):
         global_action_dist = torch.zeros_like(self.action_space).float()
         current_pos = torch.all((self.global_traj == self.pos), dim=1).nonzero()[0]
         next_pos = current_pos + 1 if current_pos < len(self.global_traj) - 1 else 0
@@ -203,9 +199,7 @@ class Car(Agent):
                 # two metrics:
                 # 1. if the next point is on the global traj
                 if len(torch.all((self.global_traj[next_pos:next_pos+step] == next_point), dim=1).nonzero()) > 0:
-                    # 2. if the next point is not occupied
-                    if not current_occupency[next_point[0], next_point[1]]:
-                        global_action_dist[self.move_to_action[move]] = 1.0
+                    global_action_dist[self.move_to_action[move]] = 1.0
         if torch.all(global_action_dist==0):
             global_action_dist[-1] = 1.0
             if torch.all(del_pos==0):
