@@ -31,28 +31,30 @@ def parse_arguments():
 
     # Add arguments for grid size, agent start and goal positions, etc.
     parser.add_argument('--map', type=str, default="config/maps/v1.1.yaml", help='YAML path to the map.')
-    parser.add_argument('--agents', type=str, default="config/agents/v0.yaml", help='YAML path to the agent definition.')
+    parser.add_argument('--agents', type=str, default="config/agents/debug.yaml", help='YAML path to the agent definition.')
     parser.add_argument('--rule_type', type=str, default="Z3_Local", help='We support ["LNN", "Z3_Global", "Z3_Local"].')
-    parser.add_argument('--rules', type=str, default="config/rules/Z3/easy/easy_rule_local.yaml", help='YAML path to the rule definition.')
+    parser.add_argument('--rules', type=str, default="config/rules/Z3/medium/medium_rule.yaml", help='YAML path to the rule definition.')
     # logger
-    parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="easy_8_2k")
-    parser.add_argument('--vis', type=bool, default=True, help='Visualize the city.')
-    parser.add_argument('--max-steps', type=int, default=1000, help='Maximum number of steps for the simulation.')
+    parser.add_argument('--log_dir', type=str, default="./log")
+    parser.add_argument('--exp', type=str, default="med_debug")
+    parser.add_argument('--vis', action='store_true', help='Visualize the city.')
+    # simulation
+    parser.add_argument('--use_multi', type=bool, default=False, help='Use multi-threading for simulation.')
+    parser.add_argument('--max-steps', type=int, default=200, help='Maximum number of steps for the simulation.')
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
     parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
     # RL
-    parser.add_argument('--use_gym', type=bool, default=False, help='In gym mode, we can use RL alg. to control certain agents.')
+    parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--rl_config', default='config/tasks/Nav/RL/config_0.001.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
 def main(args, logger):
-    logger.info("Starting city simulation with random seed {}... Debug mode: {}".format(args.seed, args.debug))
+    logger.info("Starting city simulation with random seed {}... Debug mode: {}, Use multi-processing for Z3: {}".format(args.seed, args.debug, args.use_multi))
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     # Create a city instance with a predefined grid
-    city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, False, args.debug)
+    city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, False, args.debug, args.use_multi)
     visualize_city(city, 4*WORLD_SIZE, -1, "vis/init.png")
 
     # Main simulation loop

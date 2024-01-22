@@ -16,7 +16,7 @@ from ..utils.gen import gen_occ
 logger = logging.getLogger(__name__)
 
 class City:
-    def __init__(self, grid_size, local_planner, rule_file=None):
+    def __init__(self, grid_size, local_planner, rule_file=None, use_multi=False):
         self.grid_size = grid_size
         self.layers = BASIC_LAYER
         # 0 for blocks
@@ -33,6 +33,7 @@ class City:
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
         # city rule defines local decision of all the agents
         self.local_planner = LPlanner_mapper[local_planner](rule_file)
+        self.use_multi = use_multi
         self.logic_grounds = {}
         # vis color map
         self.color_map = COLOR_MAP
@@ -47,7 +48,7 @@ class City:
         current_world = self.city_grid.clone()
         # first do local planning based on city rules, use the current world state, don't update the city matrix
         agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents, \
-                                                    self.layer_id2agent_list_id, use_multiprocessing=False)
+                                                    self.layer_id2agent_list_id, use_multiprocessing=self.use_multi)
         # Then do global action taking acording to the local planning results
         # get occupancy map
         for agent in self.agents:

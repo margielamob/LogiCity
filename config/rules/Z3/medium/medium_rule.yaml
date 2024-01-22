@@ -63,6 +63,11 @@ Predicates:
       method: HigherPri(Agent, Agent)
       function: logicity.utils.pred_converter.z3_local.HigherPri
       description: Checks if agent x, x has higher priority to y.
+  - CollidingClose:
+      arity: 2
+      method: CollidingClose(Agent, Agent)
+      function: logicity.utils.pred_converter.z3_local.CollidingClose
+      description: Checks if agent x is about to collide with agent y.
   - Stop:
       arity: 1
       method: Stop(Agent)
@@ -127,7 +132,8 @@ Rules:
               IsInInter(agent, dummyIntersection), 
               IsInInter(dummyAgent, dummyIntersection), 
               IsAmbulance(dummyAgent)
-            )
+            ),
+            CollidingClose(agent, dummyAgent)
           )
         )
       description: Combined Or version of the 6 stop rules with improved readability.

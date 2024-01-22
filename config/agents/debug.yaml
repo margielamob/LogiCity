@@ -68,11 +68,11 @@ agents:
     type: Car
     tiro: 1.0
 
-# - class: Bus
-#   id: 5
-#   size: 1
-#   gplanner: A*vg
-#   concepts:
-#     type: Car
-#     bus: 1.0
-#     no.: 61A # no. is used to define the bus routes 
+- class: Bus
+  id: 6
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    bus: 1.0
+    no.: 61A # no. is used to define the bus routes 

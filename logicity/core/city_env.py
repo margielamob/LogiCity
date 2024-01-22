@@ -20,8 +20,8 @@ WRAPPER = {
 
 
 class CityEnv(City):
-    def __init__(self, grid_size, local_planner, rule_file, rl_agent):
-        super().__init__(grid_size, local_planner, rule_file)
+    def __init__(self, grid_size, local_planner, rule_file, rl_agent, use_multi=False):
+        super().__init__(grid_size, local_planner, rule_file, use_multi=use_multi)
         self.rl_agent = rl_agent
 
 
