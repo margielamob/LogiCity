@@ -170,49 +170,89 @@ def get_direction(left, left_, top, top_):
 
 def rotate_image(image, angle):
     """ Rotate the given image by the specified angle """
-    return image.rotate(angle, expand=True)
+    if angle >= 0:
+        return image.rotate(angle, expand=True)
+    else:
+        return image.transpose(Image.FLIP_LEFT_RIGHT)
 
-def paste_car_on_map(map_image, car_image, position, direction, type):
+def create_custom_mask(image, threshold=0.1):
+    if image.mode == 'RGBA':
+        # Use the existing alpha channel
+        r, g, b, alpha = image.split()
+        alpha = alpha.point(lambda p: 255 if p > threshold else 0)
+        return alpha
+    else:
+        # Create a new mask
+        mask = Image.new('L', image.size, 0)  # Start with a fully transparent mask
+        pixels = image.load()
+        mask_pixels = mask.load()
+        
+        for i in range(image.size[0]):  # Iterate over width
+            for j in range(image.size[1]):  # Iterate over height
+                r, g, b = pixels[i, j][:3]
+                luminance = int(0.299*r + 0.587*g + 0.114*b)
+                if luminance > threshold:
+                    mask_pixels[i, j] = 255
+        return mask
+
+def paste_car_on_map(map_image, car_image, position, direction, type, position_last=None):
     """ Paste car on the map with the correct orientation and position """
+    l, t, r, b = position
     if type == "Car":
         # Define rotation angles for directions
         rotation_angles = {
             'up': 0,
             'right': 270,
             'down': 180,
-            'left': 90
+            'left': 90,
+            'none': 0
         }
     elif type == "Pedestrian":
         rotation_angles = {
             'up': 0,
             'right': 0,
-            'down': 180,
-            'left': 180
+            'down': -1,
+            'left': -1,
+            'none': 0
         }
 
 
     # Rotate the car image based on the direction
     rotated_car = rotate_image(car_image, rotation_angles[direction])
 
-    if rotated_car.mode == 'RGBA':
-        mask = rotated_car.split()[3]
-    else:
-        mask = Image.new('L', rotated_car.size, color=255)  # 'L' mode for grayscale, 255 means opaque
+    mask = create_custom_mask(rotated_car)
 
     # Calculate new position after rotation to adjust the car's head position
-    if direction == 'up':
-        new_position = position
-    elif direction == 'right':
-        new_position = (position[0] - rotated_car.width, position[1])
-    elif direction == 'down':
-        new_position = (position[0], position[1] - rotated_car.height)
-    else:  # 'left'
-        new_position = position
+    if type == "Car":
+        if direction == 'up':
+            # head position
+            head_position = ((l+r)//2, t)
+            new_position = (head_position[0] - rotated_car.width//2, head_position[1])
+        elif direction == 'right':
+            head_position = (r, (t+b)//2)
+            new_position = (head_position[0] - rotated_car.width, head_position[1] - rotated_car.height//2)
+        elif direction == 'down':
+            head_position = ((l+r)//2, b)
+            new_position = (head_position[0] - rotated_car.width//2, head_position[1] - rotated_car.height)
+        elif direction == 'left':
+            head_position = (l, (t+b)//2)
+            new_position = (head_position[0], head_position[1] - rotated_car.height//2)
+        elif direction == 'none':
+            assert position_last is not None
+            new_position = tuple(position_last)
+    elif type == "Pedestrian":
+        if direction == "none":
+            assert position_last is not None
+            new_position = tuple(position_last)
+        else:
+            center_position = ((l+r)//2, (t+b)//2)
+            new_position = (center_position[0] - rotated_car.width//2, center_position[1] - rotated_car.height//2)
+    
 
     # Paste the car image onto the map
     map_image.paste(rotated_car, new_position, mask)
 
-    return car_image, map_image
+    return rotated_car, map_image, list(new_position)
 
 def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None, agents=None):
     current_map = static_map.copy()
@@ -221,7 +261,10 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
     resized_grid = np.repeat(np.repeat(agent_layer, SCALE, axis=1), SCALE, axis=2)
     agent_layer_ = gridmap_[BASIC_LAYER:]
     resized_grid_ = np.repeat(np.repeat(agent_layer_, SCALE, axis=1), SCALE, axis=2)
-    icon_dict_local = {}
+    icon_dict_local = {
+        "icon": {},
+        "pos": {}
+    }
 
     for i in range(resized_grid.shape[0]):
         local_layer = resized_grid[i]
@@ -229,7 +272,7 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
         local_layer_ = resized_grid_[i]
         left_, top_, right_, bottom_ = get_pos(local_layer_)
         direction = get_direction(left, left_, top, top_)
-        pos = ((left+right)//2, (top+bottom)//2)
+        pos = (left, top, right, bottom)
         
         agent_type = LABEL_MAP[local_layer[top, left].item()]
         agent_name = "{}_{}".format(agent_type, BASIC_LAYER + i)
@@ -278,13 +321,21 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
             icon = icon_list[icon_id]
 
         if last_icons is not None:
-            icon = last_icons["{}_{}".format(agent_type, i)]
-            icon, current_map = paste_car_on_map(current_map, icon, pos, direction, agent_type)
-            last_icons["{}_{}".format(agent_type, i)] = icon
+            if direction == "none":
+                icon = last_icons["icon"]["{}_{}".format(agent_type, i)][1]
+                position = last_icons["pos"]["{}_{}".format(agent_type, i)]
+                icon, current_map, last_position = paste_car_on_map(current_map, icon, pos, direction, agent_type, position)
+            else:
+                icon = last_icons["icon"]["{}_{}".format(agent_type, i)][0]
+                icon, current_map, last_position = paste_car_on_map(current_map, icon, pos, direction, agent_type)
+            last_icons["icon"]["{}_{}".format(agent_type, i)][1] = icon
+            last_icons["pos"]["{}_{}".format(agent_type, i)] = last_position
         else:
             icon_img = Image.fromarray(icon) 
-            icon, current_map = paste_car_on_map(current_map, icon_img, pos, direction, agent_type)
-            icon_dict_local["{}_{}".format(agent_type, i)] = icon
+            icon_dict_local["icon"]["{}_{}".format(agent_type, i)] = [icon_img]
+            current_icon, current_map, last_position = paste_car_on_map(current_map, icon_img, pos, direction, agent_type)
+            icon_dict_local["icon"]["{}_{}".format(agent_type, i)].append(current_icon)
+            icon_dict_local["pos"]["{}_{}".format(agent_type, i)] = last_position
 
     if last_icons is not None:
         return current_map, last_icons
@@ -312,7 +363,8 @@ def main(pkl_path, ego_id, output_folder):
     time_steps = list(obs.keys())
     time_steps.sort()
     static_map = gridmap2img_static(obs[time_steps[0]]["World"].numpy(), icon_dict, ego_id)
-    cv2.imwrite("{}/static_layout.png".format(output_folder), static_map)
+    static_map_img = Image.fromarray(static_map)
+    static_map_img.save("{}/static_layout.png".format(output_folder))
     last_icons = None
     for key in trange(time_steps[0], time_steps[-2]):
         grid = obs[key]["World"].numpy()
@@ -322,14 +374,14 @@ def main(pkl_path, ego_id, output_folder):
         text = "#{}".format(key)
 
         # Specify the position for the text (x, y coordinates)
-        position = (10, 30)  # 10 pixels from the left and 30 from the top
+        position = (10, 10)  # 10 pixels from the left and 30 from the top
 
         # Create an ImageDraw object
         draw = ImageDraw.Draw(img)
 
         # Define font type and size (you might need to provide the path to a .ttf font file)
         try:
-            font = ImageFont.truetype("arial.ttf", size=40)  # Example font, adjust the path and size as needed
+            font = ImageFont.truetype("arial.ttf", size=100)  # Example font, adjust the path and size as needed
         except IOError:
             font = ImageFont.load_default()
 
@@ -349,7 +401,7 @@ def main(pkl_path, ego_id, output_folder):
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Create an animated GIF from a sequence of images.")
-    parser.add_argument("--pkl_file", default='log_rl/occ_5.pkl', help="Path to the folder containing image files.")
+    parser.add_argument("--pkl_file", default='log_rl/occ_8.pkl', help="Path to the folder containing image files.")
     parser.add_argument("--ego_id", type=int, default=0, help="which agent is ego agent. Visualize the ego agent's start and goal. This is layer_id")
     parser.add_argument("--output_folder", default="vis_city", help="Output folder.")
     
