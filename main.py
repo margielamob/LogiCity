@@ -36,9 +36,9 @@ def parse_arguments():
     parser.add_argument('--rules', type=str, default="config/rules/Z3/easy/easy_rule_local.yaml", help='YAML path to the rule definition.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="rl_debug")
+    parser.add_argument('--exp', type=str, default="occ_5")
     parser.add_argument('--vis', type=bool, default=True, help='Visualize the city.')
-    parser.add_argument('--max-steps', type=int, default=200, help='Maximum number of steps for the simulation.')
+    parser.add_argument('--max-steps', type=int, default=120, help='Maximum number of steps for the simulation.')
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
     parser.add_argument('--debug', type=bool, default=True, help='In debug mode, the agents are in defined positions.')
     # RL

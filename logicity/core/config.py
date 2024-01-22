@@ -69,7 +69,7 @@ CAR_GOAL_START_EXCLUDE_KERNEL = WALKING_STREET_WID + TRAFFIC_STREET_WID//2 + 1
 CAR_SIZE = 3 # kernel to enlarge car occupency
 OCC_CHECK_RANGE = {
     "Pedestrian": 2,
-    "Car": 8
+    "Car": 5
 }
 OCC_CHECK_ANGEL = 0.1
 DIRECTION_VECTOR = {
