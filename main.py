@@ -42,7 +42,7 @@ def parse_arguments():
     parser.add_argument('--use_multi', type=bool, default=False, help='Use multi-threading for simulation.')
     parser.add_argument('--max-steps', type=int, default=120, help='Maximum number of steps for the simulation.')
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
-    parser.add_argument('--debug', type=bool, default=True, help='In debug mode, the agents are in defined positions.')
+    parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
     # RL
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--rl_config', default='config/tasks/Nav/RL/config_0.001.yaml', help='Configure file for this RL exp.')
