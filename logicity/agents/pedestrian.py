@@ -1,12 +1,13 @@
-from .basic import Agent
+import time
 import torch
+import logging
+from .basic import Agent
+from ..core.config import *
 import torch.nn.functional as F
 from torch.distributions import Categorical
 from ..utils.find import find_nearest_building, find_building_mask
-from ..planners import GPlanner_mapper, LPlanner_mapper
+from ..planners import GPlanner_mapper
 from ..utils.sample import sample_start_goal, sample_determine_start_goal
-from ..core.config import *
-import logging
 
 logger = logging.getLogger(__name__)
 

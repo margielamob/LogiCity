@@ -36,7 +36,7 @@ def parse_arguments():
     parser.add_argument('--rules', type=str, default="config/rules/Z3/easy/easy_rule_local.yaml", help='YAML path to the rule definition.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log")
-    parser.add_argument('--exp', type=str, default="easy_debug_0.5_FOV")
+    parser.add_argument('--exp', type=str, default="global_pyastar")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # simulation
     parser.add_argument('--use_multi', type=bool, default=False, help='Use multi-threading for simulation.')
@@ -56,7 +56,6 @@ def main(args, logger):
     # Create a city instance with a predefined grid
     city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, False, args.debug, args.use_multi)
     visualize_city(city, 4*WORLD_SIZE, -1, "vis/init.png")
-
     # Main simulation loop
     steps = 0
     while steps < args.max_steps:
