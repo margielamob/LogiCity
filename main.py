@@ -33,16 +33,16 @@ def parse_arguments():
     parser.add_argument('--map', type=str, default="config/maps/v1.1.yaml", help='YAML path to the map.')
     parser.add_argument('--agents', type=str, default="config/agents/debug.yaml", help='YAML path to the agent definition.')
     parser.add_argument('--rule_type', type=str, default="Z3_Local", help='We support ["LNN", "Z3_Global", "Z3_Local"].')
-    parser.add_argument('--rules', type=str, default="config/rules/Z3/medium/medium_rule.yaml", help='YAML path to the rule definition.')
+    parser.add_argument('--rules', type=str, default="config/rules/Z3/easy/easy_rule_local.yaml", help='YAML path to the rule definition.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log")
-    parser.add_argument('--exp', type=str, default="med_debug")
+    parser.add_argument('--exp', type=str, default="easy_debug_0.5_FOV")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # simulation
     parser.add_argument('--use_multi', type=bool, default=False, help='Use multi-threading for simulation.')
-    parser.add_argument('--max-steps', type=int, default=200, help='Maximum number of steps for the simulation.')
+    parser.add_argument('--max-steps', type=int, default=120, help='Maximum number of steps for the simulation.')
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
-    parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
+    parser.add_argument('--debug', type=bool, default=True, help='In debug mode, the agents are in defined positions.')
     # RL
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--rl_config', default='config/tasks/Nav/RL/config_0.001.yaml', help='Configure file for this RL exp.')
@@ -196,4 +196,6 @@ if __name__ == '__main__':
     else:
         # Sim mode, will use the logic-based simulator to run a simulation (no learning)
         logger.info("Running in simulation mode.")
+        e = time.time()
         main(args, logger)
+        logger.info("Total time spent: {}".format(time.time()-e))

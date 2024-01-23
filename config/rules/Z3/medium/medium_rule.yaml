@@ -133,7 +133,10 @@ Rules:
               IsInInter(dummyAgent, dummyIntersection), 
               IsAmbulance(dummyAgent)
             ),
-            CollidingClose(agent, dummyAgent)
+            And(
+              Not(IsAmbulance(agent)),
+              CollidingClose(agent, dummyAgent)
+            )
           )
         )
       description: Combined Or version of the 6 stop rules with improved readability.

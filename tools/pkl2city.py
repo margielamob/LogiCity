@@ -194,8 +194,18 @@ def create_custom_mask(image, threshold=0.1):
                 if luminance > threshold:
                     mask_pixels[i, j] = 255
         return mask
+    
+def get_steet_type(gridmap, position):
+    l, t, r, b = position
+    partial_grid_horizontal = gridmap[2, t, l-10:l+10]
+    if np.sum(partial_grid_horizontal == TYPE_MAP["Mid Lane"]) > 0:
+        return "v"
+    partial_grid_vertical = gridmap[2, t-10:t+10, l]
+    if np.sum(partial_grid_vertical == TYPE_MAP["Mid Lane"]) > 0:
+        return "h"
+    return None
 
-def paste_car_on_map(map_image, car_image, position, direction, type, position_last=None):
+def paste_car_on_map(map_image, car_image, position, direction, type, position_last=None, street_type=None):
     """ Paste car on the map with the correct orientation and position """
     l, t, r, b = position
     if type == "Car":
@@ -226,17 +236,33 @@ def paste_car_on_map(map_image, car_image, position, direction, type, position_l
     if type == "Car":
         if direction == 'up':
             # head position
-            head_position = ((l+r)//2, t)
-            new_position = (head_position[0] - rotated_car.width//2, head_position[1])
+            if street_type == "v" or street_type is None:
+                head_position = ((l+r)//2, t)
+                new_position = (head_position[0] - rotated_car.width//2, head_position[1])
+            else:
+                head_position = ((l+r)//2, b)
+                new_position = (head_position[0] - rotated_car.width//2, head_position[1] - rotated_car.height)
         elif direction == 'right':
-            head_position = (r, (t+b)//2)
-            new_position = (head_position[0] - rotated_car.width, head_position[1] - rotated_car.height//2)
+            if street_type == "h" or street_type is None:
+                head_position = (r, (t+b)//2)
+                new_position = (head_position[0] - rotated_car.width, head_position[1] - rotated_car.height//2)
+            else:
+                head_position = (l, (t+b)//2)
+                new_position = (head_position[0], head_position[1] - rotated_car.height//2)
         elif direction == 'down':
-            head_position = ((l+r)//2, b)
-            new_position = (head_position[0] - rotated_car.width//2, head_position[1] - rotated_car.height)
+            if street_type == "v" or street_type is None:
+                head_position = ((l+r)//2, b)
+                new_position = (head_position[0] - rotated_car.width//2, head_position[1] - rotated_car.height)
+            else:
+                head_position = ((l+r)//2, t)
+                new_position = (head_position[0] - rotated_car.width//2, head_position[1])
         elif direction == 'left':
-            head_position = (l, (t+b)//2)
-            new_position = (head_position[0], head_position[1] - rotated_car.height//2)
+            if street_type == "h" or street_type is None:
+                head_position = (l, (t+b)//2)
+                new_position = (head_position[0], head_position[1] - rotated_car.height//2)
+            else:
+                head_position = (r, (t+b)//2)
+                new_position = (head_position[0] - rotated_car.width, head_position[1] - rotated_car.height//2)
         elif direction == 'none':
             assert position_last is not None
             new_position = tuple(position_last)
@@ -274,7 +300,7 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
         direction = get_direction(left, left_, top, top_)
         pos = (left, top, right, bottom)
         
-        agent_type = LABEL_MAP[local_layer[top, left].item()]
+        agent_type = LABEL_MAP[local_layer[top, left].item()]     
         agent_name = "{}_{}".format(agent_type, BASIC_LAYER + i)
         if agents != None:
             concepts = agents[agent_name]["concepts"]
@@ -320,20 +346,25 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
             icon_id = i%len(icon_list)
             icon = icon_list[icon_id]
 
+        if agent_type == "Car":
+            street_type = get_steet_type(resized_grid, pos)
+        else:
+            street_type = None    
+
         if last_icons is not None:
             if direction == "none":
                 icon = last_icons["icon"]["{}_{}".format(agent_type, i)][1]
                 position = last_icons["pos"]["{}_{}".format(agent_type, i)]
-                icon, current_map, last_position = paste_car_on_map(current_map, icon, pos, direction, agent_type, position)
+                icon, current_map, last_position = paste_car_on_map(current_map, icon, pos, direction, agent_type, position, street_type)
             else:
                 icon = last_icons["icon"]["{}_{}".format(agent_type, i)][0]
-                icon, current_map, last_position = paste_car_on_map(current_map, icon, pos, direction, agent_type)
+                icon, current_map, last_position = paste_car_on_map(current_map, icon, pos, direction, agent_type, street_type)
             last_icons["icon"]["{}_{}".format(agent_type, i)][1] = icon
             last_icons["pos"]["{}_{}".format(agent_type, i)] = last_position
         else:
             icon_img = Image.fromarray(icon) 
             icon_dict_local["icon"]["{}_{}".format(agent_type, i)] = [icon_img]
-            current_icon, current_map, last_position = paste_car_on_map(current_map, icon_img, pos, direction, agent_type)
+            current_icon, current_map, last_position = paste_car_on_map(current_map, icon_img, pos, direction, agent_type, street_type)
             icon_dict_local["icon"]["{}_{}".format(agent_type, i)].append(current_icon)
             icon_dict_local["pos"]["{}_{}".format(agent_type, i)] = last_position
 
@@ -401,7 +432,7 @@ def main(pkl_path, ego_id, output_folder):
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Create an animated GIF from a sequence of images.")
-    parser.add_argument("--pkl_file", default='log_rl/occ_8.pkl', help="Path to the folder containing image files.")
+    parser.add_argument("--pkl_file", default='log/med_occ8_400.pkl', help="Path to the folder containing image files.")
     parser.add_argument("--ego_id", type=int, default=0, help="which agent is ego agent. Visualize the ego agent's start and goal. This is layer_id")
     parser.add_argument("--output_folder", default="vis_city", help="Output folder.")
     

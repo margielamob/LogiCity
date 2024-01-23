@@ -107,11 +107,12 @@ class Z3PlannerLocal(LocalPlanner):
     def plan(self, world_matrix, intersect_matrix, agents, layerid2listid, use_multiprocessing=True):
         # 1. Break the global world matrix into local world matrix and split the agents and intersections
         # Note that the local ones will have different size and agent id
+        e = time.time()
         local_world_matrix = world_matrix.clone()
         local_intersections = intersect_matrix.clone()
         ego_agent, partial_agents, partial_world, partial_intersections = \
             self.break_world_matrix(local_world_matrix, agents, local_intersections, layerid2listid)
-
+        logger.info("Break world time: {}".format(time.time()-e))
         # 2. Choose between multi-processing and looping
         combined_results = {}
         agent_keys = list(partial_agents.keys())
@@ -138,10 +139,39 @@ class Z3PlannerLocal(LocalPlanner):
                                         partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name])
                 combined_results.update(result)
 
-        # e2 = time.time()
-        # print("Solve sub-problem time: {}".format(e2-e))
+        e2 = time.time()
+        logger.info("Solve sub-problem time: {}".format(e2-e))
         return combined_results
     
+    def get_fov(self, position, direction, width, height):
+        # Calculate the region of the city image that falls within the ego agent's field of view
+        if direction == None:
+            x_start = max(position[0]-AGENT_FOV, 0)
+            y_start = max(position[1]-AGENT_FOV, 0)
+            x_end = min(position[0]+AGENT_FOV+1, width)
+            y_end = min(position[1]+AGENT_FOV+1, height)
+        elif direction == "Left":
+            x_start = max(position[0]-AGENT_FOV, 0)
+            y_start = max(position[1]-AGENT_FOV, 0)
+            x_end = min(position[0]+AGENT_FOV+1, width)
+            y_end = min(position[1]+2, height)
+        elif direction == "Right":
+            x_start = max(position[0]-AGENT_FOV, 0)
+            y_start = max(position[1]-2, 0)
+            x_end = min(position[0]+AGENT_FOV+1, width)
+            y_end = min(position[1]+AGENT_FOV+1, height)
+        elif direction == "Up":
+            x_start = max(position[0]-AGENT_FOV, 0)
+            y_start = max(position[1]-AGENT_FOV, 0)
+            x_end = min(position[0]+2, width)
+            y_end = min(position[1]+AGENT_FOV+1, height)
+        elif direction == "Down":
+            x_start = max(position[0]-2, 0)
+            y_start = max(position[1]-AGENT_FOV, 0)
+            x_end = min(position[0]+AGENT_FOV+1, width)
+            y_end = min(position[1]+AGENT_FOV+1, height)
+        return x_start, y_start, x_end, y_end
+
     def break_world_matrix(self, world_matrix, agents, intersect_matrix, layerid2listid):
         ego_agent = {}
         partial_agents = {}
@@ -152,11 +182,8 @@ class Z3PlannerLocal(LocalPlanner):
             ego_agent[ego_name] = agent
             ego_layer = world_matrix[agent.layer_id]
             ego_position = (ego_layer == TYPE_MAP[agent.type]).nonzero()[0]
-            # Calculate the region of the city image that falls within the ego agent's field of view
-            x_start = max(ego_position[0]-AGENT_FOV, 0)
-            y_start = max(ego_position[1]-AGENT_FOV, 0)
-            x_end = min(ego_position[0]+AGENT_FOV+1, world_matrix.shape[1])
-            y_end = min(ego_position[1]+AGENT_FOV+1, world_matrix.shape[2])
+            ego_direction = agent.last_move_dir
+            x_start, y_start, x_end, y_end = self.get_fov(ego_position, ego_direction, world_matrix.shape[1], world_matrix.shape[2])
             partial_world_all = world_matrix[:, x_start:x_end, y_start:y_end].clone()
             partial_intersections = intersect_matrix[:, x_start:x_end, y_start:y_end].clone()
             partial_world_nonzero_int = torch.logical_and(partial_world_all != 0, \
