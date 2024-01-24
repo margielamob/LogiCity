@@ -90,10 +90,10 @@ class GymCityWrapper(gym.core.Env):
         cur_pos = self.agent.pos
         goal_pos = self.agent.goal
         
-        dist_goal = np.linalg.norm(cur_pos - goal_pos, ord=1, axis=0)
+        dist_goal = np.abs(cur_pos - goal_pos).sum()
         if self.last_dist == -1:
             self.last_dist = dist_goal
-        rew = self.last_dist - dist_goal
+        rew = (self.last_dist - dist_goal) * 5
         self.last_dist = dist_goal
         # print(cur_pos, goal_pos)
         # print(cur_pos, obs_dict["World"][2].shape, obs_dict["World"][2][cur_pos[0], cur_pos[1]])

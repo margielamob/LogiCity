@@ -36,14 +36,14 @@ def parse_arguments():
     parser.add_argument('--rules', type=str, default="config/rules/Z3/easy/easy_rule_local.yaml", help='YAML path to the rule definition.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="rl_debug")
+    parser.add_argument('--exp', type=str, default="res18_model_rw2")
     parser.add_argument('--vis', type=bool, default=False, help='Visualize the city.')
     parser.add_argument('--max-steps', type=int, default=1000, help='Maximum number of steps for the simulation.')
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
     parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
     # RL
     parser.add_argument('--use_gym', type=bool, default=True, help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--rl_config', default='config/tasks/Nav/RL/config_0.001.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--rl_config', default='config/tasks/Nav/RL/config_test.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -143,7 +143,7 @@ def main_gym(args, logger):
                                 policy_kwargs=policy_kwargs)
         # RL training mode
         # Create the custom checkpoint and evaluation callback
-        eval_checkpoint_callback = EvalCheckpointCallback(eval_env=eval_env, \
+        eval_checkpoint_callback = EvalCheckpointCallback(eval_env=eval_env, exp_name=args.exp, \
                                                           **eval_checkpoint_config)
         # Train the model
         model.learn(total_timesteps=total_timesteps, callback=eval_checkpoint_callback\
