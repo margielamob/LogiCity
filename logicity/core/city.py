@@ -16,7 +16,7 @@ from ..utils.gen import gen_occ
 logger = logging.getLogger(__name__)
 
 class City:
-    def __init__(self, grid_size, local_planner, rule_file=None):
+    def __init__(self, grid_size, local_planner, rule_file=None, use_multi=False):
         self.grid_size = grid_size
         self.layers = BASIC_LAYER
         # 0 for blocks
@@ -33,6 +33,7 @@ class City:
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
         # city rule defines local decision of all the agents
         self.local_planner = LPlanner_mapper[local_planner](rule_file)
+        self.use_multi = use_multi
         self.logic_grounds = {}
         # vis color map
         self.color_map = COLOR_MAP
@@ -47,7 +48,7 @@ class City:
         current_world = self.city_grid.clone()
         # first do local planning based on city rules, use the current world state, don't update the city matrix
         agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents, \
-                                                    self.layer_id2agent_list_id)
+                                                    self.layer_id2agent_list_id, use_multiprocessing=self.use_multi)
         # Then do global action taking acording to the local planning results
         # get occupancy map
         for agent in self.agents:
@@ -55,16 +56,8 @@ class City:
             agent_name = "{}_{}".format(agent.type, agent.layer_id)
             empty_action = agent.action_dist.clone()
             local_action_dist = agent_action_dist[agent_name]
-            # get local occupancy map if more than one agent
-            occ_map = torch.zeros_like(self.city_grid[0])
-            if len(self.agents) > 1:
-                local_world = self.city_grid[:, agent.pos[0]-OCC_CHECK_RANGE//2:agent.pos[0]+OCC_CHECK_RANGE//2, \
-                                                agent.pos[1]-OCC_CHECK_RANGE//2:agent.pos[1]+OCC_CHECK_RANGE//2].clone()
-                local_occ_map = gen_occ(torch.cat([local_world[BASIC_LAYER:agent.layer_id], local_world[agent.layer_id+1:]]))
-                occ_map[agent.pos[0]-OCC_CHECK_RANGE//2:agent.pos[0]+OCC_CHECK_RANGE//2, \
-                        agent.pos[1]-OCC_CHECK_RANGE//2:agent.pos[1]+OCC_CHECK_RANGE//2] = local_occ_map
             # global trajectory-based action or sampling from local action distribution
-            local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, local_action_dist, occ_map)
+            local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, local_action_dist)
             # save the current action in the action
             empty_action[local_action] = 1.0
             current_obs["Agent_actions"].append(empty_action)

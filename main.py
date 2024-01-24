@@ -35,26 +35,27 @@ def parse_arguments():
     parser.add_argument('--rule_type', type=str, default="Z3_Local", help='We support ["LNN", "Z3_Global", "Z3_Local"].')
     parser.add_argument('--rules', type=str, default="config/rules/Z3/easy/easy_rule_local.yaml", help='YAML path to the rule definition.')
     # logger
-    parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="res18_model_rw2")
-    parser.add_argument('--vis', type=bool, default=False, help='Visualize the city.')
-    parser.add_argument('--max-steps', type=int, default=1000, help='Maximum number of steps for the simulation.')
+    parser.add_argument('--log_dir', type=str, default="./log")
+    parser.add_argument('--exp', type=str, default="global_pyastar")
+    parser.add_argument('--vis', action='store_true', help='Visualize the city.')
+    # simulation
+    parser.add_argument('--use_multi', type=bool, default=False, help='Use multi-threading for simulation.')
+    parser.add_argument('--max-steps', type=int, default=120, help='Maximum number of steps for the simulation.')
     parser.add_argument('--seed', type=int, default=1, help='random seed to use.')
     parser.add_argument('--debug', type=bool, default=False, help='In debug mode, the agents are in defined positions.')
     # RL
-    parser.add_argument('--use_gym', type=bool, default=True, help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--rl_config', default='config/tasks/Nav/RL/config_test.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
+    parser.add_argument('--rl_config', default='config/tasks/Nav/RL/config_0.001.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
 def main(args, logger):
-    logger.info("Starting city simulation with random seed {}... Debug mode: {}".format(args.seed, args.debug))
+    logger.info("Starting city simulation with random seed {}... Debug mode: {}, Use multi-processing for Z3: {}".format(args.seed, args.debug, args.use_multi))
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     # Create a city instance with a predefined grid
-    city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, args.debug)
+    city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, False, args.debug, args.use_multi)
     visualize_city(city, 4*WORLD_SIZE, -1, "vis/init.png")
-
     # Main simulation loop
     steps = 0
     while steps < args.max_steps:
@@ -194,4 +195,6 @@ if __name__ == '__main__':
     else:
         # Sim mode, will use the logic-based simulator to run a simulation (no learning)
         logger.info("Running in simulation mode.")
+        e = time.time()
         main(args, logger)
+        logger.info("Total time spent: {}".format(time.time()-e))

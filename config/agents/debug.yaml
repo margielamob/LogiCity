@@ -8,60 +8,68 @@ agents:
     type: Pedestrian
     old: 1.0
 
-# - class: Pedestrian
-#   id: 2
-#   size: 1
-#   gplanner: A*
-#   concepts:
-#     type: Pedestrian
+- class: Pedestrian
+  id: 2
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
-# - class: Pedestrian
-#   id: 3
-#   size: 1
-#   gplanner: A*
-#   concepts:
-#     type: Pedestrian
+- class: Pedestrian
+  id: 3
+  size: 1
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
-# - class: Pedestrian
-#   id: 4
-#   size: 1
-#   lplanner: LNN
-#   gplanner: A*
-#   concepts:
-#     type: Pedestrian
+- class: Pedestrian
+  id: 4
+  size: 1
+  lplanner: LNN
+  gplanner: A*
+  concepts:
+    type: Pedestrian
 
-# - class: Private_car
-#   id: 1
-#   size: 1
-#   gplanner: A*vg
-#   concepts:
-#     type: Car
-#     ambulance: 1.0
+- class: Private_car
+  id: 1
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    ambulance: 1.0
 
-# - class: Private_car
-#   id: 2
-#   size: 1
-#   gplanner: A*vg
-#   concepts:
-#     type: Car
+- class: Private_car
+  id: 2
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
 
-# - class: Private_car
-#   id: 3
-#   size: 1
-#   gplanner: A*vg
-#   concepts:
-#     type: Car
+- class: Private_car
+  id: 3
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
 
-# - class: Private_car
-#   id: 4
-#   size: 1
-#   gplanner: A*vg
-#   concepts:
-#     type: Car
-#     tiro: 1.0
+- class: Private_car
+  id: 4
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    tiro: 1.0
+
+- class: Private_car
+  id: 5
+  size: 1
+  gplanner: A*vg
+  concepts:
+    type: Car
+    tiro: 1.0
 
 # - class: Bus
-#   id: 5
+#   id: 6
 #   size: 1
 #   gplanner: A*vg
 #   concepts:

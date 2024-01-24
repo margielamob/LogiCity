@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import pickle as pkl
+from PIL import Image, ImageDraw, ImageFont
 import torch
 import os
 from tqdm import trange
@@ -103,7 +104,7 @@ def gridmap2img_static(gridmap, icon_dict, ego_id):
     for i in range(0, img.shape[0]):
         for j in range(0, img.shape[1]):
             # Paste the walking_icon (or its sliced version) to img
-            traffic_img[i:i+h_space_left, j:j+w_space_left] = [0, 215, 255]
+            traffic_img[i:i+h_space_left, j:j+w_space_left] = [255, 215, 0]
     img[traffic_mask] = traffic_img[traffic_mask]
 
     # For the building icons
@@ -155,46 +156,151 @@ def get_pos(local_layer):
     bottom = torch.max(rows).item()
     return (left, top, right, bottom)
 
-def flip_icon(icon, left, left_, top, top_, type, last_icon=None):
-    if type == "Car":
-        # Cars by defual face the top
-        if left_ > left:
-            # move right
-            icon = cv2.flip(cv2.transpose(icon), 1)
-        elif left_ < left:
-            # move left
-            icon = cv2.transpose(icon)
-        elif top_ > top:
-            icon = cv2.flip(icon, 0)
-        elif top_ < top:
-            icon = icon
-        else:
-            icon = last_icon if last_icon is not None else icon
-        return icon
-    elif type == "Pedestrian":
-        if left_ < left:
-            icon_left = cv2.flip(icon, 1)
-            return icon_left
-        else: 
-            return icon
+def get_direction(left, left_, top, top_):
+    if left_ > left:
+        return "right"
+    elif left_ < left:
+        return "left"
+    elif top_ > top:
+        return "down"
+    elif top_ < top:
+        return "up"
     else:
-        return icon
+        return "none"
+
+def rotate_image(image, angle):
+    """ Rotate the given image by the specified angle """
+    if angle >= 0:
+        return image.rotate(angle, expand=True)
+    else:
+        return image.transpose(Image.FLIP_LEFT_RIGHT)
+
+def create_custom_mask(image, threshold=0.1):
+    if image.mode == 'RGBA':
+        # Use the existing alpha channel
+        r, g, b, alpha = image.split()
+        alpha = alpha.point(lambda p: 255 if p > threshold else 0)
+        return alpha
+    else:
+        # Create a new mask
+        mask = Image.new('L', image.size, 0)  # Start with a fully transparent mask
+        pixels = image.load()
+        mask_pixels = mask.load()
+        
+        for i in range(image.size[0]):  # Iterate over width
+            for j in range(image.size[1]):  # Iterate over height
+                r, g, b = pixels[i, j][:3]
+                luminance = int(0.299*r + 0.587*g + 0.114*b)
+                if luminance > threshold:
+                    mask_pixels[i, j] = 255
+        return mask
+    
+def get_steet_type(gridmap, position):
+    l, t, r, b = position
+    partial_grid_horizontal = gridmap[2, t, l-10:l+10]
+    if np.sum(partial_grid_horizontal == TYPE_MAP["Mid Lane"]) > 0:
+        return "v"
+    partial_grid_vertical = gridmap[2, t-10:t+10, l]
+    if np.sum(partial_grid_vertical == TYPE_MAP["Mid Lane"]) > 0:
+        return "h"
+    return None
+
+def paste_car_on_map(map_image, car_image, position, direction, type, position_last=None, street_type=None):
+    """ Paste car on the map with the correct orientation and position """
+    l, t, r, b = position
+    if type == "Car":
+        # Define rotation angles for directions
+        rotation_angles = {
+            'up': 0,
+            'right': 270,
+            'down': 180,
+            'left': 90,
+            'none': 0
+        }
+    elif type == "Pedestrian":
+        rotation_angles = {
+            'up': 0,
+            'right': 0,
+            'down': -1,
+            'left': -1,
+            'none': 0
+        }
+
+
+    # Rotate the car image based on the direction
+    rotated_car = rotate_image(car_image, rotation_angles[direction])
+
+    mask = create_custom_mask(rotated_car)
+
+    # Calculate new position after rotation to adjust the car's head position
+    if type == "Car":
+        if direction == 'up':
+            # head position
+            if street_type == "v" or street_type is None:
+                head_position = ((l+r)//2, t)
+                new_position = (head_position[0] - rotated_car.width//2, head_position[1])
+            else:
+                head_position = ((l+r)//2, b)
+                new_position = (head_position[0] - rotated_car.width//2, head_position[1] - rotated_car.height)
+        elif direction == 'right':
+            if street_type == "h" or street_type is None:
+                head_position = (r, (t+b)//2)
+                new_position = (head_position[0] - rotated_car.width, head_position[1] - rotated_car.height//2)
+            else:
+                head_position = (l, (t+b)//2)
+                new_position = (head_position[0], head_position[1] - rotated_car.height//2)
+        elif direction == 'down':
+            if street_type == "v" or street_type is None:
+                head_position = ((l+r)//2, b)
+                new_position = (head_position[0] - rotated_car.width//2, head_position[1] - rotated_car.height)
+            else:
+                head_position = ((l+r)//2, t)
+                new_position = (head_position[0] - rotated_car.width//2, head_position[1])
+        elif direction == 'left':
+            if street_type == "h" or street_type is None:
+                head_position = (l, (t+b)//2)
+                new_position = (head_position[0], head_position[1] - rotated_car.height//2)
+            else:
+                head_position = (r, (t+b)//2)
+                new_position = (head_position[0] - rotated_car.width, head_position[1] - rotated_car.height//2)
+        elif direction == 'none':
+            assert position_last is not None
+            new_position = tuple(position_last)
+    elif type == "Pedestrian":
+        if direction == "none":
+            assert position_last is not None
+            new_position = tuple(position_last)
+        else:
+            center_position = ((l+r)//2, (t+b)//2)
+            new_position = (center_position[0] - rotated_car.width//2, center_position[1] - rotated_car.height//2)
+    
+
+    # Paste the car image onto the map
+    map_image.paste(rotated_car, new_position, mask)
+
+    return rotated_car, map_image, list(new_position)
 
 def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None, agents=None):
     current_map = static_map.copy()
+    current_map = Image.fromarray(current_map)
     agent_layer = gridmap[BASIC_LAYER:]
     resized_grid = np.repeat(np.repeat(agent_layer, SCALE, axis=1), SCALE, axis=2)
     agent_layer_ = gridmap_[BASIC_LAYER:]
     resized_grid_ = np.repeat(np.repeat(agent_layer_, SCALE, axis=1), SCALE, axis=2)
-    icon_dict_local = {}
+    icon_dict_local = {
+        "icon": {},
+        "pos": {}
+    }
 
     for i in range(resized_grid.shape[0]):
         local_layer = resized_grid[i]
         left, top, right, bottom = get_pos(local_layer)
         local_layer_ = resized_grid_[i]
         left_, top_, right_, bottom_ = get_pos(local_layer_)
+        direction = get_direction(left, left_, top, top_)
+        pos = (left, top, right, bottom)
         
-        agent_type = LABEL_MAP[local_layer[top, left].item()]
+        agent_type = LABEL_MAP[local_layer[top, left].item()]     
         agent_name = "{}_{}".format(agent_type, BASIC_LAYER + i)
         if agents != None:
             concepts = agents[agent_name]["concepts"]
@@ -240,24 +346,28 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
             icon_id = i%len(icon_list)
             icon = icon_list[icon_id]
 
-        if last_icons is not None:
-            last_icon = last_icons["{}_{}".format(agent_type, i)]
-            icon = flip_icon(icon, left, left_, top, top_, agent_type, last_icon)
-            last_icons["{}_{}".format(agent_type, i)] = icon
+        if agent_type == "Car":
+            street_type = get_steet_type(resized_grid, pos)
         else:
-            icon = flip_icon(icon, left, left_, top, top_, agent_type)
-            icon_dict_local["{}_{}".format(agent_type, i)] = icon
+            street_type = None    
 
-        top_img = max(0, (top+bottom)//2-icon.shape[0]//2)
-        left_img = max(0, (left+right)//2-icon.shape[1]//2)
-        bottom_img = min(current_map.shape[0], (top+bottom)//2+icon.shape[0]-icon.shape[0]//2)
-        right_img = min(current_map.shape[1], (left+right)//2+icon.shape[1]-icon.shape[1]//2)
+        if last_icons is not None:
+            if direction == "none":
+                icon = last_icons["icon"]["{}_{}".format(agent_type, i)][1]
+                position = last_icons["pos"]["{}_{}".format(agent_type, i)]
+                icon, current_map, last_position = paste_car_on_map(current_map, icon, pos, direction, agent_type, position, street_type)
+            else:
+                icon = last_icons["icon"]["{}_{}".format(agent_type, i)][0]
+                icon, current_map, last_position = paste_car_on_map(current_map, icon, pos, direction, agent_type, street_type)
+            last_icons["icon"]["{}_{}".format(agent_type, i)][1] = icon
+            last_icons["pos"]["{}_{}".format(agent_type, i)] = last_position
+        else:
+            icon_img = Image.fromarray(icon) 
+            icon_dict_local["icon"]["{}_{}".format(agent_type, i)] = [icon_img]
+            current_icon, current_map, last_position = paste_car_on_map(current_map, icon_img, pos, direction, agent_type, street_type)
+            icon_dict_local["icon"]["{}_{}".format(agent_type, i)].append(current_icon)
+            icon_dict_local["pos"]["{}_{}".format(agent_type, i)] = last_position
 
-        icon = icon[:bottom_img-top_img, :right_img-left_img]
-        icon_mask = np.sum(icon > 10, axis=2) > 0
-
-        # Paste the walking_icon (or its sliced version) to img
-        current_map[top_img:bottom_img, left_img:right_img][icon_mask] = icon[icon_mask]
     if last_icons is not None:
         return current_map, last_icons
     else:
@@ -267,11 +377,11 @@ def main(pkl_path, ego_id, output_folder):
     icon_dict = {}
     for key in PATH_DICT.keys():
         if isinstance(PATH_DICT[key], list):
-            raw_img = [cv2.imread(path) for path in PATH_DICT[key]]
+            raw_img = [cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB) for path in PATH_DICT[key]]
             resized_img = [resize_with_aspect_ratio(img, ICON_SIZE_DICT[key]) for img in raw_img]
             icon_dict[key] = resized_img
         else:
-            raw_img = cv2.imread(PATH_DICT[key])
+            raw_img = cv2.cvtColor(cv2.imread(PATH_DICT[key]), cv2.COLOR_BGR2RGB)
             resized_img = resize_with_aspect_ratio(raw_img, ICON_SIZE_DICT[key])
             icon_dict[key] = resized_img
 
@@ -281,30 +391,40 @@ def main(pkl_path, ego_id, output_folder):
         agents = data["Static Info"]["Agents"]
 
     print(obs.keys())
-    static_map = gridmap2img_static(obs[0]["World"].numpy(), icon_dict, ego_id)
-    cv2.imwrite("{}/static_layout.png".format(output_folder), static_map)
+    time_steps = list(obs.keys())
+    time_steps.sort()
+    static_map = gridmap2img_static(obs[time_steps[0]]["World"].numpy(), icon_dict, ego_id)
+    static_map_img = Image.fromarray(static_map)
+    static_map_img.save("{}/static_layout.png".format(output_folder))
     last_icons = None
-    for key in trange(len(obs.keys())-1):
+    for key in trange(time_steps[0], time_steps[-2]):
         grid = obs[key]["World"].numpy()
         grid_ = obs[key+1]["World"].numpy()
         img, last_icons = gridmap2img_agents(grid, grid_, icon_dict, static_map, last_icons, agents)
         # Define the text to be added
         text = "#{}".format(key)
-        
-        # Specify the position for the text (x, y coordinates)
-        position = (10, 30)  # 10 pixels from the left and 30 from the top
-        
-        # Define font type and scale
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 1
-        color = (255, 255, 255)  # White color
-        thickness = 2  # Thickness of the font
 
-        # Use cv2.putText() method to add text
-        cv2.putText(img, text, position, font, font_scale, color, thickness, cv2.LINE_AA)
-        
+        # Specify the position for the text (x, y coordinates)
+        position = (10, 10)  # 10 pixels from the left and 30 from the top
+
+        # Create an ImageDraw object
+        draw = ImageDraw.Draw(img)
+
+        # Define font type and size (you might need to provide the path to a .ttf font file)
+        try:
+            font = ImageFont.truetype("arial.ttf", size=100)  # Example font, adjust the path and size as needed
+        except IOError:
+            font = ImageFont.load_default()
+
+        # Define text color
+        color = (255, 255, 255)  # White color
+
+        # Add text to image
+        draw.text(position, text, fill=color, font=font)
+
         # Save the image
-        cv2.imwrite("{}/step_{}.png".format(output_folder, key), img)
+        output_path = "{}/step_{}.png".format(output_folder, key)
+        img.save(output_path)
     cv2.destroyAllWindows()
 
     return
@@ -312,8 +432,13 @@ def main(pkl_path, ego_id, output_folder):
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Create an animated GIF from a sequence of images.")
+<<<<<<< HEAD
     parser.add_argument("--pkl_file", default='log_rl/res18_model_rw2_1.pkl', help="Path to the folder containing image files.")
     parser.add_argument("--ego_id", type=int, default=3, help="which agent is ego agent. Visualize the ego agent's start and goal. This is layer_id")
+=======
+    parser.add_argument("--pkl_file", default='log/med_occ8_400.pkl', help="Path to the folder containing image files.")
+    parser.add_argument("--ego_id", type=int, default=0, help="which agent is ego agent. Visualize the ego agent's start and goal. This is layer_id")
+>>>>>>> ca2b6921637f2e839098467be86369a2e900a002
     parser.add_argument("--output_folder", default="vis_city", help="Output folder.")
     
     args = parser.parse_args()
