@@ -22,11 +22,12 @@ class GymCityWrapper(gym.core.Env):
         :param City env: the CityEnv instance
         '''        
         self.env = env
-        self.fov = AGENT_FOV*2
-        self.observation_space = Dict({
-            "map": Box(low=-1.0, high=1.0, shape=(3, self.fov, self.fov), dtype=np.float32),  # Adjust the shape as needed
-            "position": Box(low=0.0, high=1.0, shape=(6,), dtype=np.float32)
-        })
+        self.logic_grounding_shape = self.env.logic_grounding_shape
+        # self.observation_space = Dict({
+        #     "map": Box(low=-1.0, high=1.0, shape=(3, self.fov, self.fov), dtype=np.float32),  # Adjust the shape as needed
+        #     "position": Box(low=0.0, high=1.0, shape=(6,), dtype=np.float32)
+        # })
+        self.observation_space = Box(low=-1.0, high=1.0, shape=(3, ), dtype=np.float32)
         # self.n_agents = len(env.agents)
         # self.ped_idx = [i+3 for i in range(self.n_agents) if env.agents[i].type == "Pedestrian"]
         # self.car_idx = [i+3 for i in range(self.n_agents) if env.agents[i].type == "Car"]

@@ -23,6 +23,7 @@ class CityEnv(City):
     def __init__(self, grid_size, local_planner, rule_file, rl_agent, use_multi=False):
         super().__init__(grid_size, local_planner, rule_file, use_multi=use_multi)
         self.rl_agent = rl_agent
+        self.logic_grounding_shape = self.local_planner.logic_grounding_shape(self.rl_agent["fov_entities"])
 
 
     def update(self, action=None, idx=None):
@@ -35,11 +36,10 @@ class CityEnv(City):
             action_idx = torch.where(action)[0][0]
                 
         new_matrix = torch.zeros_like(self.city_grid)
-        # current_world = self.city_grid.clone()
+        current_world = self.city_grid.clone()
         # first do local planning based on city rules
-        # rl debug, skip local planning
-        # agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents, \
-        #                                             self.layer_id2agent_list_id, use_multiprocessing=False)
+        agent_action_dist, rl_agent_grounding = self.local_planner.plan(current_world, self.intersection_matrix, self.agents, \
+                                                    self.layer_id2agent_list_id, use_multiprocessing=False)
         # Then do global action taking acording to the local planning results
         # input((action_idx, idx))
         
@@ -48,21 +48,12 @@ class CityEnv(City):
             agent_name = "{}_{}".format(agent.type, agent.layer_id)
             empty_action = agent.action_dist.clone()
             # local reasoning-based action distribution
-            # rl debug, skip local planning
-            # local_action_dist = agent_action_dist[agent_name]
-            # get local occupancy map if more than one agent
-            occ_map = torch.zeros_like(self.city_grid[0])
-            if len(self.agents) > 1:
-                local_world = self.city_grid[:, agent.pos[0]-OCC_CHECK_RANGE//2:agent.pos[0]+OCC_CHECK_RANGE//2, \
-                                                agent.pos[1]-OCC_CHECK_RANGE//2:agent.pos[1]+OCC_CHECK_RANGE//2].clone()
-                local_occ_map = gen_occ(torch.cat([local_world[BASIC_LAYER:agent.layer_id], local_world[agent.layer_id+1:]]))
-                occ_map[agent.pos[0]-OCC_CHECK_RANGE//2:agent.pos[0]+OCC_CHECK_RANGE//2, \
-                        agent.pos[1]-OCC_CHECK_RANGE//2:agent.pos[1]+OCC_CHECK_RANGE//2] = local_occ_map
+            local_action_dist = agent_action_dist[agent_name]
             # global trajectory-based action or sampling from local action distribution
             if action is not None and agent.layer_id == idx: 
                 current_obs["Agent_actions"].append(action)
             else:
-                local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, local_action_dist, occ_map)
+                local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, local_action_dist)
                 # save the current action in the action
                 empty_action[local_action] = 1.0    
                 current_obs["Agent_actions"].append(empty_action)

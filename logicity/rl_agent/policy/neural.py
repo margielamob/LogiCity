@@ -8,9 +8,9 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-class NeuralNav(BaseFeaturesExtractor):
+class CNNFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space, features_dim=64):
-        super(NeuralNav, self).__init__(observation_space, features_dim)
+        super(CNNFeatureExtractor, self).__init__(observation_space, features_dim)
         
         # Define networks for 2D map and position data
         self.resnet = resnet18(weights=None)
@@ -32,3 +32,22 @@ class NeuralNav(BaseFeaturesExtractor):
         pos_features = self.pos_extractor(pos_data)
         merged = torch.cat([map_features, pos_features], dim=1)
         return self.merge_layer(merged)
+    
+class MLPFeatureExtractor(BaseFeaturesExtractor):
+    def __init__(self, observation_space, features_dim=64):
+        super(MLPFeatureExtractor, self).__init__(observation_space, features_dim)
+
+        # Assuming the observation space is a Box and has a shape attribute
+        n_input_features = observation_space.shape[0]
+
+        # Define the MLP layers
+        self.net = nn.Sequential(
+            nn.Linear(n_input_features, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, features_dim)
+        )
+
+    def forward(self, observations):
+        return self.net(observations)

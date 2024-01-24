@@ -1,1 +1,1 @@
-from .neural import NeuralNav
+from .neural import CNNFeatureExtractor, MLPFeatureExtractor

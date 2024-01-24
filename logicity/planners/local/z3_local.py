@@ -206,7 +206,6 @@ class Z3PlannerLocal(LocalPlanner):
                 other_agent_layer_id = int(non_zero_layer_indices[layer_id])
                 other_agent = agents[layerid2listid[other_agent_layer_id]]
                 assert other_agent.type == agent_type
-                # ego agent is the first
                 if other_agent_layer_id == agent.layer_id:
                     partial_agent["ego_{}".format(layer_id)] = PesudoAgent(agent_type, layer_id, other_agent.concepts, other_agent.last_move_dir)
                 else:
@@ -214,6 +213,8 @@ class Z3PlannerLocal(LocalPlanner):
             partial_agents[ego_name] = partial_agent
         return ego_agent, partial_agents, partial_world, partial_intersection
             
+    def logic_grounding_shape(self, fov_entities):
+        return logic_grounding_shape(self.entity_types, self.predicates, self.z3_vars, fov_entities)
 
     def format_rule_string(self, rule_str):
         indent_level = 0
@@ -240,6 +241,49 @@ class Z3PlannerLocal(LocalPlanner):
             raise ValueError("Unmatched opening bracket detected.")
 
         return formatted_str
+
+def logic_grounding_shape(
+                      entity_types, 
+                      predicates, 
+                      var_names,
+                      fov_entities):
+    # TODO: determine the shape of the logic grounding in the RL agent
+    n = 0
+    # 1. create sorts and variables
+    entity_sorts = {}
+    for entity_type in entity_types:
+        entity_sorts[entity_type] = DeclareSort(entity_type)
+        assert fov_entities[entity_type] > 0, "Make sure the entity type (defined in rules) is in the fov_entities"
+    # 3. partial world to entities
+    local_entities = world2entity(entity_sorts, partial_intersections, partial_agents)
+    # 4. create, ground predicates and add to solver
+    local_predicates = copy.deepcopy(predicates)
+    for pred_name, pred_info in local_predicates.items():
+        eval_pred = eval(pred_info["instance"])
+        pred_info["instance"] = eval_pred
+        arity = pred_info["arity"]
+
+        # Import the grounding method
+        method_full_name = pred_info["function"]
+        if method_full_name == "None":
+            continue
+        module_name, method_name = method_full_name.rsplit('.', 1)
+        module = importlib.import_module(module_name)
+        method = getattr(module, method_name)
+
+        if arity == 1:
+            # Unary predicate grounding
+            for entity in local_entities[eval_pred.domain(0).name()]:
+                n += 1
+        elif arity == 2:
+            # Binary predicate grounding
+            for entity1 in local_entities[eval_pred.domain(0).name()]:
+                entity1_name = entity1.decl().name()
+                for entity2 in local_entities[eval_pred.domain(1).name()]:
+                    entity2_name = entity2.decl().name()
+                    n += 1
+    logger.info("Given Predicates {}, the FOV entities {}, The logic grounding shape is: {}".format(local_predicates, fov_entities, n))
+    return n
 
 def solve_sub_problem(ego_name, 
                       ego_action_mapping,
