@@ -5,12 +5,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 class EvalCheckpointCallback(CheckpointCallback):
-    def __init__(self, eval_env, eval_freq=50000, log_dir='./log/', *args, **kwargs):
+    def __init__(self, eval_env, exp_name, eval_freq=50000, *args, **kwargs):
         super(EvalCheckpointCallback, self).__init__(*args, **kwargs)
         self.eval_env = eval_env
         self.eval_freq = eval_freq
-        self.log_dir = log_dir
-        os.makedirs(self.log_dir, exist_ok=True)
+        self.exp_name = exp_name
         self.best_mean_reward = -np.inf
 
     def on_step(self) -> bool:
@@ -33,12 +32,12 @@ class EvalCheckpointCallback(CheckpointCallback):
             logger.info(f"Step: {self.n_calls} - Mean Reward: {mean_reward}")
 
             # Log the mean reward
-            with open(os.path.join(self.log_dir, "eval_rewards.txt"), "a") as file:
+            with open(os.path.join(self.save_path, "{}_eval_rewards.txt".format(self.exp_name)), "a") as file:
                 file.write(f"Step: {self.n_calls} - Mean Reward: {mean_reward}\n")
 
             # Update the best model if current mean reward is better
             if mean_reward > self.best_mean_reward:
                 self.best_mean_reward = mean_reward
-                self.model.save("{}/best_model.zip".format(self.log_dir))
+                self.model.save("{}/best_model.zip".format(self.save_path))
 
         return True

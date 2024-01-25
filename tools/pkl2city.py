@@ -432,8 +432,13 @@ def main(pkl_path, ego_id, output_folder):
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Create an animated GIF from a sequence of images.")
+<<<<<<< HEAD
+    parser.add_argument("--pkl_file", default='log_rl/res18_model_rw2_1.pkl', help="Path to the folder containing image files.")
+    parser.add_argument("--ego_id", type=int, default=3, help="which agent is ego agent. Visualize the ego agent's start and goal. This is layer_id")
+=======
     parser.add_argument("--pkl_file", default='log/med_occ8_400.pkl', help="Path to the folder containing image files.")
     parser.add_argument("--ego_id", type=int, default=0, help="which agent is ego agent. Visualize the ego agent's start and goal. This is layer_id")
+>>>>>>> ca2b6921637f2e839098467be86369a2e900a002
     parser.add_argument("--output_folder", default="vis_city", help="Output folder.")
     
     args = parser.parse_args()

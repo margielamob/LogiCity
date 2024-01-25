@@ -32,6 +32,6 @@ stable_baselines:
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/res18_model_1e-5_480000_steps.zip"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/res18_model_rw2/best_model.zip"           # Path to a checkpoint to restore the model from
   num_envs: 2                   # Number of environments to run in parallel
   total_timesteps: 5000000    # Total number of timesteps to run for all environments combined
