@@ -50,7 +50,7 @@ class Z3PlannerRL(Z3Planner):
                                                 [(ego_name, ego_agent[ego_name].action_mapping, ego_agent[ego_name].action_dist,
                                                 self.rule_tem, self.entity_types, self.predicates, self.z3_vars,
                                                 partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name],
-                                                rl_flags[ego_name])
+                                                self.fov_entities, rl_flags[ego_name], self.rl_input_shape)
                                                 for ego_name in batch_keys])
                     
                     for result in batch_results:
@@ -61,7 +61,8 @@ class Z3PlannerRL(Z3Planner):
             for ego_name in agent_keys:
                 result = solve_sub_problem(ego_name, ego_agent[ego_name].action_mapping, ego_agent[ego_name].action_dist,
                                         self.rule_tem, self.entity_types, self.predicates, self.z3_vars,
-                                        partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name], rl_flags[ego_name])
+                                        partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name], 
+                                        self.fov_entities, rl_flags[ego_name], rl_input_shape=self.rl_input_shape)
                 combined_results.update(result)
 
         e2 = time.time()
@@ -204,6 +205,10 @@ def logic_grounding_shape(
         pred_info["instance"] = eval_pred
         arity = pred_info["arity"]
 
+        method_full_name = pred_info["function"]
+        if method_full_name == "None":
+            continue
+
         if arity == 1:
             # Unary predicate grounding
             for _ in entities[eval_pred.domain(0).name()]:
@@ -226,8 +231,11 @@ def solve_sub_problem(ego_name,
                       partial_agents, 
                       partial_world, 
                       partial_intersections,
-                      rl_flag):
+                      fov_entities,
+                      rl_flag,
+                      rl_input_shape):
     # 1. create solver
+    grounding = []
     local_solver = Solver()
     # 2. create sorts and variables
     entity_sorts = {}
@@ -236,7 +244,7 @@ def solve_sub_problem(ego_name,
     z3_vars = {var_name: Const(var_name, entity_sorts[var_name.replace('dummy', '')]) \
                        for var_name in var_names}
     # 3. partial world to entities
-    local_entities = world2entity(entity_sorts, partial_intersections, partial_agents, rl_flag)
+    local_entities = world2entity(entity_sorts, partial_intersections, partial_agents, fov_entities, rl_flag)
     # 4. create, ground predicates and add to solver
     local_predicates = copy.deepcopy(predicates)
     for pred_name, pred_info in local_predicates.items():
@@ -258,8 +266,10 @@ def solve_sub_problem(ego_name,
                 entity_name = entity.decl().name()
                 value = method(partial_world, partial_intersections, partial_agents, entity_name)
                 if value:
+                    grounding.append(1)
                     local_solver.add(eval_pred(entity))
                 else:
+                    grounding.append(0)
                     local_solver.add(Not(eval_pred(entity)))
         elif arity == 2:
             # Binary predicate grounding
@@ -269,8 +279,10 @@ def solve_sub_problem(ego_name,
                     entity2_name = entity2.decl().name()
                     value = method(partial_world, partial_intersections, partial_agents, entity1_name, entity2_name)
                     if value:
+                        grounding.append(1)
                         local_solver.add(eval_pred(entity1, entity2))
                     else:
+                        grounding.append(0)
                         local_solver.add(Not(eval_pred(entity1, entity2)))
 
     # 5. create, ground rules and add to solver
@@ -311,10 +323,14 @@ def solve_sub_problem(ego_name,
                     action_dist[action_id] = 1.0
 
         agents_actions = {ego_name: action_dist}
+        if rl_flag:
+            agents_actions["{}_grounding".format(ego_name)] = np.array(grounding, dtype=np.float32)
+            assert len(agents_actions["{}_grounding".format(ego_name)]) == rl_input_shape
         return agents_actions
     else:
-        # No solution means do not exist intersection/agent in the field of view, Normal
-        # Interpret the solution to the FOL problem
+        # raise ValueError("No solution means do not exist intersection/agent in the field of view")
+    #     # No solution means do not exist intersection/agent in the field of view, Normal
+    #     # Interpret the solution to the FOL problem
         action_mapping = ego_action_mapping
         action_dist = torch.zeros_like(ego_action_dist)
 
@@ -323,6 +339,9 @@ def solve_sub_problem(ego_name,
                 action_dist[action_id] = 1.0
 
         agents_actions = {ego_name: action_dist}
+        if rl_flag:
+            agents_actions["{}_grounding".format(ego_name)] = np.array(grounding, dtype=np.float32)
+            assert len(agents_actions["{}_grounding".format(ego_name)]) == rl_input_shape
         return agents_actions
 
 def split_into_batches(keys, batch_size):

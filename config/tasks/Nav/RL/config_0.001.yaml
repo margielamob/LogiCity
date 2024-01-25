@@ -1,11 +1,11 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/v1.1.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/debug.yaml" # Agents in the simulation
+  agent_yaml_file: "config/agents/rl_16.yaml" # Agents in the simulation
   rule_type: "Z3_RL"               # z3 rl will sat the rl_agent with fixed number of other entities, also return the groundings as obs
   rule_yaml_file: "config/rules/Z3/easy/easy_rule_local.yaml"                 # Whether to render the environment
   rl: true
-  debug: True
+  debug: false
   rl_agent: 
     agent_name: "Pedestrian_1"               # ID of the RL agent, this is the agent id in the agent yaml file
     horizon: 500                          # Maximum steps in each episode 
