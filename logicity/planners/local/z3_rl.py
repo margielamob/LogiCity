@@ -11,7 +11,7 @@ from ...core.config import *
 from multiprocessing import Pool
 from ...utils.find import find_agent
 from ...utils.sample import split_into_subsets
-from .basic import LocalPlanner
+from .z3 import Z3Planner
 
 logger = logging.getLogger(__name__)
 
@@ -20,98 +20,22 @@ class PesudoAgent:
     def __init__(self, type, layer_id, concepts, moving_direction):
         self.type = type
         self.layer_id = layer_id
-        self.type = concepts["type"]
+        self.type = concepts["type"] if concepts else None
         self.concepts = concepts
         self.moving_direction = moving_direction
 
-class Z3PlannerLocal(LocalPlanner):
+class Z3PlannerRL(Z3Planner):
     def __init__(self, yaml_path):        
         super().__init__(yaml_path)
 
-    def _create_entities(self):
-        # Create Z3 sorts for each entity type
-        self.entity_types = []
-        for entity_type in self.data["EntityTypes"]:
-            # Create a Z3 sort (type) for each entity
-            self.entity_types.append(entity_type)
-        # Print the entity types
-        entity_types_info = "\n".join(["- {}".format(entity) for entity in self.entity_types])
-        logger.info("Number of Entity Types: {}\nEntity Types:\n{}".format(len(self.entity_types), entity_types_info))
-
-    def _create_predicates(self):
-        self.predicates = {}
-        for pred_dict in self.data["Predicates"]:
-            (pred_name, info), = pred_dict.items()
-            method_name = info["method"].split('(')[0]
-            arity = info["arity"]
-            z3_func = None
-            if arity == 1:
-                # Unary predicate
-                entity_type = info["method"].split('(')[1].split(')')[0]
-                z3_func = "Function('{}', entity_sorts['{}'], BoolSort())".format(method_name, entity_type)
-            elif arity == 2:
-                # Binary predicate
-                types = info["method"].split('(')[1].split(')')[0].split(', ')
-                z3_func = "Function('{}', entity_sorts['{}'], entity_sorts['{}'], BoolSort())".format(method_name, types[0], types[1])
-
-            # Store complete predicate information
-            self.predicates[pred_name] = {
-                "instance": z3_func,
-                "arity": arity,
-                "method": info["method"],
-                "function": info.get("function", None),  # Optional, may be used for dynamic grounding
-            }
-        # Print the predicates
-        predicates_info = "\n".join(["- {}: {}".format(predicate, details) for predicate, details in self.predicates.items()])
-        logger.info("Number of Predicates: {}\nPredicates:\n{}".format(len(self.predicates), predicates_info))
-
-    def _create_rules(self):
-        self.rules = {}
-        self.rule_tem = {}
-        for rule_dict in self.data["Rules"]:
-            (rule_name, rule_info), = rule_dict.items()
-            # Check if the rule is valid
-            formula = rule_info["formula"]
-            logger.info("Rule: {} -> \n {}".format(rule_name, formula))
-
-            # Create Z3 variables based on the formula
-            var_names = self._extract_variables(formula)
-            self.z3_vars = var_names
-
-            # Substitute predicate names in the formula with Z3 function instances
-            for method_name, pred_info in self.predicates.items():
-                formula = formula.replace(method_name, f'local_predicates["{method_name}"]["instance"]')
-
-            # Now replace the variable names in the formula with their Z3 counterparts
-            for var_name in var_names:
-                formula = formula.replace(var_name, f'z3_vars["{var_name}"]')
-
-            # Evaluate the modified formula string to create the Z3 expression
-            self.rule_tem[rule_name] = formula
-        rule_info = "\n".join(["- {}: {}".format(rule, details) for rule, details in self.rule_tem.items()])
-        logger.info("Number of Rules: {}\nRules:\n{}".format(len(self.rule_tem), rule_info))
-        logger.info("Rules will be grounded later...")
-
-    def _extract_variables(self, formula):
-        # Regular expression to find words that start with 'dummy'
-        pattern = re.compile(r'\bdummy\w*\b')
-
-        # Find all matches in the formula
-        matches = pattern.findall(formula)
-
-        # Remove duplicates by converting the list to a set, then back to a list
-        unique_variables = list(set(matches))
-
-        return unique_variables
-
-    def plan(self, world_matrix, intersect_matrix, agents, layerid2listid, use_multiprocessing=True):
+    def plan(self, world_matrix, intersect_matrix, agents, layerid2listid, use_multiprocessing=True, rl_agent=None):
         # 1. Break the global world matrix into local world matrix and split the agents and intersections
         # Note that the local ones will have different size and agent id
         e = time.time()
         local_world_matrix = world_matrix.clone()
         local_intersections = intersect_matrix.clone()
-        ego_agent, partial_agents, partial_world, partial_intersections = \
-            self.break_world_matrix(local_world_matrix, agents, local_intersections, layerid2listid)
+        ego_agent, partial_agents, partial_world, partial_intersections, rl_flags = \
+            self.break_world_matrix(local_world_matrix, agents, local_intersections, layerid2listid, rl_agent)
         logger.info("Break world time: {}".format(time.time()-e))
         # 2. Choose between multi-processing and looping
         combined_results = {}
@@ -125,7 +49,8 @@ class Z3PlannerLocal(LocalPlanner):
                     batch_results = pool.starmap(solve_sub_problem, 
                                                 [(ego_name, ego_agent[ego_name].action_mapping, ego_agent[ego_name].action_dist,
                                                 self.rule_tem, self.entity_types, self.predicates, self.z3_vars,
-                                                partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name])
+                                                partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name],
+                                                self.fov_entities, rl_flags[ego_name], self.rl_input_shape)
                                                 for ego_name in batch_keys])
                     
                     for result in batch_results:
@@ -136,7 +61,8 @@ class Z3PlannerLocal(LocalPlanner):
             for ego_name in agent_keys:
                 result = solve_sub_problem(ego_name, ego_agent[ego_name].action_mapping, ego_agent[ego_name].action_dist,
                                         self.rule_tem, self.entity_types, self.predicates, self.z3_vars,
-                                        partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name])
+                                        partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name], 
+                                        self.fov_entities, rl_flags[ego_name], rl_input_shape=self.rl_input_shape)
                 combined_results.update(result)
 
         e2 = time.time()
@@ -172,14 +98,17 @@ class Z3PlannerLocal(LocalPlanner):
             y_end = min(position[1]+AGENT_FOV+1, height)
         return x_start, y_start, x_end, y_end
 
-    def break_world_matrix(self, world_matrix, agents, intersect_matrix, layerid2listid):
+    def break_world_matrix(self, world_matrix, agents, intersect_matrix, layerid2listid, rl_agent):
+        # TODO: for rl_agent, the other entity number is fixed
         ego_agent = {}
         partial_agents = {}
         partial_world = {}
         partial_intersection = {}
+        rl_flag = {}
         for agent in agents:
             ego_name = "{}_{}".format(agent.type, agent.layer_id)
             ego_agent[ego_name] = agent
+            rl_flag[ego_name] = (agent.layer_id==rl_agent)
             ego_layer = world_matrix[agent.layer_id]
             ego_position = (ego_layer == TYPE_MAP[agent.type]).nonzero()[0]
             ego_direction = agent.last_move_dir
@@ -192,8 +121,6 @@ class Z3PlannerLocal(LocalPlanner):
             non_zero_layers = partial_world_nonzero_int.any(dim=1).any(dim=1)
             non_zero_layer_indices = torch.where(non_zero_layers)[0]
             partial_world_squeezed = partial_world_all[non_zero_layers]
-            partial_world[ego_name] = partial_world_squeezed
-            partial_intersection[ego_name] = partial_intersections
             partial_agent = {}
             for layer_id in range(partial_world_squeezed.shape[0]):
                 layer = partial_world_squeezed[layer_id]
@@ -210,11 +137,24 @@ class Z3PlannerLocal(LocalPlanner):
                     partial_agent["ego_{}".format(layer_id)] = PesudoAgent(agent_type, layer_id, other_agent.concepts, other_agent.last_move_dir)
                 else:
                     partial_agent[str(layer_id)] = PesudoAgent(agent_type, layer_id, other_agent.concepts, other_agent.last_move_dir)
+            if rl_flag[ego_name]:
+                # RL agent needs fixed number of entities
+                while len(partial_agent) < self.fov_entities["Agent"]:
+                    layer_id += 1
+                    place_holder_agent = PesudoAgent("PH", layer_id, None,\
+                                                      None)
+                    partial_agent["PH_{}".format(layer_id)] = place_holder_agent
+                        # Additional place holder for rl agent
+                    # partial_world_squeezed = torch.cat([partial_world_squeezed, partial_world_squeezed[-1].unsqueeze(0)], dim=0)
+            partial_world[ego_name] = partial_world_squeezed
+            partial_intersection[ego_name] = partial_intersections
             partial_agents[ego_name] = partial_agent
-        return ego_agent, partial_agents, partial_world, partial_intersection
+        return ego_agent, partial_agents, partial_world, partial_intersection, rl_flag
             
     def logic_grounding_shape(self, fov_entities):
-        return logic_grounding_shape(self.entity_types, self.predicates, self.z3_vars, fov_entities)
+        self.fov_entities = fov_entities
+        self.rl_input_shape = logic_grounding_shape(self.entity_types, self.predicates, self.z3_vars, fov_entities)
+        return self.rl_input_shape
 
     def format_rule_string(self, rule_str):
         indent_level = 0
@@ -254,8 +194,11 @@ def logic_grounding_shape(
     for entity_type in entity_types:
         entity_sorts[entity_type] = DeclareSort(entity_type)
         assert fov_entities[entity_type] > 0, "Make sure the entity type (defined in rules) is in the fov_entities"
-    # 3. partial world to entities
-    local_entities = world2entity(entity_sorts, partial_intersections, partial_agents)
+    # 3. entities
+    entities = {}
+    for entity_type in entity_sorts.keys():
+        entity_num = fov_entities[entity_type]
+        entities[entity_type] = [Const(f"{entity_type}_{i}", entity_sorts[entity_type]) for i in range(entity_num)]
     # 4. create, ground predicates and add to solver
     local_predicates = copy.deepcopy(predicates)
     for pred_name, pred_info in local_predicates.items():
@@ -263,24 +206,18 @@ def logic_grounding_shape(
         pred_info["instance"] = eval_pred
         arity = pred_info["arity"]
 
-        # Import the grounding method
         method_full_name = pred_info["function"]
         if method_full_name == "None":
             continue
-        module_name, method_name = method_full_name.rsplit('.', 1)
-        module = importlib.import_module(module_name)
-        method = getattr(module, method_name)
 
         if arity == 1:
             # Unary predicate grounding
-            for entity in local_entities[eval_pred.domain(0).name()]:
+            for _ in entities[eval_pred.domain(0).name()]:
                 n += 1
         elif arity == 2:
             # Binary predicate grounding
-            for entity1 in local_entities[eval_pred.domain(0).name()]:
-                entity1_name = entity1.decl().name()
-                for entity2 in local_entities[eval_pred.domain(1).name()]:
-                    entity2_name = entity2.decl().name()
+            for _ in entities[eval_pred.domain(0).name()]:
+                for _ in entities[eval_pred.domain(1).name()]:
                     n += 1
     logger.info("Given Predicates {}, the FOV entities {}, The logic grounding shape is: {}".format(local_predicates, fov_entities, n))
     return n
@@ -294,8 +231,12 @@ def solve_sub_problem(ego_name,
                       var_names,
                       partial_agents, 
                       partial_world, 
-                      partial_intersections):
+                      partial_intersections,
+                      fov_entities,
+                      rl_flag,
+                      rl_input_shape):
     # 1. create solver
+    grounding = []
     local_solver = Solver()
     # 2. create sorts and variables
     entity_sorts = {}
@@ -304,7 +245,7 @@ def solve_sub_problem(ego_name,
     z3_vars = {var_name: Const(var_name, entity_sorts[var_name.replace('dummy', '')]) \
                        for var_name in var_names}
     # 3. partial world to entities
-    local_entities = world2entity(entity_sorts, partial_intersections, partial_agents)
+    local_entities = world2entity(entity_sorts, partial_intersections, partial_agents, fov_entities, rl_flag)
     # 4. create, ground predicates and add to solver
     local_predicates = copy.deepcopy(predicates)
     for pred_name, pred_info in local_predicates.items():
@@ -326,8 +267,10 @@ def solve_sub_problem(ego_name,
                 entity_name = entity.decl().name()
                 value = method(partial_world, partial_intersections, partial_agents, entity_name)
                 if value:
+                    grounding.append(1)
                     local_solver.add(eval_pred(entity))
                 else:
+                    grounding.append(0)
                     local_solver.add(Not(eval_pred(entity)))
         elif arity == 2:
             # Binary predicate grounding
@@ -337,8 +280,10 @@ def solve_sub_problem(ego_name,
                     entity2_name = entity2.decl().name()
                     value = method(partial_world, partial_intersections, partial_agents, entity1_name, entity2_name)
                     if value:
+                        grounding.append(1)
                         local_solver.add(eval_pred(entity1, entity2))
                     else:
+                        grounding.append(0)
                         local_solver.add(Not(eval_pred(entity1, entity2)))
 
     # 5. create, ground rules and add to solver
@@ -379,10 +324,14 @@ def solve_sub_problem(ego_name,
                     action_dist[action_id] = 1.0
 
         agents_actions = {ego_name: action_dist}
+        if rl_flag:
+            agents_actions["{}_grounding".format(ego_name)] = np.array(grounding, dtype=np.float32)
+            assert len(agents_actions["{}_grounding".format(ego_name)]) == rl_input_shape
         return agents_actions
     else:
-        # No solution means do not exist intersection/agent in the field of view, Normal
-        # Interpret the solution to the FOL problem
+        # raise ValueError("No solution means do not exist intersection/agent in the field of view")
+    #     # No solution means do not exist intersection/agent in the field of view, Normal
+    #     # Interpret the solution to the FOL problem
         action_mapping = ego_action_mapping
         action_dist = torch.zeros_like(ego_action_dist)
 
@@ -391,6 +340,9 @@ def solve_sub_problem(ego_name,
                 action_dist[action_id] = 1.0
 
         agents_actions = {ego_name: action_dist}
+        if rl_flag:
+            agents_actions["{}_grounding".format(ego_name)] = np.array(grounding, dtype=np.float32)
+            assert len(agents_actions["{}_grounding".format(ego_name)]) == rl_input_shape
         return agents_actions
 
 def split_into_batches(keys, batch_size):
@@ -398,7 +350,7 @@ def split_into_batches(keys, batch_size):
     for i in range(0, len(keys), batch_size):
         yield keys[i:i + batch_size]
 
-def world2entity(entity_sorts, partial_intersect, partial_agents):
+def world2entity(entity_sorts, partial_intersect, partial_agents, fov_entities, rl_flag):
     assert "Agent" in entity_sorts.keys() and "Intersection" in entity_sorts.keys()
     # all the enitities are stored in self.entities
     entities = {}
@@ -410,9 +362,13 @@ def world2entity(entity_sorts, partial_intersect, partial_agents):
                 if "ego" in key:
                     ego_agent = agent
                     continue
-                agent_id = agent.layer_id
-                agent_type = agent.type
-                agent_name = f"Agent_{agent_type}_{agent_id}"
+                if "PH" in key:
+                    agent_id = agent.layer_id
+                    agent_name = f"Agent_PH_{agent_id}"
+                else:
+                    agent_id = agent.layer_id
+                    agent_type = agent.type
+                    agent_name = f"Agent_{agent_type}_{agent_id}"
                 # Create a Z3 constant for the agent
                 agent_entity = Const(agent_name, entity_sorts['Agent'])
                 entities[entity_type].append(agent_entity)
@@ -423,13 +379,31 @@ def world2entity(entity_sorts, partial_intersect, partial_agents):
             agent_entity = Const(agent_name, entity_sorts['Agent'])
             # ego agent is the first
             entities[entity_type] = [agent_entity] + entities[entity_type]
+            if rl_flag:
+                assert len(entities[entity_type]) == fov_entities["Agent"]
         elif entity_type == "Intersection":
             # For Intersections
             unique_intersections = np.unique(partial_intersect[0])
             unique_intersections = unique_intersections[unique_intersections != 0]
-            for intersection_id in unique_intersections:
-                intersection_name = f"Intersection_{intersection_id}"
-                # Create a Z3 constant for the intersection
-                intersection_entity = Const(intersection_name, entity_sorts['Intersection'])
-                entities[entity_type].append(intersection_entity)
+            if not rl_flag:
+                for intersection_id in unique_intersections:
+                    intersection_name = f"Intersection_{intersection_id}"
+                    # Create a Z3 constant for the intersection
+                    intersection_entity = Const(intersection_name, entity_sorts['Intersection'])
+                    entities[entity_type].append(intersection_entity)
+            else:
+                for intersection_id in unique_intersections:
+                    if len(entities[entity_type]) == fov_entities["Intersection"]:
+                        break
+                    intersection_name = f"Intersection_{intersection_id}"
+                    # Create a Z3 constant for the intersection
+                    intersection_entity = Const(intersection_name, entity_sorts['Intersection'])
+                    entities[entity_type].append(intersection_entity)
+                if len(entities[entity_type]) < fov_entities["Intersection"]:
+                    while len(entities[entity_type]) < fov_entities["Intersection"]:
+                        intersection_name = f"Intersection_{-1}"
+                        # Create a Z3 constant for the intersection
+                        intersection_entity = Const(intersection_name, entity_sorts['Intersection'])
+                        entities[entity_type].append(entities[entity_type][-1])
+                assert len(entities[entity_type]) == fov_entities["Intersection"]
     return entities

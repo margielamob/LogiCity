@@ -138,7 +138,7 @@ def main_gym(args, logger):
             train_env = make_env(simulation_config)
         eval_env = make_env(simulation_config)
         train_env.reset()
-        model = algorithm_class("MultiInputPolicy", \
+        model = algorithm_class("MlpPolicy", \
                                 train_env, \
                                 **hyperparameters, \
                                 policy_kwargs=policy_kwargs)

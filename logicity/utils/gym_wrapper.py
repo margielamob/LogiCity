@@ -27,7 +27,7 @@ class GymCityWrapper(gym.core.Env):
         #     "map": Box(low=-1.0, high=1.0, shape=(3, self.fov, self.fov), dtype=np.float32),  # Adjust the shape as needed
         #     "position": Box(low=0.0, high=1.0, shape=(6,), dtype=np.float32)
         # })
-        self.observation_space = Box(low=-1.0, high=1.0, shape=(3, ), dtype=np.float32)
+        self.observation_space = Box(low=-1.0, high=1.0, shape=(self.logic_grounding_shape, ), dtype=np.float32)
         # self.n_agents = len(env.agents)
         # self.ped_idx = [i+3 for i in range(self.n_agents) if env.agents[i].type == "Pedestrian"]
         # self.car_idx = [i+3 for i in range(self.n_agents) if env.agents[i].type == "Car"]
@@ -44,7 +44,9 @@ class GymCityWrapper(gym.core.Env):
                     self.agent = agent
                     self.agent_layer_id = agent.layer_id
         assert self.agent_layer_id is not None, "Agent not found! Recheck Your agent_name in the config file!"
-        self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.agent.action_space.shape[0], ), dtype=np.float32)
+        action_space = self.env.rl_agent["action_space"]
+        self.action_space = gym.spaces.Box(low=0, high=1, shape=(action_space, ), dtype=np.float32)
+        self.action_mapping = env.rl_agent["action_mapping"]
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
         self.scale = [25, 7, 3.5, 8.3]
         self.mini_scale = [0, 0, -1, 0]
@@ -52,73 +54,73 @@ class GymCityWrapper(gym.core.Env):
         
     def _flatten_obs(self, obs_dict):
         # Create a new image with a 0 background
-        # TODO: may need layers from other agents
-        neighborhood_obs = CPU(obs_dict["World"][0:3])
-        map_obs = np.ones((3, self.fov, self.fov), dtype=np.float32)
-        start_pos = CPU(self.agent.start)
-        cur_pos = CPU(self.agent.pos)
-        goal_pos = CPU(self.agent.goal)
+        # neighborhood_obs = CPU(obs_dict["World"][0:3])
+        # map_obs = np.ones((3, self.fov, self.fov), dtype=np.float32)
+        # start_pos = CPU(self.agent.start)
+        # cur_pos = CPU(self.agent.pos)
+        # goal_pos = CPU(self.agent.goal)
 
-        # Calculate the region of the city image that falls within the agent's field of view
-        x_start = max(cur_pos[0] - self.fov//2, 0)
-        y_start = max(cur_pos[1] - self.fov//2, 0)
-        x_end = min(cur_pos[0] + self.fov//2, neighborhood_obs.shape[1])
-        y_end = min(cur_pos[1] + self.fov//2, neighborhood_obs.shape[2])
+        # # Calculate the region of the city image that falls within the agent's field of view
+        # x_start = max(cur_pos[0] - self.fov//2, 0)
+        # y_start = max(cur_pos[1] - self.fov//2, 0)
+        # x_end = min(cur_pos[0] + self.fov//2, neighborhood_obs.shape[1])
+        # y_end = min(cur_pos[1] + self.fov//2, neighborhood_obs.shape[2])
 
-        # Calculate where this region should be placed in the map_obs
-        new_x_start = max(self.fov//2 - cur_pos[0], 0)
-        new_y_start = max(self.fov//2 - cur_pos[1], 0)
-        new_x_end = new_x_start + (x_end - x_start)
-        new_y_end = new_y_start + (y_end - y_start)
+        # # Calculate where this region should be placed in the map_obs
+        # new_x_start = max(self.fov//2 - cur_pos[0], 0)
+        # new_y_start = max(self.fov//2 - cur_pos[1], 0)
+        # new_x_end = new_x_start + (x_end - x_start)
+        # new_y_end = new_y_start + (y_end - y_start)
 
-        # Place the part of the city image that's within the UAV's field of view into the map_obs
-        map_obs[:, new_x_start:new_x_end, new_y_start:new_y_end] = neighborhood_obs[:, x_start:x_end, y_start:y_end]
-        start_pos = np.asarray(start_pos, dtype=np.float32) / 240.
-        cur_pos = np.asarray(cur_pos, dtype=np.float32) / 240.
-        goal_pos = np.asarray(goal_pos, dtype=np.float32) / 240.
-        pos_data = np.concatenate([start_pos, cur_pos, goal_pos])
+        # # Place the part of the city image that's within the UAV's field of view into the map_obs
+        # map_obs[:, new_x_start:new_x_end, new_y_start:new_y_end] = neighborhood_obs[:, x_start:x_end, y_start:y_end]
+        # start_pos = np.asarray(start_pos, dtype=np.float32) / 240.
+        # cur_pos = np.asarray(cur_pos, dtype=np.float32) / 240.
+        # goal_pos = np.asarray(goal_pos, dtype=np.float32) / 240.
+        # pos_data = np.concatenate([start_pos, cur_pos, goal_pos])
 
-        return {
-                "map": map_obs,
-                "position": pos_data
-            }   
+        return obs_dict["World_state"][0]
         
     def _get_reward(self, obs_dict):
         ''' Get the reward for the current step.
         :param dict obs_dict: the observation dictionary
         :return: the reward
         '''
-        cur_pos = self.agent.pos
-        goal_pos = self.agent.goal
+        # cur_pos = self.agent.pos
+        # goal_pos = self.agent.goal
         
-        dist_goal = np.abs(cur_pos - goal_pos).sum()
-        if self.last_dist == -1:
-            self.last_dist = dist_goal
-        rew = (self.last_dist - dist_goal) * 5
-        self.last_dist = dist_goal
-        # print(cur_pos, goal_pos)
-        # print(cur_pos, obs_dict["World"][2].shape, obs_dict["World"][2][cur_pos[0], cur_pos[1]])
-        if self.agent_type == 'Pedestrian':
-            count_on_road = len(np.where(obs_dict["World"][2][cur_pos[0], cur_pos[1]] == 1.0)[0]) + \
-                                len(np.where(obs_dict["World"][2][cur_pos[0], cur_pos[1]] == -1)[0])
-        elif self.agent_type == 'Car':
-            count_on_road = len(np.where(obs_dict["World"][2][cur_pos[0], cur_pos[1]] == 2.0)[0]) + \
-                                len(np.where(obs_dict["World"][2][cur_pos[0], cur_pos[1]] == -1)[0])
-        # print(rew, 1-count_on_road)
-        rew -= (1-count_on_road)        # reward weighting
+        # dist_goal = np.abs(cur_pos - goal_pos).sum()
+        # if self.last_dist == -1:
+        #     self.last_dist = dist_goal
+        # rew = (self.last_dist - dist_goal) * 5
+        # self.last_dist = dist_goal
+        # # print(cur_pos, goal_pos)
+        # # print(cur_pos, obs_dict["World"][2].shape, obs_dict["World"][2][cur_pos[0], cur_pos[1]])
+        # if self.agent_type == 'Pedestrian':
+        #     count_on_road = len(np.where(obs_dict["World"][2][cur_pos[0], cur_pos[1]] == 1.0)[0]) + \
+        #                         len(np.where(obs_dict["World"][2][cur_pos[0], cur_pos[1]] == -1)[0])
+        # elif self.agent_type == 'Car':
+        #     count_on_road = len(np.where(obs_dict["World"][2][cur_pos[0], cur_pos[1]] == 2.0)[0]) + \
+        #                         len(np.where(obs_dict["World"][2][cur_pos[0], cur_pos[1]] == -1)[0])
+        # # print(rew, 1-count_on_road)
+        # rew -= (1-count_on_road)        # reward weighting
+        agent_action = obs_dict["Agent_actions"][0]
+        expert_action = obs_dict["Expert_actions"][0]
+        rew = 0
+        if (agent_action == expert_action).all():
+            rew += 1
+        else:
+            rew -= 5
         return rew
     
     
     def reset(self, return_info=False):
         self.t = 0
-        # TODO: reset functions!
-        WALKING_STREET = TYPE_MAP['Walking Street']
-        CROSSING_STREET = TYPE_MAP['Overlap']
-        self.agent.init(self.env.city_grid, rl_agent=True)
+        self.agent.init(self.env.city_grid, debug=True)
         self.reinit()
         logger.info("=============")
         logger.info("Reset Agent")
-        ob_dict = self.env.update(torch.from_numpy(np.array([0, 0, 0, 0, 1])), self.agent_layer_id)
+        ob_dict = self.env.update(torch.tensor([0, 0, 0, 0, 1], dtype=torch.float32), self.agent_layer_id)
         obs = self._flatten_obs(ob_dict)
         self.last_dist = -1
         self.last_pos = None
@@ -138,10 +140,7 @@ class GymCityWrapper(gym.core.Env):
     def step(self, action):
         self.t += 1
         index = np.argmax(action) # if action is a numpy array
-        one_hot_action = torch.zeros(self.action_space.shape[0])
-        one_hot_action[index] = 1.
-        one_hot_action = one_hot_action.float()
-        # assert len(action.shape) == 1, "Action must be a 1D array!"
+        one_hot_action = torch.tensor(self.action_mapping[index], dtype=torch.float32)
         info = {}
         ob_dict = self.env.update(one_hot_action, self.agent_layer_id)
         # ob_dict = self.env.update()
@@ -153,8 +152,8 @@ class GymCityWrapper(gym.core.Env):
         done = self.agent.reach_goal
         if done:
             info["succcess"] = True
-            rew += 10
-            self.agent.init(self.env.city_grid, rl_agent=True)
+            rew += 1
+            self.agent.init(self.env.city_grid)
             self.reinit()
             logger.info("Reset agent by success")
         if self.agent.pos[0] <= 0 or self.agent.pos[1] <= 0 or \
@@ -162,7 +161,7 @@ class GymCityWrapper(gym.core.Env):
             info["success"] = False
             done = True
             rew -= 10
-            self.agent.init(self.env.city_grid, rl_agent=True)
+            self.agent.init(self.env.city_grid)
             self.reinit()
             logger.info("Reset agent by oor")
         
@@ -170,7 +169,7 @@ class GymCityWrapper(gym.core.Env):
             done = True
             info["success"] = False
             info["overtime"] = True
-            self.agent.init(self.env.city_grid, rl_agent=True)
+            self.agent.init(self.env.city_grid)
             self.reinit()
             print("Reset agent by overtime")
             
