@@ -39,7 +39,7 @@ class CityEnv(City):
         current_world = self.city_grid.clone()
         # first do local planning based on city rules
         agent_action_dist, rl_agent_grounding = self.local_planner.plan(current_world, self.intersection_matrix, self.agents, \
-                                                    self.layer_id2agent_list_id, use_multiprocessing=False)
+                                                    self.layer_id2agent_list_id, use_multiprocessing=False, rl_agent=idx)
         # Then do global action taking acording to the local planning results
         # input((action_idx, idx))
         

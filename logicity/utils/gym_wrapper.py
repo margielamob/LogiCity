@@ -27,7 +27,7 @@ class GymCityWrapper(gym.core.Env):
         #     "map": Box(low=-1.0, high=1.0, shape=(3, self.fov, self.fov), dtype=np.float32),  # Adjust the shape as needed
         #     "position": Box(low=0.0, high=1.0, shape=(6,), dtype=np.float32)
         # })
-        self.observation_space = Box(low=-1.0, high=1.0, shape=(3, ), dtype=np.float32)
+        self.observation_space = Box(low=-1.0, high=1.0, shape=(self.logic_grounding_shape, ), dtype=np.float32)
         # self.n_agents = len(env.agents)
         # self.ped_idx = [i+3 for i in range(self.n_agents) if env.agents[i].type == "Pedestrian"]
         # self.car_idx = [i+3 for i in range(self.n_agents) if env.agents[i].type == "Car"]
@@ -44,7 +44,9 @@ class GymCityWrapper(gym.core.Env):
                     self.agent = agent
                     self.agent_layer_id = agent.layer_id
         assert self.agent_layer_id is not None, "Agent not found! Recheck Your agent_name in the config file!"
-        self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.agent.action_space.shape[0], ), dtype=np.float32)
+        action_space = self.env.rl_agent["action_space"]
+        self.action_space = gym.spaces.Box(low=0, high=1, shape=(action_space, ), dtype=np.float32)
+        self.action_mapping = env.rl_agent["action_mapping"]
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
         self.scale = [25, 7, 3.5, 8.3]
         self.mini_scale = [0, 0, -1, 0]
@@ -52,7 +54,6 @@ class GymCityWrapper(gym.core.Env):
         
     def _flatten_obs(self, obs_dict):
         # Create a new image with a 0 background
-        # TODO: may need layers from other agents
         neighborhood_obs = CPU(obs_dict["World"][0:3])
         map_obs = np.ones((3, self.fov, self.fov), dtype=np.float32)
         start_pos = CPU(self.agent.start)
@@ -111,10 +112,9 @@ class GymCityWrapper(gym.core.Env):
     
     def reset(self, return_info=False):
         self.t = 0
-        # TODO: reset functions!
         WALKING_STREET = TYPE_MAP['Walking Street']
         CROSSING_STREET = TYPE_MAP['Overlap']
-        self.agent.init(self.env.city_grid, rl_agent=True)
+        self.agent.init(self.env.city_grid, debug=True)
         self.reinit()
         logger.info("=============")
         logger.info("Reset Agent")
