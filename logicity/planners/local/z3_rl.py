@@ -20,7 +20,7 @@ class PesudoAgent:
     def __init__(self, type, layer_id, concepts, moving_direction):
         self.type = type
         self.layer_id = layer_id
-        self.type = concepts["type"]
+        self.type = concepts["type"] if concepts else None
         self.concepts = concepts
         self.moving_direction = moving_direction
 
@@ -138,13 +138,14 @@ class Z3PlannerRL(Z3Planner):
                 else:
                     partial_agent[str(layer_id)] = PesudoAgent(agent_type, layer_id, other_agent.concepts, other_agent.last_move_dir)
             if rl_flag[ego_name]:
+                # RL agent needs fixed number of entities
                 while len(partial_agent) < self.fov_entities["Agent"]:
                     layer_id += 1
-                    place_holder_agent = PesudoAgent(partial_agent["{}".format(layer_id-1)].type, layer_id, partial_agent["{}".format(layer_id-1)].concepts,\
-                                                      partial_agent["{}".format(layer_id-1)].moving_direction)
-                    partial_agent["{}".format(layer_id)] = place_holder_agent
+                    place_holder_agent = PesudoAgent("PH", layer_id, None,\
+                                                      None)
+                    partial_agent["PH_{}".format(layer_id)] = place_holder_agent
                         # Additional place holder for rl agent
-                    partial_world_squeezed = torch.cat([partial_world_squeezed, partial_world_squeezed[-1].unsqueeze(0)], dim=0)
+                    # partial_world_squeezed = torch.cat([partial_world_squeezed, partial_world_squeezed[-1].unsqueeze(0)], dim=0)
             partial_world[ego_name] = partial_world_squeezed
             partial_intersection[ego_name] = partial_intersections
             partial_agents[ego_name] = partial_agent
@@ -361,9 +362,13 @@ def world2entity(entity_sorts, partial_intersect, partial_agents, fov_entities, 
                 if "ego" in key:
                     ego_agent = agent
                     continue
-                agent_id = agent.layer_id
-                agent_type = agent.type
-                agent_name = f"Agent_{agent_type}_{agent_id}"
+                if "PH" in key:
+                    agent_id = agent.layer_id
+                    agent_name = f"Agent_PH_{agent_id}"
+                else:
+                    agent_id = agent.layer_id
+                    agent_type = agent.type
+                    agent_name = f"Agent_{agent_type}_{agent_id}"
                 # Create a Z3 constant for the agent
                 agent_entity = Const(agent_name, entity_sorts['Agent'])
                 entities[entity_type].append(agent_entity)

@@ -13,6 +13,8 @@ def IsAt(world_matrix, intersect_matrix, agents, entity1, entity2):
     # Must be "Agents" at "Intersections"
     assert "Agent" in entity1
     assert "Intersection" in entity2
+    if "PH" in entity1:
+        return 0
 
     _, agent_type, layer_id = entity1.split("_")
     layer_id = int(layer_id)
@@ -35,6 +37,8 @@ def CollidingClose(world_matrix, intersect_matrix, agents, entity1, entity2):
     assert "Agent" in entity1
     assert "Agent" in entity2
     if entity1 == entity2:
+        return 0
+    if "PH" in entity1 or "PH" in entity2:
         return 0
     # TODO: Colliding close checker
     # 1. Get the position of the two agents
@@ -120,6 +124,8 @@ def IsInInter(world_matrix, intersect_matrix, agents, entity1, entity2):
     # Must be "Agents" in "Intersections"
     assert "Agent" in entity1
     assert "Intersection" in entity2
+    if "PH" in entity1:
+        return 0
     _, agent_type, layer_id = entity1.split("_")
     layer_id = int(layer_id)
     agent_layer = world_matrix[layer_id]
@@ -136,6 +142,10 @@ def IsClose(world_matrix, intersect_matrix, agents, entity1, entity2):
     # Must be "Agents" close to "Agents"
     assert "Agent" in entity1
     assert "Agent" in entity2
+    if entity1 == entity2:
+        return 0
+    if "PH" in entity1 or "PH" in entity2:
+        return 0
     _, agent_type1, layer_id1 = entity1.split("_")
     _, agent_type2, layer_id2 = entity2.split("_")
     layer_id1 = int(layer_id1)
@@ -152,7 +162,7 @@ def IsClose(world_matrix, intersect_matrix, agents, entity1, entity2):
 
 def IsCar(world_matrix, intersect_matrix, agents, entity):
     assert "Agent" in entity
-    if "dummy" in entity:
+    if "PH" in entity:
         return 0
     if "Car" in entity:
         return 1
@@ -193,6 +203,8 @@ def inter2priority_list(intersection_positions):
 def HigherPri(world_matrix, intersect_matrix, agents, entity1, entity2):
     assert "Agent" in entity1
     assert "Agent" in entity2
+    if entity1 == entity2:
+        return 0
     if ("Car" not in entity1) or ("Car" not in entity2):
         return 0
     if "dummy" in entity1 or "dummy" in entity2:
@@ -240,7 +252,7 @@ def HigherPri(world_matrix, intersect_matrix, agents, entity1, entity2):
 
 def IsPed(world_matrix, intersect_matrix, agents, entity):
     assert "Agent" in entity
-    if "dummy" in entity:
+    if "PH" in entity:
         return 0
     if "Pedestrian" in entity:
         return 1
@@ -250,6 +262,8 @@ def IsPed(world_matrix, intersect_matrix, agents, entity):
 def IsAmb(world_matrix, intersect_matrix, agents, entity):
     assert "Agent" in entity
     if "Pedestrian" in entity:
+        return 0
+    if "PH" in entity:
         return 0
     _, _, layer_id = entity.split("_")
     if layer_id in agents.keys():
@@ -266,6 +280,8 @@ def IsBus(world_matrix, intersect_matrix, agents, entity):
     assert "Agent" in entity
     if "Pedestrian" in entity:
         return 0
+    if "PH" in entity:
+        return 0
     _, _, layer_id = entity.split("_")
     if layer_id in agents.keys():
         agent_concept = agents[layer_id].concepts
@@ -281,6 +297,8 @@ def IsTiro(world_matrix, intersect_matrix, agents, entity):
     assert "Agent" in entity
     if "Pedestrian" in entity:
         return 0
+    if "PH" in entity:
+        return 0
     _, _, layer_id = entity.split("_")
     if layer_id in agents.keys():
         agent_concept = agents[layer_id].concepts
@@ -295,6 +313,8 @@ def IsTiro(world_matrix, intersect_matrix, agents, entity):
 def IsOld(world_matrix, intersect_matrix, agents, entity):
     assert "Agent" in entity
     if "Car" in entity:
+        return 0
+    if "PH" in entity:
         return 0
     _, _, layer_id = entity.split("_")
     if layer_id in agents.keys():

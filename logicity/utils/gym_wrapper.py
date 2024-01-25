@@ -152,8 +152,8 @@ class GymCityWrapper(gym.core.Env):
         done = self.agent.reach_goal
         if done:
             info["succcess"] = True
-            rew += 10
-            self.agent.init(self.env.city_grid, rl_agent=True)
+            rew += 1
+            self.agent.init(self.env.city_grid)
             self.reinit()
             logger.info("Reset agent by success")
         if self.agent.pos[0] <= 0 or self.agent.pos[1] <= 0 or \
@@ -161,7 +161,7 @@ class GymCityWrapper(gym.core.Env):
             info["success"] = False
             done = True
             rew -= 10
-            self.agent.init(self.env.city_grid, rl_agent=True)
+            self.agent.init(self.env.city_grid)
             self.reinit()
             logger.info("Reset agent by oor")
         
@@ -169,7 +169,7 @@ class GymCityWrapper(gym.core.Env):
             done = True
             info["success"] = False
             info["overtime"] = True
-            self.agent.init(self.env.city_grid, rl_agent=True)
+            self.agent.init(self.env.city_grid)
             self.reinit()
             print("Reset agent by overtime")
             
