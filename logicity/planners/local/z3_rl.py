@@ -31,12 +31,12 @@ class Z3PlannerRL(Z3Planner):
     def plan(self, world_matrix, intersect_matrix, agents, layerid2listid, use_multiprocessing=True, rl_agent=None):
         # 1. Break the global world matrix into local world matrix and split the agents and intersections
         # Note that the local ones will have different size and agent id
-        e = time.time()
+        # e = time.time()
         local_world_matrix = world_matrix.clone()
         local_intersections = intersect_matrix.clone()
         ego_agent, partial_agents, partial_world, partial_intersections, rl_flags = \
             self.break_world_matrix(local_world_matrix, agents, local_intersections, layerid2listid, rl_agent)
-        logger.info("Break world time: {}".format(time.time()-e))
+        # logger.info("Break world time: {}".format(time.time()-e))
         # 2. Choose between multi-processing and looping
         combined_results = {}
         agent_keys = list(partial_agents.keys())
@@ -66,7 +66,7 @@ class Z3PlannerRL(Z3Planner):
                 combined_results.update(result)
 
         e2 = time.time()
-        logger.info("Solve sub-problem time: {}".format(e2-e))
+        # logger.info("Solve sub-problem time: {}".format(e2-e))
         return combined_results
     
     def get_fov(self, position, direction, width, height):
@@ -127,6 +127,9 @@ class Z3PlannerRL(Z3Planner):
                 layer_nonzero_int = torch.logical_and(layer != 0, layer == layer.to(torch.int64))
                 if layer_nonzero_int.nonzero().shape[0] > 1:
                     continue
+                if len(partial_agent) >= self.fov_entities["Agent"] and rl_flag[ego_name]:
+                    # can only handle fixed number of agents
+                    break
                 non_zero_values = int(layer[layer_nonzero_int.nonzero()[0][0], layer_nonzero_int.nonzero()[0][1]])
                 agent_type = LABEL_MAP[non_zero_values]
                 # find this agent
@@ -356,11 +359,13 @@ def world2entity(entity_sorts, partial_intersect, partial_agents, fov_entities, 
     entities = {}
     for entity_type in entity_sorts.keys():
         entities[entity_type] = []
+        flag = False
         # For Agents
         if entity_type == "Agent":
             for key, agent in partial_agents.items():
                 if "ego" in key:
                     ego_agent = agent
+                    flag = True
                     continue
                 if "PH" in key:
                     agent_id = agent.layer_id
@@ -372,6 +377,7 @@ def world2entity(entity_sorts, partial_intersect, partial_agents, fov_entities, 
                 # Create a Z3 constant for the agent
                 agent_entity = Const(agent_name, entity_sorts['Agent'])
                 entities[entity_type].append(agent_entity)
+            assert flag, logger.info(partial_agents)
             agent_id = ego_agent.layer_id
             agent_type = ego_agent.type
             agent_name = f"Agent_{agent_type}_{agent_id}"
@@ -380,7 +386,7 @@ def world2entity(entity_sorts, partial_intersect, partial_agents, fov_entities, 
             # ego agent is the first
             entities[entity_type] = [agent_entity] + entities[entity_type]
             if rl_flag:
-                assert len(entities[entity_type]) == fov_entities["Agent"]
+                assert len(entities[entity_type]) == fov_entities["Agent"], logger.info(entities)
         elif entity_type == "Intersection":
             # For Intersections
             unique_intersections = np.unique(partial_intersect[0])
@@ -400,10 +406,12 @@ def world2entity(entity_sorts, partial_intersect, partial_agents, fov_entities, 
                     intersection_entity = Const(intersection_name, entity_sorts['Intersection'])
                     entities[entity_type].append(intersection_entity)
                 if len(entities[entity_type]) < fov_entities["Intersection"]:
+                    current = len(entities[entity_type]) + 100
                     while len(entities[entity_type]) < fov_entities["Intersection"]:
-                        intersection_name = f"Intersection_{-1}"
+                        intersection_name = "Intersection_PH_{}".format(current)
                         # Create a Z3 constant for the intersection
                         intersection_entity = Const(intersection_name, entity_sorts['Intersection'])
-                        entities[entity_type].append(entities[entity_type][-1])
+                        entities[entity_type].append(intersection_entity)
+                        current += 1
                 assert len(entities[entity_type]) == fov_entities["Intersection"]
     return entities

@@ -116,7 +116,7 @@ class GymCityWrapper(gym.core.Env):
     
     def reset(self, return_info=False):
         self.t = 0
-        self.agent.init(self.env.city_grid, debug=True)
+        self.agent.init(self.env.city_grid)
         self.reinit()
         logger.info("=============")
         logger.info("Reset Agent")

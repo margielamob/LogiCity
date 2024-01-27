@@ -13,7 +13,7 @@ def IsAt(world_matrix, intersect_matrix, agents, entity1, entity2):
     # Must be "Agents" at "Intersections"
     assert "Agent" in entity1
     assert "Intersection" in entity2
-    if "PH" in entity1:
+    if "PH" in entity1 or "PH" in entity2:
         return 0
 
     _, agent_type, layer_id = entity1.split("_")
@@ -78,7 +78,7 @@ def CollidingClose(world_matrix, intersect_matrix, agents, entity1, entity2):
 
 def IsInterCarEmpty(world_matrix, intersect_matrix, agents, entity):
     assert "Intersection" in entity
-    if "dummy" in entity:
+    if "PH" in entity:
         return 0
     _, inter_id = entity.split("_")
     inter_id = int(inter_id)
@@ -100,7 +100,7 @@ def IsInterCarEmpty(world_matrix, intersect_matrix, agents, entity):
 
 def IsInterEmpty(world_matrix, intersect_matrix, agents, entity):
     assert "Intersection" in entity
-    if "dummy" in entity:
+    if "PH" in entity:
         return 0
     _, inter_id = entity.split("_")
     inter_id = int(inter_id)
@@ -124,7 +124,7 @@ def IsInInter(world_matrix, intersect_matrix, agents, entity1, entity2):
     # Must be "Agents" in "Intersections"
     assert "Agent" in entity1
     assert "Intersection" in entity2
-    if "PH" in entity1:
+    if "PH" in entity1 or "PH" in entity2:
         return 0
     _, agent_type, layer_id = entity1.split("_")
     layer_id = int(layer_id)
@@ -207,7 +207,7 @@ def HigherPri(world_matrix, intersect_matrix, agents, entity1, entity2):
         return 0
     if ("Car" not in entity1) or ("Car" not in entity2):
         return 0
-    if "dummy" in entity1 or "dummy" in entity2:
+    if "PH" in entity1 or "PH" in entity2:
         return 0
     if entity1 == entity2:
         return 0

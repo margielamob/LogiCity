@@ -29,6 +29,7 @@ class CityEnv(City):
     def update(self, action, idx):
         current_obs = {}
         # state at time t
+        current_obs["World"] = self.city_grid.clone()
         current_obs["World_state"] = []
         current_obs["Agent_actions"] = []
         current_obs["Expert_actions"] = []
@@ -37,7 +38,7 @@ class CityEnv(City):
         current_world = self.city_grid.clone()
         # first do local planning based on city rules
         agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents, \
-                                                    self.layer_id2agent_list_id, use_multiprocessing=False, rl_agent=idx)
+                                                    self.layer_id2agent_list_id, use_multiprocessing=self.use_multi, rl_agent=idx)
         # Then do global action taking acording to the local planning results
         # input((action_idx, idx))
         

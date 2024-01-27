@@ -51,6 +51,7 @@ class Pedestrian(Agent):
         self.movable_region = (world_state_matrix[STREET_ID] == WALKING_STREET) | (world_state_matrix[STREET_ID] == CROSSING_STREET)
         # get global traj on the occupacy map
         self.global_traj = self.global_planner(self.movable_region, self.start, self.goal)
+        self.reach_goal = False
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
     def get_start(self, world_state_matrix):

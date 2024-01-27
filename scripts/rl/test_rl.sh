@@ -1,3 +1,4 @@
 # Description: Test RL agent
 # /bin/bash
-python3 main.py --rl_config config/tasks/Nav/RL/config_test.yaml --exp PPO_1e-5_test
+CONFIG=config/tasks/Nav/RL/config_mlp.yaml
+python3 main.py --rl_config $CONFIG --exp mlp_test --use_gym
