@@ -6,8 +6,7 @@ simulation:
   rule_yaml_file: "config/rules/Z3/easy/easy_rule.yaml"                 # Whether to render the environment
   rl: false
   debug: false
-  use_multi: True
-  seed: 0
-  max-steps: 120
+  use_multi: false
+  agent_region: 120
   
 

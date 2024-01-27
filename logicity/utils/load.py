@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class CityLoader:
     @staticmethod
-    def from_yaml(map_yaml_file, agent_yaml_file, rule_yaml_file, rule_type, rl=False, debug=False, rl_agent=None, use_multi=False):
+    def from_yaml(map_yaml_file, agent_yaml_file, rule_yaml_file, rule_type, rl=False, debug=False, rl_agent=None, use_multi=False, agent_region=240):
 
         cached_observation = {
                 "Time_Obs": {},
@@ -80,7 +80,7 @@ class CityLoader:
         city.add_intersections()
 
         # Add agents to the city
-        logger.info("Adding {} agents".format(len(city_config["agents"])))
+        logger.info("Adding {} agents, they are constrained in {} region".format(len(city_config["agents"]), agent_region))
         for agents_data in tqdm(city_config["agents"]):
             agent = Agent_mapper[agents_data["class"]](
                 size=agents_data["size"],
@@ -88,7 +88,8 @@ class CityLoader:
                 global_planner=agents_data['gplanner'],
                 concepts=agents_data['concepts'],
                 world_state_matrix=city.city_grid,
-                debug=debug
+                debug=debug,
+                region=agent_region
             )
             city.add_agent(agent)
             agent_name = "{}_{}".format(agent.type, agent.layer_id)

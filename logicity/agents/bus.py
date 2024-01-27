@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
 class Bus(Car):
-    def __init__(self, size, id, world_state_matrix, global_planner, concepts, debug=False):
-        super().__init__(size, id, world_state_matrix, global_planner, concepts, debug=debug)
+    def __init__(self, size, id, world_state_matrix, global_planner, concepts, debug=False, region=240):
+        super().__init__(size, id, world_state_matrix, global_planner, concepts, debug=debug, region=region)
 
     def init(self, world_state_matrix, debug=False):
         Traffic_STREET = TYPE_MAP['Traffic Street']

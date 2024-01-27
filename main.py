@@ -32,6 +32,9 @@ def parse_arguments():
     parser.add_argument('--log_dir', type=str, default="./log_rl")
     parser.add_argument('--exp', type=str, default="test_mlp")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
+    # seed
+    parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--max-steps', type=int, default=100)
     # RL
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--config', default='config/tasks/sim/easy.yaml', help='Configure file for this RL exp.')
@@ -39,11 +42,14 @@ def parse_arguments():
     return parser.parse_args()
 
 def main(args, logger):
-    logger.info("Starting city simulation with random seed {}... Debug mode: {}, Use multi-processing for Z3: {}".format(args.seed, args.debug, args.use_multi))
+    config = load_config(args.config)
+    # simulation config
+    simulation_config = config["simulation"]
+    logger.info("Simulation config: {}".format(simulation_config))
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     # Create a city instance with a predefined grid
-    city, cached_observation = CityLoader.from_yaml(args.map, args.agents, args.rules, args.rule_type, False, args.debug, args.use_multi)
+    city, cached_observation = CityLoader.from_yaml(**simulation_config)
     visualize_city(city, 4*WORLD_SIZE, -1, "vis/init.png")
     # Main simulation loop
     steps = 0
@@ -88,7 +94,7 @@ def main_gym(args, logger):
         return _init
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
-    config = load_config(args.rl_config)
+    config = load_config(args.config)
     # simulation config
     simulation_config = config["simulation"]
     logger.info("Simulation config: {}".format(simulation_config))
@@ -177,13 +183,13 @@ if __name__ == '__main__':
     logger = setup_logger(log_dir=args.log_dir, log_name=args.exp)
     if args.use_gym:
         logger.info("Running in RL mode.")
-        assert args.rl_config is not None, "Please specify a config file for RL."
-        logger.info("Loading RL config from {}.".format(args.rl_config))
+        logger.info("Loading RL config from {}.".format(args.config))
         # RL mode, will use gym wrapper to learn and test an agent
         main_gym(args, logger)
     else:
         # Sim mode, will use the logic-based simulator to run a simulation (no learning)
         logger.info("Running in simulation mode.")
+        logger.info("Loading simulation config from {}.".format(args.config))
         e = time.time()
         main(args, logger)
         logger.info("Total time spent: {}".format(time.time()-e))

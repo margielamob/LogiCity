@@ -14,11 +14,11 @@ logger = logging.getLogger(__name__)
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
 class Pedestrian(Agent):
-    def __init__(self, size, id, world_state_matrix, global_planner, concepts, debug=False):
+    def __init__(self, size, id, world_state_matrix, global_planner, concepts, debug=False, region=240):
         self.start_point_list = None
         self.goal_point_list = None
         self.global_planner = GPlanner_mapper[global_planner]
-        super().__init__(size, id, world_state_matrix, concepts, debug=debug)
+        super().__init__(size, id, world_state_matrix, concepts, debug=debug, region=region)
         # pedestrian use A*, which is just a function
         self.action_mapping = {
             0: "Left_Normal", 
@@ -59,6 +59,9 @@ class Pedestrian(Agent):
         building = [TYPE_MAP[b] for b in PEDES_GOAL_START]
         # Find cells that are walking streets and have a house or office around them
         desired_locations = sample_start_goal(world_state_matrix, TYPE_MAP['Walking Street'], building, kernel_size=PED_GOAL_START_INCLUDE_KERNEL)
+        desired_locations[self.region:, :] = False
+        desired_locations[:, self.region:] = False
+        
         self.start_point_list = torch.nonzero(desired_locations).tolist()
         random_index = torch.randint(0, len(self.start_point_list), (1,)).item()
         
@@ -88,9 +91,10 @@ class Pedestrian(Agent):
         expanded_mask = F.max_pool2d(building_mask[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2) > 0
         
         desired_locations[expanded_mask[0, 0]] = False
-
+        desired_locations[self.region:, :] = False
+        desired_locations[:, self.region:] = False
         # Return the indices of the desired locations
-        goal_point_list = torch.nonzero(desired_locations).tolist()
+        goal_point_list = torch.nonzero(desired_locations).tolist()        
         random_index = torch.randint(0, len(goal_point_list), (1,)).item()
         
         # Fetch the corresponding location
@@ -134,6 +138,8 @@ class Pedestrian(Agent):
             expanded_mask = F.max_pool2d(building_mask[None, None].float(), exclusion_radius, stride=1, padding=(exclusion_radius - 1) // 2) > 0
             
             desired_locations[expanded_mask[0, 0]] = False
+            desired_locations[self.region:, :] = False
+            desired_locations[:, self.region:] = False
 
             # Return the indices of the desired locations
             goal_point_list = torch.nonzero(desired_locations).tolist()

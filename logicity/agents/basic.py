@@ -3,7 +3,7 @@ from torch.distributions import Categorical
 from ..core.config import *
 
 class Agent:
-    def __init__(self, size, id, world_state_matrix, concepts, debug=False):
+    def __init__(self, size, id, world_state_matrix, concepts, debug=False, region=240):
         self.size = size
         self.concepts = concepts
         self.type = concepts["type"]
@@ -28,6 +28,7 @@ class Agent:
         self.reach_goal = False
         self.reach_goal_buffer = 0
         self.debug = debug
+        self.region = region
         self.init(world_state_matrix, debug)
 
     def init(self, world_state_matrix, debug=False):
