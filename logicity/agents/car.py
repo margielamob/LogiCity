@@ -81,6 +81,7 @@ class Car(Agent):
         self.intersection_points = torch.cat([torch.cat(self.global_planner.start_lists, dim=0), torch.cat(self.global_planner.end_lists, dim=0)], dim=0)
         # get global traj on the occupacy map
         self.global_traj = self.global_planner.plan(self.start, self.goal, 1)
+        self.reach_goal = False
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
     def get_start(self, world_state_matrix):

@@ -120,7 +120,9 @@ class GymCityWrapper(gym.core.Env):
         self.reinit()
         logger.info("=============")
         logger.info("Reset Agent")
-        ob_dict = self.env.update(torch.tensor([0, 0, 0, 0, 1], dtype=torch.float32), self.agent_layer_id)
+        one_hot_action = torch.zeros_like(self.agent.action_dist, dtype=torch.float32)
+        one_hot_action[-1] = 1
+        ob_dict = self.env.update(one_hot_action, self.agent_layer_id)
         obs = self._flatten_obs(ob_dict)
         self.last_dist = -1
         self.last_pos = None
