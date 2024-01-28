@@ -1,7 +1,7 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/1p9c.yaml" # Agents in the simulation
+  agent_yaml_file: "config/agents/4p12c.yaml" # Agents in the simulation
   rule_type: "Z3_RL"               # z3 rl will sat the rl_agent with fixed number of other entities, also return the groundings as obs
   rule_yaml_file: "config/rules/Z3/easy/easy_rule.yaml"                    # Whether to render the environment
   rl: true
@@ -9,21 +9,21 @@ simulation:
   use_multi: false
   agent_region: 140
   rl_agent: 
-    agent_name: "Pedestrian_1"               # ID of the RL agent, this is the agent id in the agent yaml file
+    agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
     horizon: 250                          # Maximum steps in each episode 
     action_space: 2                       # Number of discrete actions, 2 means normal/stop
     action_mapping:                       # Mapping from policy action index to actual action space, see /agent folder
-      0: [1, 1, 1, 1, 0]
-      1: [0, 0, 0, 0, 1]
+      0: [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0]
+      1: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     fov_entities:
-      Agent: 5                        # Maximum number of agents in the FOV, include the RL agent
+      Agent: 6                        # Maximum number of agents in the FOV, include the RL agent
       Intersection: 1                 # Maximum number of intersections in the FOV, these correspond to the definition of rules
 
 eval_checkpoint:
   eval_freq: 20000                        # This is the frequency of evaluation, will be multiplied by num_envs
   save_freq: 20000
   save_path: './checkpoints/'
-  name_prefix: 'mlp_model_small'
+  name_prefix: 'car_small_4p12c'
 
 # Stable Baselines specific settings
 stable_baselines:
@@ -40,7 +40,7 @@ stable_baselines:
     ent_coef: 0.0                 # Entropy coefficient
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
-  train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/best_model.zip"           # Path to a checkpoint to restore the model from
-  num_envs: 1                   # Number of environments to run in parallel
+  train: true                   # Whether to train the model
+  checkpoint_path: ""           # Path to a checkpoint to restore the model from
+  num_envs: 2                   # Number of environments to run in parallel
   total_timesteps: 1000000    # Total number of timesteps to run for all environments combined
