@@ -18,7 +18,7 @@ class EvalCheckpointCallback(CheckpointCallback):
         # Perform evaluation at specified intervals
         if self.n_calls % self.eval_freq == 0:
             rewards_list = []
-            for episode in range(20):  # Number of episodes for evaluation
+            for episode in range(5):  # Number of episodes for evaluation
                 obs = self.eval_env.reset()
                 episode_rewards = 0
                 done = False

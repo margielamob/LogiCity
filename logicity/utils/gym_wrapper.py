@@ -28,11 +28,6 @@ class GymCityWrapper(gym.core.Env):
         #     "position": Box(low=0.0, high=1.0, shape=(6,), dtype=np.float32)
         # })
         self.observation_space = Box(low=-1.0, high=1.0, shape=(self.logic_grounding_shape, ), dtype=np.float32)
-        # self.n_agents = len(env.agents)
-        # self.ped_idx = [i+3 for i in range(self.n_agents) if env.agents[i].type == "Pedestrian"]
-        # self.car_idx = [i+3 for i in range(self.n_agents) if env.agents[i].type == "Car"]
-        # self.num_ped = len(self.ped_idx)
-        # self.num_car = len(self.car_idx)
         self.last_dist = -1
         self.agent_name = env.rl_agent["agent_name"]
         self.horizon = env.rl_agent["horizon"]
@@ -118,7 +113,6 @@ class GymCityWrapper(gym.core.Env):
         self.t = 0
         self.agent.init(self.env.city_grid)
         self.reinit()
-        logger.info("=============")
         logger.info("Reset Agent")
         one_hot_action = torch.zeros_like(self.agent.action_dist, dtype=torch.float32)
         one_hot_action[-1] = 1
@@ -138,6 +132,8 @@ class GymCityWrapper(gym.core.Env):
         agent_layer[start[0], start[1]] = agent_code
         agent_layer[goal[0], goal[1]] = agent_code + AGENT_GOAL_PLUS
         self.env.city_grid[self.agent_layer_id] = agent_layer
+        assert len((agent_layer == agent_code).nonzero()) == 1, \
+            ValueError("RL agent should be unique in the world matrix, now start is {}, goal is {}".format(start, goal))
 
     def step(self, action):
         self.t += 1
@@ -173,7 +169,7 @@ class GymCityWrapper(gym.core.Env):
             info["overtime"] = True
             self.agent.init(self.env.city_grid)
             self.reinit()
-            print("Reset agent by overtime")
+            logger.info("Reset agent by overtime")
             
         return obs, rew, done, info
     

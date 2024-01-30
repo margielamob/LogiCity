@@ -110,6 +110,7 @@ class Z3PlannerRL(Z3Planner):
             ego_agent[ego_name] = agent
             rl_flag[ego_name] = (agent.layer_id==rl_agent)
             ego_layer = world_matrix[agent.layer_id]
+            assert len((ego_layer == TYPE_MAP[agent.type]).nonzero()) == 1, ValueError("Ego agent {}_{} should be unique in the world matrix, now it is {}".format(agent.type, agent.layer_id, (ego_layer == TYPE_MAP[agent.type]).nonzero()))
             ego_position = (ego_layer == TYPE_MAP[agent.type]).nonzero()[0]
             ego_direction = agent.last_move_dir
             x_start, y_start, x_end, y_end = self.get_fov(ego_position, ego_direction, world_matrix.shape[1], world_matrix.shape[2])

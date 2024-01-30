@@ -125,6 +125,7 @@ class Car(Agent):
         desired_locations[expanded_mask[0, 0]] = False
         desired_locations[self.region:, :] = False
         desired_locations[:, self.region:] = False
+        desired_locations[start_point[0], start_point[1]] = False
 
         # Return the indices of the desired locations
         goal_point_list = torch.nonzero(desired_locations).tolist()
@@ -132,6 +133,7 @@ class Car(Agent):
         
         # Fetch the corresponding location
         goal_point = goal_point_list[random_index]
+        assert (goal_point[0] != start_point[0] or goal_point[1] != start_point[1]), "start point and goal point are the same!"
 
         # Return the indices of the desired locations
         return goal_point
