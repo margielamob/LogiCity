@@ -1,3 +1,6 @@
 [submodule "src/lnn"]
 	path = src/lnn
 	url = https://github.com/Jaraxxus-Me/LNN.git
+[submodule "src/pyastar"]
+	path = src/pyastar
+	url = https://github.com/Jaraxxus-Me/pyastar2d.git
