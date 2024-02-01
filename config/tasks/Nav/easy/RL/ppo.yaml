@@ -10,7 +10,7 @@ simulation:
   agent_region: 100
   rl_agent: 
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
-    horizon: 250                          # Maximum steps in each episode 
+    horizon: 100                          # Maximum steps in each episode 
     action_space: 4                       # Number of discrete actions, 4 means slow/normal/fast/stop
     action_mapping:                       # Mapping from policy action index to actual action space, see /agent folder
       0: [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -22,10 +22,10 @@ simulation:
       Intersection: 1                 # Maximum number of intersections in the FOV, these correspond to the definition of rules
 
 eval_checkpoint:
-  eval_freq: 20000                        # This is the frequency of evaluation, will be multiplied by num_envs
-  save_freq: 20000
+  eval_freq: 1000                        # This is the frequency of evaluation, will be multiplied by num_envs
+  save_freq: 1000
   save_path: './checkpoints/'
-  name_prefix: 'car_small_4p12c'
+  name_prefix: '3p6c2b_ppo'
 
 # Stable Baselines specific settings
 stable_baselines:

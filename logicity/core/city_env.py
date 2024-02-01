@@ -32,13 +32,14 @@ class CityEnv(City):
         current_obs["World"] = self.city_grid.clone()
         current_obs["World_state"] = []
         current_obs["Agent_actions"] = []
-        current_obs["Expert_actions"] = []
+        current_obs["Reward"] = []
                 
         new_matrix = torch.zeros_like(self.city_grid)
         current_world = self.city_grid.clone()
         # first do local planning based on city rules
         agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents, \
-                                                    self.layer_id2agent_list_id, use_multiprocessing=self.use_multi, rl_agent=idx)
+                                                    self.layer_id2agent_list_id, use_multiprocessing=self.use_multi, rl_agent=idx, \
+                                                    rl_action=action)
         # Then do global action taking acording to the local planning results
         # input((action_idx, idx))
         
@@ -46,14 +47,14 @@ class CityEnv(City):
             # re-initialized agents may update city matrix as well
             agent_name = "{}_{}".format(agent.type, agent.layer_id)
             # local reasoning-based action distribution
-            local_action_dist = agent_action_dist[agent_name]
             # global trajectory-based action or sampling from local action distribution
             if agent.layer_id == idx: 
                 current_obs["Agent_actions"].append(action)
                 current_obs["World_state"].append(agent_action_dist["{}_grounding".format(agent_name)])
-                current_obs["Expert_actions"].append(local_action_dist)
+                current_obs["Reward"].append(agent_action_dist["{}_reward".format(agent_name)])
                 local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, action)
             else: 
+                local_action_dist = agent_action_dist[agent_name]
                 local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, local_action_dist)
 
             if agent.reach_goal:

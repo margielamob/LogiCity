@@ -94,3 +94,10 @@ CLOSE_RANGE = 5
 # solver processer
 NUM_PROCESS = 8
 AGENT_FOV = 25 # better be larger than intersection width
+ACTION2NAME = {
+    0: "Left",
+    1: "Right",
+    2: "Up",
+    3: "Down",
+    4: "Stop"
+}

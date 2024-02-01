@@ -15,6 +15,7 @@ from .z3 import Z3Planner
 
 logger = logging.getLogger(__name__)
 
+
 # used for grounding
 class PesudoAgent:
     def __init__(self, type, layer_id, concepts, moving_direction):
@@ -29,16 +30,20 @@ class Z3PlannerRL(Z3Planner):
         super().__init__(yaml_path)
 
     def _create_rules(self):
-        self.rules = {}
-        self.rule_tem = {}
-        for rule_dict in self.data["Rules"]:
-            (rule_name, rule_info), = rule_dict.items()
+        assert "Task" in self.data["Rules"].keys(), "Make sure the task rule is defined"
+        assert "Sim" in self.data["Rules"].keys(), "Make sure the sim rule is defined"
+        self.rules = {
+            "Task": {},
+            "Sim": {}
+        }
+        for rule_dict in self.data["Rules"]["Sim"]:
+            rule_name, formula = rule_dict["name"], rule_dict["formula"]
             # Check if the rule is valid
-            formula = rule_info["formula"]
-            logger.info("Rule: {} -> \n {}".format(rule_name, formula))
+            logger.info("*** Sim Rule ***: {} -> \n {}".format(rule_name, formula))
 
             # Create Z3 variables based on the formula
             var_names = self._extract_variables(formula)
+            # Note: Sim rule should contain all the Z3 variables
             self.z3_vars = var_names
 
             # Substitute predicate names in the formula with Z3 function instances
@@ -50,12 +55,39 @@ class Z3PlannerRL(Z3Planner):
                 formula = formula.replace(var_name, f'z3_vars["{var_name}"]')
 
             # Evaluate the modified formula string to create the Z3 expression
-            self.rule_tem[rule_name] = formula
-        rule_info = "\n".join(["- {}: {}".format(rule, details) for rule, details in self.rule_tem.items()])
-        logger.info("Number of Rules: {}\nRules:\n{}".format(len(self.rule_tem), rule_info))
+            self.rules["Sim"][rule_name] = formula
+
+        for rule_dict in self.data["Rules"]["Task"]:
+            rule_name, formula = rule_dict["name"], rule_dict["formula"]
+            self.rules["Task"][rule_name] = {}
+            # Check if the rule is valid
+            logger.info("*** Task Rule ***: {} -> \n {}".format(rule_name, formula))
+
+            # Create Z3 variables based on the formula
+            var_names = self._extract_variables(formula)
+
+            # Substitute predicate names in the formula with Z3 function instances
+            for method_name, pred_info in self.predicates.items():
+                formula = formula.replace(method_name, f'local_predicates["{method_name}"]["instance"]')
+
+            # Now replace the variable names in the formula with their Z3 counterparts
+            for var_name in var_names:
+                formula = formula.replace(var_name, f'z3_vars["{var_name}"]')
+
+            # Evaluate the modified formula string to create the Z3 expression
+            self.rules["Task"][rule_name]["content"] = formula
+            self.rules["Task"][rule_name]["weight"] = rule_dict["weight"]
+        
+        logger.info("Rules created successfully")
         logger.info("Rules will be grounded later...")
 
-    def plan(self, world_matrix, intersect_matrix, agents, layerid2listid, use_multiprocessing=True, rl_agent=None):
+    def plan(self, world_matrix, 
+             intersect_matrix, 
+             agents, 
+             layerid2listid, 
+             use_multiprocessing=True, 
+             rl_agent=None,
+             rl_action=None):
         # 1. Break the global world matrix into local world matrix and split the agents and intersections
         # Note that the local ones will have different size and agent id
         # e = time.time()
@@ -86,10 +118,16 @@ class Z3PlannerRL(Z3Planner):
         else:
             # Looping approach
             for ego_name in agent_keys:
-                result = solve_sub_problem(ego_name, ego_agent[ego_name].action_mapping, ego_agent[ego_name].action_dist,
-                                        self.rule_tem, self.entity_types, self.predicates, self.z3_vars,
-                                        partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name], 
-                                        self.fov_entities, rl_flags[ego_name], rl_input_shape=self.rl_input_shape)
+                if rl_flags[ego_name]:
+                    result = solve_sub_problem(ego_name, ego_agent[ego_name].action_mapping, ego_agent[ego_name].action_dist,
+                                            self.rules['Task'], self.entity_types, self.predicates, self.z3_vars,
+                                            partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name], 
+                                            self.fov_entities, True, rl_input_shape=self.rl_input_shape, rl_action=rl_action)
+                else:
+                    result = solve_sub_problem(ego_name, ego_agent[ego_name].action_mapping, ego_agent[ego_name].action_dist,
+                                            self.rules['Sim'], self.entity_types, self.predicates, self.z3_vars,
+                                            partial_agents[ego_name], partial_world[ego_name], partial_intersections[ego_name], 
+                                            self.fov_entities, False)
                 combined_results.update(result)
 
         e2 = time.time()
@@ -126,7 +164,6 @@ class Z3PlannerRL(Z3Planner):
         return x_start, y_start, x_end, y_end
 
     def break_world_matrix(self, world_matrix, agents, intersect_matrix, layerid2listid, rl_agent):
-        # TODO: for rl_agent, the other entity number is fixed
         ego_agent = {}
         partial_agents = {}
         partial_world = {}
@@ -265,116 +302,208 @@ def solve_sub_problem(ego_name,
                       partial_intersections,
                       fov_entities,
                       rl_flag,
-                      rl_input_shape):
-    # 1. create solver
+                      rl_input_shape=None,
+                      rl_action=None):
     grounding = []
-    local_solver = Solver()
-    # 2. create sorts and variables
+    # 1. create sorts and variables
     entity_sorts = {}
     for entity_type in entity_types:
         entity_sorts[entity_type] = DeclareSort(entity_type)
     z3_vars = {var_name: Const(var_name, entity_sorts[var_name.replace('dummy', '')]) \
                        for var_name in var_names}
-    # 3. partial world to entities
+    # 2. partial world to entities
     local_entities = world2entity(entity_sorts, partial_intersections, partial_agents, fov_entities, rl_flag)
-    # 4. create, ground predicates and add to solver
+    # 3. create, ground predicates and add to solver
     local_predicates = copy.deepcopy(predicates)
-    for pred_name, pred_info in local_predicates.items():
-        eval_pred = eval(pred_info["instance"])
-        pred_info["instance"] = eval_pred
-        arity = pred_info["arity"]
+    # 4. create, ground predicates and add to solver
+    if not rl_flag:
+        local_solver = Solver()
+        for pred_name, pred_info in local_predicates.items():
+            eval_pred = eval(pred_info["instance"])
+            pred_info["instance"] = eval_pred
+            arity = pred_info["arity"]
 
-        # Import the grounding method
-        method_full_name = pred_info["function"]
-        if method_full_name == "None":
-            continue
-        module_name, method_name = method_full_name.rsplit('.', 1)
-        module = importlib.import_module(module_name)
-        method = getattr(module, method_name)
+            # Import the grounding method
+            method_full_name = pred_info["function"]
+            if method_full_name == "None":
+                continue
+            module_name, method_name = method_full_name.rsplit('.', 1)
+            module = importlib.import_module(module_name)
+            method = getattr(module, method_name)
 
-        if arity == 1:
-            # Unary predicate grounding
-            for entity in local_entities[eval_pred.domain(0).name()]:
-                entity_name = entity.decl().name()
-                value = method(partial_world, partial_intersections, partial_agents, entity_name)
-                if value:
-                    grounding.append(1)
-                    local_solver.add(eval_pred(entity))
-                else:
-                    grounding.append(0)
-                    local_solver.add(Not(eval_pred(entity)))
-        elif arity == 2:
-            # Binary predicate grounding
-            for entity1 in local_entities[eval_pred.domain(0).name()]:
-                entity1_name = entity1.decl().name()
-                for entity2 in local_entities[eval_pred.domain(1).name()]:
-                    entity2_name = entity2.decl().name()
-                    value = method(partial_world, partial_intersections, partial_agents, entity1_name, entity2_name)
+            if arity == 1:
+                # Unary predicate grounding
+                for entity in local_entities[eval_pred.domain(0).name()]:
+                    entity_name = entity.decl().name()
+                    value = method(partial_world, partial_intersections, partial_agents, entity_name)
                     if value:
-                        grounding.append(1)
-                        local_solver.add(eval_pred(entity1, entity2))
+                        local_solver.add(eval_pred(entity))
                     else:
-                        grounding.append(0)
-                        local_solver.add(Not(eval_pred(entity1, entity2)))
+                        local_solver.add(Not(eval_pred(entity)))
+            elif arity == 2:
+                # Binary predicate grounding
+                for entity1 in local_entities[eval_pred.domain(0).name()]:
+                    entity1_name = entity1.decl().name()
+                    for entity2 in local_entities[eval_pred.domain(1).name()]:
+                        entity2_name = entity2.decl().name()
+                        value = method(partial_world, partial_intersections, partial_agents, entity1_name, entity2_name)
+                        if value:
+                            local_solver.add(eval_pred(entity1, entity2))
+                        else:
+                            local_solver.add(Not(eval_pred(entity1, entity2)))
+        # 5. create, ground rules and add to solver
+        local_rule_tem = copy.deepcopy(rule_tem)
+        for rule_name, rule_template in local_rule_tem.items():
+            # the first entity is the ego agent
+            agent = local_entities["Agent"][0]
+            # Replace placeholder in the rule template with the actual agent entity
+            instantiated_rule = eval(rule_template)
+            local_solver.add(instantiated_rule)
 
-    # 5. create, ground rules and add to solver
-    local_rule_tem = copy.deepcopy(rule_tem)
-    for rule_name, rule_template in local_rule_tem.items():
-        # the first entity is the ego agent
-        agent = local_entities["Agent"][0]
-        # Replace placeholder in the rule template with the actual agent entity
-        instantiated_rule = eval(rule_template)
-        local_solver.add(instantiated_rule)
+        # **Important: Closed world quantifier rule, to ensure z3 do not add new entity to satisfy the rule and "dummy" is not part of the world**
+        for var_name, z3_var in z3_vars.items():
+            entity_list = local_entities[var_name.replace('dummy', '')]
+            constraint = Or([z3_var == entity for entity in entity_list])
+            local_solver.add(ForAll([z3_var], constraint))
+        
+        # 6. solve
+        if local_solver.check() == sat:
+            model = local_solver.model()
+            # Interpret the solution to the FOL problem
+            action_mapping = ego_action_mapping
+            action_dist = torch.zeros_like(ego_action_dist)
 
-    # **Important: Closed world quantifier rule, to ensure z3 do not add new entity to satisfy the rule and "dummy" is not part of the world**
-    for var_name, z3_var in z3_vars.items():
-        entity_list = local_entities[var_name.replace('dummy', '')]
-        constraint = Or([z3_var == entity for entity in entity_list])
-        local_solver.add(ForAll([z3_var], constraint))
-    
-    # 6. solve
-    if local_solver.check() == sat:
-        model = local_solver.model()
-        # Interpret the solution to the FOL problem
-        action_mapping = ego_action_mapping
-        action_dist = torch.zeros_like(ego_action_dist)
+            for key in local_predicates.keys():
+                action = []
+                for action_id, action_name in action_mapping.items():
+                    if key in action_name:
+                        action.append(action_id)
+                if len(action)>0:
+                    for a in action:
+                        if is_true(model.evaluate(local_predicates[key]["instance"](local_entities["Agent"][0]))):
+                            action_dist[a] = 1.0
+            # No action specified, use the default action, Normal
+            if action_dist.sum() == 0:
+                for action_id, action_name in action_mapping.items():
+                    if "Normal" in action_name:
+                        action_dist[action_id] = 1.0
 
-        for key in local_predicates.keys():
-            action = []
-            for action_id, action_name in action_mapping.items():
-                if key in action_name:
-                    action.append(action_id)
-            if len(action)>0:
-                for a in action:
-                    if is_true(model.evaluate(local_predicates[key]["instance"](local_entities["Agent"][0]))):
-                        action_dist[a] = 1.0
-        # No action specified, use the default action, Normal
-        if action_dist.sum() == 0:
+            agents_actions = {ego_name: action_dist}
+            # if rl_flag:
+            #     agents_actions["{}_grounding".format(ego_name)] = np.array(grounding, dtype=np.float32)
+            #     assert len(agents_actions["{}_grounding".format(ego_name)]) == rl_input_shape
+            return agents_actions
+        else:
+            # raise ValueError("No solution means do not exist intersection/agent in the field of view")
+        #     # No solution means do not exist intersection/agent in the field of view, Normal
+        #     # Interpret the solution to the FOL problem
+            action_mapping = ego_action_mapping
+            action_dist = torch.zeros_like(ego_action_dist)
+
             for action_id, action_name in action_mapping.items():
                 if "Normal" in action_name:
                     action_dist[action_id] = 1.0
 
-        agents_actions = {ego_name: action_dist}
-        if rl_flag:
-            agents_actions["{}_grounding".format(ego_name)] = np.array(grounding, dtype=np.float32)
-            assert len(agents_actions["{}_grounding".format(ego_name)]) == rl_input_shape
-        return agents_actions
+            agents_actions = {ego_name: action_dist}
+            return agents_actions
     else:
-        # raise ValueError("No solution means do not exist intersection/agent in the field of view")
-    #     # No solution means do not exist intersection/agent in the field of view, Normal
-    #     # Interpret the solution to the FOL problem
-        action_mapping = ego_action_mapping
-        action_dist = torch.zeros_like(ego_action_dist)
+        local_solvers = {rule_name: Solver() for rule_name in rule_tem.keys()}
+        for pred_name, pred_info in local_predicates.items():
+            eval_pred = eval(pred_info["instance"])
+            pred_info["instance"] = eval_pred
+            arity = pred_info["arity"]
 
-        for action_id, action_name in action_mapping.items():
-            if "Normal" in action_name:
-                action_dist[action_id] = 1.0
+            # Import the grounding method
+            method_full_name = pred_info["function"]
 
-        agents_actions = {ego_name: action_dist}
-        if rl_flag:
-            agents_actions["{}_grounding".format(ego_name)] = np.array(grounding, dtype=np.float32)
-            assert len(agents_actions["{}_grounding".format(ego_name)]) == rl_input_shape
+            if method_full_name == "None":
+                assert rl_action is not None, "Make sure the rl_action is not None"
+                # ego action
+                action_name = get_action_name(rl_action)
+                if pred_name == action_name:
+                    for rule_name, rule_template in rule_tem.items():
+                        local_solvers[rule_name].add(eval_pred(local_entities["Agent"][0]))
+                else:
+                    for rule_name, rule_template in rule_tem.items():
+                        local_solvers[rule_name].add(Not(eval_pred(local_entities["Agent"][0])))
+                continue
+
+            module_name, method_name = method_full_name.rsplit('.', 1)
+            module = importlib.import_module(module_name)
+            method = getattr(module, method_name)
+
+            if arity == 1:
+                # Unary predicate grounding
+                for entity in local_entities[eval_pred.domain(0).name()]:
+                    entity_name = entity.decl().name()
+                    value = method(partial_world, partial_intersections, partial_agents, entity_name)
+                    if value:
+                        grounding.append(1)
+                        for rule_name, rule_template in rule_tem.items():
+                            local_solvers[rule_name].add(eval_pred(entity))
+                    else:
+                        grounding.append(0)
+                        for rule_name, rule_template in rule_tem.items():
+                            local_solvers[rule_name].add(Not(eval_pred(entity)))
+            elif arity == 2:
+                # Binary predicate grounding
+                for entity1 in local_entities[eval_pred.domain(0).name()]:
+                    entity1_name = entity1.decl().name()
+                    for entity2 in local_entities[eval_pred.domain(1).name()]:
+                        entity2_name = entity2.decl().name()
+                        value = method(partial_world, partial_intersections, partial_agents, entity1_name, entity2_name)
+                        if value:
+                            grounding.append(1)
+                            for rule_name, rule_template in rule_tem.items():
+                                local_solvers[rule_name].add(eval_pred(entity1, entity2))
+                        else:
+                            grounding.append(0)
+                            for rule_name, rule_template in rule_tem.items():
+                                local_solvers[rule_name].add(Not(eval_pred(entity1, entity2)))
+
+        # 5. create, ground rules and add to solver
+        local_rule_tem = copy.deepcopy(rule_tem)
+        for rule_name, rule_template in local_rule_tem.items():
+            # the first entity is the ego agent
+            agent = local_entities["Agent"][0]
+            # Replace placeholder in the rule template with the actual agent entity
+            instantiated_rule = eval(rule_template["content"])
+            local_solvers[rule_name].add(instantiated_rule)
+
+        # **Important: Closed world quantifier rule, to ensure z3 do not add new entity to satisfy the rule and "dummy" is not part of the world**
+        for var_name, z3_var in z3_vars.items():
+            entity_list = local_entities[var_name.replace('dummy', '')]
+            for rule_name, rule_template in rule_tem.items():
+                constraint = Or([z3_var == entity for entity in entity_list])
+                local_solvers[rule_name].add(ForAll([z3_var], constraint))
+        
+        # 6. solve for reward
+        reward = 0
+        for rule_name, rule_solver in local_solvers.items():
+            if rule_solver.check() == sat:
+                continue
+            else:
+                reward -= rule_tem[rule_name]["weight"]
+
+        agents_actions = {
+            "{}_grounding".format(ego_name): np.array(grounding, dtype=np.float32),
+            "{}_reward".format(ego_name): reward
+        }
+        assert len(grounding) == rl_input_shape
+
         return agents_actions
+        
+
+def get_action_name(rl_action):
+    # see agents/car.py
+    if rl_action[0] == 1:
+        return "Slow"
+    elif rl_action[4] == 1:
+        return "Normal"
+    elif rl_action[8] == 1:
+        return "Fast"
+    else:
+        return "Stop"
 
 def split_into_batches(keys, batch_size):
     """Split keys into batches of a given size."""

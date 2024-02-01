@@ -90,8 +90,9 @@ Predicates:
       description: Slow action.
 
 Rules:
-  - Sim: # how the determinist agents move
-    - Stop:
+  Sim: # how the determinist agents move
+    - name: Stop
+      formula: |
         Stop(agent) == Exists(
           [dummyIntersection, dummyAgent], 
           Or(
@@ -124,30 +125,32 @@ Rules:
           )
         )
       description: Or version of the following 3 stop rule.
-  - Task: # how the rl agents should move
-     - Collision_Stop:
-        formula: |
-          Implies(Stop(agent), Exists(
-            [dummyAgent], 
-            CollidingClose(agent, dummyAgent)
-            )
-          )
-        description: should not collide.
-        weight: 1
-    - Intersection_Stop:
-        formula: |
-          Implies(Stop(agent), Exists(
-            [dummyIntersection], 
-              And(
-                IsAt(agent, dummyIntersection), 
-                Not(
-                  And(
-                    IsInterEmpty(dummyIntersection), 
-                    IsInterCarEmpty(dummyIntersection)
-                  )
+  Task: # how the rl agents should move
+    - name: Collision_Stop
+      description: should not collide.
+      weight: 1
+      formula: |
+        Implies(Exists(
+          [dummyAgent], 
+          CollidingClose(agent, dummyAgent)
+          ),
+          Stop(agent)
+        )
+    - name: Intersection_Stop
+      description: should stop at intersection.
+      weight: 2
+      formula: |
+        Implies(Exists(
+          [dummyIntersection], 
+            And(
+              IsAt(agent, dummyIntersection), 
+              Not(
+                And(
+                  IsInterEmpty(dummyIntersection), 
+                  IsInterCarEmpty(dummyIntersection)
                 )
               )
             )
-          )
-        description: should stop at intersection.
-        weight: 2
+          ),
+          Stop(agent)
+        )

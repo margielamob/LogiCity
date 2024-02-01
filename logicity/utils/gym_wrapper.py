@@ -99,14 +99,14 @@ class GymCityWrapper(gym.core.Env):
         #                         len(np.where(obs_dict["World"][2][cur_pos[0], cur_pos[1]] == -1)[0])
         # # print(rew, 1-count_on_road)
         # rew -= (1-count_on_road)        # reward weighting
-        agent_action = obs_dict["Agent_actions"][0]
-        expert_action = obs_dict["Expert_actions"][0]
-        rew = 0
-        if (agent_action == expert_action).all():
-            rew += 1
-        else:
-            rew -= 5
-        return rew
+        # agent_action = obs_dict["Agent_actions"][0]
+        # expert_action = obs_dict["Expert_actions"][0]
+        # rew = 0
+        # if (agent_action == expert_action).all():
+        #     rew += 1
+        # else:
+        #     rew -= 5
+        return obs_dict["Reward"][0] - 1
     
     
     def reset(self, return_info=False):
@@ -150,21 +150,22 @@ class GymCityWrapper(gym.core.Env):
         done = self.agent.reach_goal
         if done:
             info["succcess"] = True
-            rew += 1
+            rew += 10
             self.agent.init(self.env.city_grid)
             self.reinit()
             logger.info("Reset agent by success")
-        if self.agent.pos[0] <= 0 or self.agent.pos[1] <= 0 or \
-            self.agent.pos[0] >= 240 or self.agent.pos[1] >= 240: 
-            info["success"] = False
-            done = True
-            rew -= 10
-            self.agent.init(self.env.city_grid)
-            self.reinit()
-            logger.info("Reset agent by oor")
+        # if self.agent.pos[0] <= 0 or self.agent.pos[1] <= 0 or \
+        #     self.agent.pos[0] >= 240 or self.agent.pos[1] >= 240: 
+        #     info["success"] = False
+        #     done = True
+        #     rew -= 10
+        #     self.agent.init(self.env.city_grid)
+        #     self.reinit()
+        #     logger.info("Reset agent by oor")
         
         if self.t >= self.horizon: 
             done = True
+            rew -= 10
             info["success"] = False
             info["overtime"] = True
             self.agent.init(self.env.city_grid)
