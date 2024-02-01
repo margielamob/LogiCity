@@ -1,4 +1,4 @@
 # Description: Test RL agent
 # /bin/bash
-CONFIG=config/tasks/Nav/RL/config_test.yaml
+CONFIG=config/tasks/Nav/easy/RL/ppotest.yaml
 python3 main.py --config $CONFIG --exp car_test --use_gym
