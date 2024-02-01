@@ -1,1 +1,0 @@
-Not(Or(And(A, Not(B), C, Not(And(D, E))), And(A, Not(B), C, D, E, F), And(G, C, Not(E)), And(G, H, Not(I)), And(Not(B), J, K), And(L, M)))

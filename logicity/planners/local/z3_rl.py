@@ -28,6 +28,33 @@ class Z3PlannerRL(Z3Planner):
     def __init__(self, yaml_path):        
         super().__init__(yaml_path)
 
+    def _create_rules(self):
+        self.rules = {}
+        self.rule_tem = {}
+        for rule_dict in self.data["Rules"]:
+            (rule_name, rule_info), = rule_dict.items()
+            # Check if the rule is valid
+            formula = rule_info["formula"]
+            logger.info("Rule: {} -> \n {}".format(rule_name, formula))
+
+            # Create Z3 variables based on the formula
+            var_names = self._extract_variables(formula)
+            self.z3_vars = var_names
+
+            # Substitute predicate names in the formula with Z3 function instances
+            for method_name, pred_info in self.predicates.items():
+                formula = formula.replace(method_name, f'local_predicates["{method_name}"]["instance"]')
+
+            # Now replace the variable names in the formula with their Z3 counterparts
+            for var_name in var_names:
+                formula = formula.replace(var_name, f'z3_vars["{var_name}"]')
+
+            # Evaluate the modified formula string to create the Z3 expression
+            self.rule_tem[rule_name] = formula
+        rule_info = "\n".join(["- {}: {}".format(rule, details) for rule, details in self.rule_tem.items()])
+        logger.info("Number of Rules: {}\nRules:\n{}".format(len(self.rule_tem), rule_info))
+        logger.info("Rules will be grounded later...")
+
     def plan(self, world_matrix, intersect_matrix, agents, layerid2listid, use_multiprocessing=True, rl_agent=None):
         # 1. Break the global world matrix into local world matrix and split the agents and intersections
         # Note that the local ones will have different size and agent id
