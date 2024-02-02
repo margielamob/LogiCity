@@ -30,7 +30,8 @@ class GymCityWrapper(gym.core.Env):
         self.observation_space = Box(low=-1.0, high=1.0, shape=(self.logic_grounding_shape, ), dtype=np.float32)
         self.last_dist = -1
         self.agent_name = env.rl_agent["agent_name"]
-        self.horizon = env.rl_agent["horizon"]
+        self.max_horizon = env.rl_agent["max_horizon"]
+        self.horizon = self.max_horizon
         self.agent_type = self.agent_name.split("_")[0]
         agent_id = self.agent_name.split("_")[1] # this is agent id in the yaml file
         for agent in self.env.agents:
@@ -106,23 +107,14 @@ class GymCityWrapper(gym.core.Env):
         #     rew += 1
         # else:
         #     rew -= 5
-        return obs_dict["Reward"][0] - 1
+        return obs_dict["Reward"][0] - 1/self.horizon
     
     
     def reset(self, return_info=False):
+        logger.info("***Reset RL Agent in Env***")
         self.t = 0
         self.agent.init(self.env.city_grid)
-        self.reinit()
-        logger.info("Reset Agent")
-        one_hot_action = torch.zeros_like(self.agent.action_dist, dtype=torch.float32)
-        one_hot_action[-1] = 1
-        ob_dict = self.env.update(one_hot_action, self.agent_layer_id)
-        obs = self._flatten_obs(ob_dict)
-        self.last_dist = -1
-        self.last_pos = None
-        return obs
-    
-    def reinit(self): 
+        self.horizon = min(self.max_horizon, len(self.agent.global_traj))
         agent_code = self.type2label[self.agent_type]
         # draw agent
         # print('start: ', self.agent.start, 'pos: ', self.agent.pos)
@@ -132,8 +124,26 @@ class GymCityWrapper(gym.core.Env):
         agent_layer[start[0], start[1]] = agent_code
         agent_layer[goal[0], goal[1]] = agent_code + AGENT_GOAL_PLUS
         self.env.city_grid[self.agent_layer_id] = agent_layer
-        assert len((agent_layer == agent_code).nonzero()) == 1, \
-            ValueError("RL agent should be unique in the world matrix, now start is {}, goal is {}".format(start, goal))
+        one_hot_action = torch.zeros_like(self.agent.action_dist, dtype=torch.float32)
+        one_hot_action[-1] = 1
+        ob_dict = self.env.update(one_hot_action, self.agent_layer_id)
+        obs = self._flatten_obs(ob_dict)
+        self.last_dist = -1
+        self.last_pos = None
+        return obs
+    
+    # def reinit(self): 
+    #     agent_code = self.type2label[self.agent_type]
+    #     # draw agent
+    #     # print('start: ', self.agent.start, 'pos: ', self.agent.pos)
+    #     agent_layer = torch.zeros((self.env.grid_size[0], self.env.grid_size[1]))
+    #     start = self.agent.start
+    #     goal = self.agent.goal
+    #     agent_layer[start[0], start[1]] = agent_code
+    #     agent_layer[goal[0], goal[1]] = agent_code + AGENT_GOAL_PLUS
+    #     self.env.city_grid[self.agent_layer_id] = agent_layer
+    #     assert len((agent_layer == agent_code).nonzero()) == 1, \
+    #         ValueError("RL agent should be unique in the world matrix, now start is {}, goal is {}".format(start, goal))
 
     def step(self, action):
         self.t += 1
@@ -150,27 +160,17 @@ class GymCityWrapper(gym.core.Env):
         done = self.agent.reach_goal
         if done:
             info["succcess"] = True
-            rew += 10
-            self.agent.init(self.env.city_grid)
-            self.reinit()
-            logger.info("Reset agent by success")
-        # if self.agent.pos[0] <= 0 or self.agent.pos[1] <= 0 or \
-        #     self.agent.pos[0] >= 240 or self.agent.pos[1] >= 240: 
-        #     info["success"] = False
-        #     done = True
-        #     rew -= 10
-        #     self.agent.init(self.env.city_grid)
-        #     self.reinit()
-        #     logger.info("Reset agent by oor")
+            rew += 2
+            logger.info("will reset agent by success")
+            self.reset()
         
         if self.t >= self.horizon: 
             done = True
-            rew -= 10
+            rew -= 2
             info["success"] = False
             info["overtime"] = True
-            self.agent.init(self.env.city_grid)
-            self.reinit()
             logger.info("Reset agent by overtime")
+            self.reset()
             
         return obs, rew, done, info
     

@@ -150,7 +150,7 @@ def main_gym(args, logger):
     
     # Checkpoint evaluation
     rew_list = []
-    for ts in range(1, 3): 
+    for ts in range(1, 5): 
         eval_env, cached_observation = make_env(simulation_config, True)
         model = PPO.load(rl_config["checkpoint_path"], env=eval_env)
         o = eval_env.reset()

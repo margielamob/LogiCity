@@ -19,10 +19,13 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
 ## Installation
 
 - From scratch
+
   ```shell
   conda create -n logicity python=3.9
   conda activate logicity
-  git clone --recurse-submodules https://github.com/Jaraxxus-Me/LogiCity.git
+  git clone https://github.com/Jaraxxus-Me/LogiCity.git
+  git submodule init
+  git submodule update
   # requirements for logicity
   # torch
   pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu116
@@ -32,13 +35,16 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
   cd src/lnn
   pip install -r requirements.txt
   pip install -e .
+  # pyastar
+  cd src/pyastar
+  pip install -e .
   # install logicity-lib
   cd ..
   cd ..
   pip install -v -e .
   ```
-
 - Using docker
+
   ```shell
   docker pull bowenli1024/logicity:v3
   docker run bowenli1024/logicity:v3
@@ -54,12 +60,12 @@ Only running the simulation for data collection, the cached data will be saved t
 
 ```shell
 # easy mode
-python3 main.py --rules config/rules/LNN/easy/easy_rule.yaml --exp easy
+bash scripts/sim/run_sim_easy.sh
 # medium mode
-python3 main.py --rules config/rules/LNN/medium/medium_rule.yaml --exp medium
+bash scripts/sim/run_sim_med.sh
 ```
 
-By default, this will run with 42 agents specified in `config/agents/v0.yaml`, you may make any modifications.
+You may make any modifications in the agent configuration.
 
 Some important arguments:
 
@@ -88,29 +94,32 @@ Some important arguments:
 
 ## LogiCity Tasks
 
-LogiCity now supports two tasks: Learning Logic (Induct the decision logic by the concept-action pairs) and Learning Navigation (Learn to take action by the img (local FOV)-action pairs).
+LogiCity now supports logic based navigation task: the controlled agent is a car, it has 4 action spaces, "Slow" "Fast" "Normal" and "Stop". We require a policy to navigate the ego agent to its goal fast and safe. The are 4 modes:
 
-### Learning Logic
+Easy: Only stop is constrained, few predicates matter
 
-Training different algorithm to fit the Logic in the sim.
+Med-easy: Only stop is constrained, more predicates matter
 
-```shell
-# see the config/tasks/logic configure files for easy/medium mode with Decision Tree, MLP, or SATNet.
-python3 logic_main.py
+Med-hard: both stop and slow is constrained, few predicates matter
+
+hard: both stop and slow is constrained, more predicates matter
+
+- Navigation steps:
+
+- Rule violation:
+
+
+$$
+S_{0}=0\\
+        S_{i+1}=S_{i}-1-\sum_{k}^{K}w_k\psi^i_k\\
+        \psi^i_k = 0 (\mathrm{Rule}_k\ \mathrm{holds \ at\ step\ }i) \\
+        \psi^i_k = 1 (\mathrm{Rule}_k\ \mathrm{violated \ at\ step\ }i)
+$$
+
+To run an RL task:
+
 ```
-
-### Learning Navigation
-
-```shell
-# see the config/tasks/nav configure files for the settings like network, training pipeline, etc. Now it by defaults use ResNet50.
-# You may need some dataset from Bowen
-python3 nav_main.py
-```
-
-### Train RL Agents
-
-```shell
-python main.py --rules config/rules/LNN/easy/easy_rule.yaml --agents config/agents/debug.yaml --use_gym True --exp debug_gym
+bash scripts/rl/train_rl.sh
 ```
 
 ## Branches

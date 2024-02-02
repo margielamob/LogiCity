@@ -22,7 +22,7 @@ class EvalCheckpointCallback(CheckpointCallback):
                 obs = self.eval_env.reset()
                 episode_rewards = 0
                 step = 0
-                while step<500:
+                while step<100:
                     action, _states = self.model.predict(obs, deterministic=True)
                     obs, reward, done, _info = self.eval_env.step(action)
                     episode_rewards += reward
