@@ -33,6 +33,7 @@ class CityEnv(City):
         current_obs["World_state"] = []
         current_obs["Agent_actions"] = []
         current_obs["Reward"] = []
+        current_obs["Expert_actions"] = []
         
         reward = self.local_planner.eval(action)
         current_obs["Reward"].append(reward)
@@ -40,8 +41,7 @@ class CityEnv(City):
         current_world = self.city_grid.clone()
         # first do local planning based on city rules
         agent_action_dist = self.local_planner.plan(current_world, self.intersection_matrix, self.agents, \
-                                                    self.layer_id2agent_list_id, use_multiprocessing=self.use_multi, rl_agent=idx, \
-                                                    rl_action=action)
+                                                    self.layer_id2agent_list_id, use_multiprocessing=self.use_multi, rl_agent=idx)
         # Then do global action taking acording to the local planning results
         # input((action_idx, idx))
         
@@ -53,6 +53,8 @@ class CityEnv(City):
             if agent.layer_id == idx: 
                 current_obs["Agent_actions"].append(action)
                 current_obs["World_state"].append(agent_action_dist["{}_grounding".format(agent_name)])
+                if "{}_action".format(agent_name) in agent_action_dist:
+                    current_obs["Expert_actions"].append(agent_action_dist["{}_action".format(agent_name)].clone())
                 local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, action)
             else: 
                 local_action_dist = agent_action_dist[agent_name]

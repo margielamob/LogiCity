@@ -91,8 +91,7 @@ class Z3PlannerRL(Z3Planner):
              agents, 
              layerid2listid, 
              use_multiprocessing=True, 
-             rl_agent=None,
-             rl_action=None):
+             rl_agent=None):
         # 1. Break the global world matrix into local world matrix and split the agents and intersections
         # Note that the local ones will have different size and agent id
         # e = time.time()

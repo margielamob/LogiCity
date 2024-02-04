@@ -37,7 +37,7 @@ def parse_arguments():
     parser.add_argument('--max-steps', type=int, default=100)
     # RL
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/RL/ppo.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/RL/expert.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 

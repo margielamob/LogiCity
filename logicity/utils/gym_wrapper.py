@@ -34,6 +34,7 @@ class GymCityWrapper(gym.core.Env):
         self.horizon = self.max_horizon
         self.agent_type = self.agent_name.split("_")[0]
         agent_id = self.agent_name.split("_")[1] # this is agent id in the yaml file
+        self.use_expert = env.rl_agent["use_expert"]
         for agent in self.env.agents:
             if agent.type == self.agent_type:
                 if agent.id == int(agent_id):
@@ -41,6 +42,10 @@ class GymCityWrapper(gym.core.Env):
                     self.agent_layer_id = agent.layer_id
         assert self.agent_layer_id is not None, "Agent not found! Recheck Your agent_name in the config file!"
         action_space = self.env.rl_agent["action_space"]
+        if self.use_expert:
+            self.expert_action = torch.zeros_like(self.agent.action_dist, dtype=torch.float32)
+        else:
+            self.expert_action = -1
         self.action_space = gym.spaces.Box(low=0, high=1, shape=(action_space, ), dtype=np.float32)
         self.action_mapping = env.rl_agent["action_mapping"]
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
@@ -128,6 +133,8 @@ class GymCityWrapper(gym.core.Env):
         one_hot_action = torch.zeros_like(self.agent.action_dist, dtype=torch.float32)
         one_hot_action[-1] = 1
         ob_dict = self.env.update(one_hot_action, self.agent_layer_id)
+        if self.use_expert:
+            self.expert_action = ob_dict["Expert_actions"][0]
         obs = self._flatten_obs(ob_dict)
         self.last_dist = -1
         self.last_pos = None
@@ -148,10 +155,15 @@ class GymCityWrapper(gym.core.Env):
 
     def step(self, action):
         self.t += 1
-        index = np.argmax(action) # if action is a numpy array
-        one_hot_action = torch.tensor(self.action_mapping[index], dtype=torch.float32)
+        if self.use_expert:
+            one_hot_action = self.expert_action
+        else:
+            index = np.argmax(action) # if action is a numpy array
+            one_hot_action = torch.tensor(self.action_mapping[index], dtype=torch.float32)
         info = {}
         ob_dict = self.env.update(one_hot_action, self.agent_layer_id)
+        if self.use_expert:
+            self.expert_action = ob_dict["Expert_actions"][0].clone()
         # ob_dict = self.env.update()
         info.update(ob_dict)
         obs = self._flatten_obs(ob_dict)
