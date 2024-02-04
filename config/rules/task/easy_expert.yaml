@@ -125,6 +125,31 @@ Rules:
           )
         )
       description: Or version of the following 3 stop rule.
+  Expert: # how the expert agents should move
+    - name: Stop
+      description: should not collide.
+      weight: 1
+      formula: |
+        Stop(agent) == Exists(
+          [dummyAgent, dummyIntersection], 
+          Or(
+            CollidingClose(agent, dummyAgent),
+            And(
+              IsAt(agent, dummyIntersection), 
+              Not(
+                And(
+                  IsInterEmpty(dummyIntersection), 
+                  IsInterCarEmpty(dummyIntersection)
+                )
+              )
+            )
+          )
+        )
+    - name: Fast
+      description: If not stop, then fast.
+      weight: 1
+      formula: |
+        Fast(agent) == Not(Stop(agent))
   Task: # how the reward/score is calculated
     - name: Collision_Stop
       description: should not collide.

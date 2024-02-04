@@ -2,7 +2,7 @@
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
   agent_yaml_file: "config/agents/3p6c.yaml" # Agents in the simulation
-  rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
+  rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
   rule_yaml_file: "config/rules/task/easy.yaml"                    # Whether to render the environment
   rl: true
   debug: false
@@ -42,7 +42,7 @@ stable_baselines:
     ent_coef: 0.0                 # Entropy coefficient
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
-  train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/3p6c2b_ppo_720000_steps.zip"           # Path to a checkpoint to restore the model from
+  train: true                   # Whether to train the model
+  checkpoint_path: ""           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   total_timesteps: 1000000    # Total number of timesteps to run for all environments combined
