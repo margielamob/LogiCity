@@ -125,7 +125,7 @@ Rules:
           )
         )
       description: Or version of the following 3 stop rule.
-  Task: # how the rl agents should move
+  Task: # how the reward/score is calculated
     - name: Collision_Stop
       description: should not collide.
       weight: 1

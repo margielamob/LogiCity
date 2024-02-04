@@ -107,7 +107,7 @@ class GymCityWrapper(gym.core.Env):
         #     rew += 1
         # else:
         #     rew -= 5
-        return obs_dict["Reward"][0] - 1/self.horizon
+        return obs_dict["Reward"][0] - 2/self.horizon
     
     
     def reset(self, return_info=False):
@@ -160,7 +160,6 @@ class GymCityWrapper(gym.core.Env):
         done = self.agent.reach_goal
         if done:
             info["succcess"] = True
-            rew += 2
             logger.info("will reset agent by success")
             self.reset()
         
