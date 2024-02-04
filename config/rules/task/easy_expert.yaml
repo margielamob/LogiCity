@@ -1,0 +1,152 @@
+EntityTypes:
+  - Agent
+  - Intersection
+
+Predicates:
+  - IsPedestrian:
+      arity: 1
+      method: IsPed(Agent)
+      function: logicity.utils.pred_converter.z3_local.IsPed
+      description: Checks if agent x is a pedestrian.
+  - IsCar:
+      arity: 1
+      method: IsCar(Agent)
+      function: logicity.utils.pred_converter.z3_local.IsCar
+      description: Checks if agent x is a car.
+  - IsAmbulance:
+      arity: 1
+      method: IsAmb(Agent)
+      function: logicity.utils.pred_converter.z3_local.IsAmb
+      description: Checks if the agent has concept "ambulance".
+  - IsBus:
+      arity: 1
+      method: IsBus(Agent)
+      function: logicity.utils.pred_converter.z3_local.IsBus
+      description: Checks if the agent has concept "bus".
+  - IsTiro:
+      arity: 1
+      method: IsTiro(Agent)
+      function: logicity.utils.pred_converter.z3_local.IsTiro
+      description: Checks if the agent has concept "tiro".
+  - IsOld:
+      arity: 1
+      method: IsOld(Agent)
+      function: logicity.utils.pred_converter.z3_local.IsOld
+      description: Checks if the agent has concept "old".
+  - IsInterEmpty:
+      arity: 1
+      method: IsInterEmpty(Intersection)
+      function: logicity.utils.pred_converter.z3_local.IsInterEmpty
+      description: Checks if the intersection x is empty.
+  - IsInterCarEmpty:
+      arity: 1
+      method: IsInterCarEmpty(Intersection)
+      function: logicity.utils.pred_converter.z3_local.IsInterCarEmpty
+      description: Checks if the intersection x is empty with cars.
+  - IsClose:
+      arity: 2
+      method: IsClose(Agent, Agent)
+      function: logicity.utils.pred_converter.z3_local.IsClose
+      description: Checks if agent x close to agent y.
+  - IsAt:
+      arity: 2
+      method: IsAt(Agent, Intersection)
+      function: logicity.utils.pred_converter.z3_local.IsAt
+      description: Checks if agent x is at intersection y.
+  - IsInInter:
+      arity: 2
+      method: IsInInter(Agent, Intersection)
+      function: logicity.utils.pred_converter.z3_local.IsInInter
+      description: Checks if agent x is in intersection y.
+  - HigherPri:
+      arity: 2
+      method: HigherPri(Agent, Agent)
+      function: logicity.utils.pred_converter.z3_local.HigherPri
+      description: Checks if agent x, x has higher priority to y.
+  - CollidingClose:
+      arity: 2
+      method: CollidingClose(Agent, Agent)
+      function: logicity.utils.pred_converter.z3_local.CollidingClose
+      description: Checks if agent x is about to collide with agent y.
+  - Stop:
+      arity: 1
+      method: Stop(Agent)
+      function: None
+      description: Stop action.
+  - Fast:
+      arity: 1
+      method: Fast(Agent)
+      function: None
+      description: Fast action.
+  - Normal:
+      arity: 1
+      method: Normal(Agent)
+      function: None
+      description: Normal action.
+  - Slow:
+      arity: 1
+      method: Slow(Agent)
+      function: None
+      description: Slow action.
+
+Rules:
+  Sim: # how the determinist agents move
+    - name: Stop
+      formula: |
+        Stop(agent) == Exists(
+          [dummyIntersection, dummyAgent], 
+          Or(
+            And(
+              IsCar(agent), 
+              IsAt(agent, dummyIntersection), 
+              IsAt(dummyAgent, dummyIntersection), 
+              IsInterEmpty(dummyIntersection), 
+              Or(
+                HigherPri(dummyAgent, agent), 
+                IsPedestrian(dummyAgent)
+              )
+            ),
+            And(
+              IsPedestrian(agent), 
+              IsAt(agent, dummyIntersection), 
+              Not(IsInterCarEmpty(dummyIntersection))
+            ),
+            And(
+              IsCar(agent), 
+              IsAt(agent, dummyIntersection), 
+              Not(
+                And(
+                  IsInterEmpty(dummyIntersection), 
+                  IsInterCarEmpty(dummyIntersection)
+                )
+              )
+            ),
+            CollidingClose(agent, dummyAgent)
+          )
+        )
+      description: Or version of the following 3 stop rule.
+  Task: # how the rl agents should move
+    - name: Stop
+      description: should not collide.
+      weight: 1
+      formula: |
+        Stop(agent) == Exists(
+          [dummyAgent, dummyIntersection], 
+          Or(
+            CollidingClose(agent, dummyAgent),
+            And(
+              IsAt(agent, dummyIntersection), 
+              Not(
+                And(
+                  IsInterEmpty(dummyIntersection), 
+                  IsInterCarEmpty(dummyIntersection)
+                )
+              )
+            )
+          )
+        )
+    - name: Fast
+      description: If not stop, then fast.
+      weight: 1
+      formula: |
+        Fast(agent) == Not(Stop(agent))
