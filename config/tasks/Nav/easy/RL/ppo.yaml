@@ -44,5 +44,5 @@ stable_baselines:
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: true                   # Whether to train the model
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
-  num_envs: 3                   # Number of environments to run in parallel
+  num_envs: 1                   # Number of environments to run in parallel
   total_timesteps: 1000000    # Total number of timesteps to run for all environments combined

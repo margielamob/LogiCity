@@ -107,7 +107,7 @@ class GymCityWrapper(gym.core.Env):
         #     rew += 1
         # else:
         #     rew -= 5
-        return obs_dict["Reward"][0] - 2/self.horizon
+        return obs_dict["Reward"][0] - 10/self.horizon
     
     
     def reset(self, return_info=False):
@@ -116,6 +116,7 @@ class GymCityWrapper(gym.core.Env):
         self.agent.init(self.env.city_grid)
         self.horizon = min(self.max_horizon, len(self.agent.global_traj))
         agent_code = self.type2label[self.agent_type]
+        self.env.local_planner.reset()
         # draw agent
         # print('start: ', self.agent.start, 'pos: ', self.agent.pos)
         agent_layer = torch.zeros((self.env.grid_size[0], self.env.grid_size[1]))
