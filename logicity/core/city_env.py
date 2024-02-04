@@ -33,7 +33,9 @@ class CityEnv(City):
         current_obs["World_state"] = []
         current_obs["Agent_actions"] = []
         current_obs["Reward"] = []
-                
+        
+        reward = self.local_planner.eval(action)
+        current_obs["Reward"].append(reward)
         new_matrix = torch.zeros_like(self.city_grid)
         current_world = self.city_grid.clone()
         # first do local planning based on city rules
@@ -51,7 +53,6 @@ class CityEnv(City):
             if agent.layer_id == idx: 
                 current_obs["Agent_actions"].append(action)
                 current_obs["World_state"].append(agent_action_dist["{}_grounding".format(agent_name)])
-                current_obs["Reward"].append(agent_action_dist["{}_reward".format(agent_name)])
                 local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, action)
             else: 
                 local_action_dist = agent_action_dist[agent_name]
