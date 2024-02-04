@@ -6,7 +6,7 @@ simulation:
   rule_yaml_file: "config/rules/sim/easy/easy_rule.yaml"                 # Whether to render the environment
   rl: false
   debug: false
-  use_multi: false
+  use_multi: true
   agent_region: 240
   
 
