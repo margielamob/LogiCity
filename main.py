@@ -180,33 +180,24 @@ def main_gym(args, logger):
     
     # Checkpoint evaluation
     rew_list = []
-    for ts in range(1, 5): 
+    
+    for ts in range(10): 
         eval_env, cached_observation = make_env(simulation_config, True)
         model = PPO.load(rl_config["checkpoint_path"], env=eval_env)
         o = eval_env.reset()
-        action = model.predict(o)[0]
-        sys.stdout = open(os.devnull, 'w')
         ep_rew_list = []
-        rew = 0        
-        ep_rew = 0
-        for steps in trange(500):
+        rew = 0    
+        step = 0    
+        while step<300:
+            action, _states = model.predict(o, deterministic=True)
             o, r, d, i = eval_env.step(action)
             action = model.predict(o)[0]
             ep_rew_list.append(r)
             rew += r
-            cached_observation["Time_Obs"][steps] = i
-            if d:
-                print(ep_rew_list)
-                np.save("{}/rew_{}_{}.npy".format(args.log_dir, args.exp, ts), np.array(ep_rew_list))
-                # np.save('rew.npy', np.array(ep_rew_list))
-                break
-                # o = env.reset()
-                # action = model.predict(o)[0]
+            step += 1
         rew_list.append(rew)
-        sys.stdout = sys.__stdout__   
-        with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
-            pkl.dump(cached_observation, f)
-        print(rew_list)
+    mean_reward = np.mean(rew_list)
+    print(rew_list)
 
 if __name__ == '__main__':
     args = parse_arguments()
