@@ -26,6 +26,29 @@ def dynamic_import(module_name, class_name):
     module = importlib.import_module(module_name)
     return getattr(module, class_name)
 
+def make_env(simulation_config, return_cache=False): 
+    # Unpack arguments from simulation_config and pass them to CityLoader
+    city, cached_observation = CityLoader.from_yaml(**simulation_config)
+    env = GymCityWrapper(city)
+    if return_cache: 
+        return env, cached_observation
+    else:
+        return env
+    
+def make_envs(simulation_config, rank):
+    """
+    Utility function for multiprocessed env.
+    
+    :param simulation_config: The configuration for the simulation.
+    :param rank: Unique index for each environment to ensure different seeds.
+    :return: A function that creates a single environment.
+    """
+    def _init():
+        env = make_env(simulation_config)
+        env.seed(rank + 1000)  # Optional: set a unique seed for each environment
+        return env
+    return _init
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
@@ -36,10 +59,39 @@ def parse_arguments():
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--max-steps', type=int, default=100)
     # RL
+    parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--config', default='config/tasks/Nav/easy/RL/expert.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
+
+def main_collect(args, logger):
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    config = load_config(args.config)
+    simulation_config = config["simulation"]
+    logger.info("Simulation config: {}".format(simulation_config))
+    collection_config = config['collecting_config']
+    logger.info("RL config: {}".format(collection_config))
+
+    # Check if expert data collection is requested
+    logger.info("Collecting expert demonstration data...")
+    # Create an environment instance for collecting expert demonstrations
+    expert_data_env, cached_observation = make_env(simulation_config, True)  # Use your existing environment setup function
+    assert expert_data_env.use_expert  # Ensure the environment uses expert actions
+    
+    # Initialize the ExpertCollector with the environment and total timesteps
+    collector = ExpertCollector(expert_data_env, **collection_config)
+    _, full_world = collector.collect_data(cached_observation)
+    
+    # Save the collected expert demonstrations
+    collector.save_data(f"{args.log_dir}/{args.exp}_expert_demonstrations.pkl")
+    logger.info(f"Collected and saved expert demonstration data to {args.log_dir}/{args.exp}_expert_demonstrations.pkl")
+    # Save the full world if needed
+    if collection_config["return_full_world"]:
+        for ts in range(len(full_world)):
+            with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
+                pkl.dump(full_world[ts], f)
 
 def main(args, logger):
     config = load_config(args.config)
@@ -69,29 +121,7 @@ def main(args, logger):
     with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
         pkl.dump(cached_observation, f)
 
-
 def main_gym(args, logger): 
-    def make_env(simulation_config, return_cache=False): 
-        # Unpack arguments from simulation_config and pass them to CityLoader
-        city, cached_observation = CityLoader.from_yaml(**simulation_config)
-        env = GymCityWrapper(city)
-        if return_cache: 
-            return env, cached_observation
-        else:
-            return env
-    def make_envs(simulation_config, rank):
-        """
-        Utility function for multiprocessed env.
-        
-        :param simulation_config: The configuration for the simulation.
-        :param rank: Unique index for each environment to ensure different seeds.
-        :return: A function that creates a single environment.
-        """
-        def _init():
-            env = make_env(simulation_config)
-            env.seed(rank + 1000)  # Optional: set a unique seed for each environment
-            return env
-        return _init
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     config = load_config(args.config)
@@ -181,7 +211,11 @@ def main_gym(args, logger):
 if __name__ == '__main__':
     args = parse_arguments()
     logger = setup_logger(log_dir=args.log_dir, log_name=args.exp)
-    if args.use_gym:
+    if args.collect_only:
+        logger.info("Running in data collection mode.")
+        logger.info("Loading simulation config from {}.".format(args.config))
+        main_collect(args, logger)
+    elif args.use_gym:
         logger.info("Running in RL mode.")
         logger.info("Loading RL config from {}.".format(args.config))
         # RL mode, will use gym wrapper to learn and test an agent
