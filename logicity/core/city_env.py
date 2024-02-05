@@ -25,18 +25,43 @@ class CityEnv(City):
         self.rl_agent = rl_agent
         self.logic_grounding_shape = self.local_planner.logic_grounding_shape(self.rl_agent["fov_entities"])
 
-
-    def update(self, action, idx):
+    def move_rl_agent(self, action, idx):
         current_obs = {}
-        # state at time t
-        current_obs["World"] = self.city_grid.clone()
-        current_obs["World_state"] = []
-        current_obs["Agent_actions"] = []
         current_obs["Reward"] = []
-        current_obs["Expert_actions"] = []
+        current_obs["Agent_actions"] = []
         
         reward = self.local_planner.eval(action)
         current_obs["Reward"].append(reward)
+        new_matrix = torch.zeros_like(self.city_grid)
+        
+        for agent in self.agents:
+            # re-initialized agents may update city matrix as well
+            # local reasoning-based action distribution
+            # global trajectory-based action or sampling from local action distribution
+            if agent.layer_id == idx: 
+                current_obs["Agent_actions"].append(action)
+                local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, action)
+            else: 
+                continue
+
+            if agent.reach_goal:
+                continue
+
+            next_layer = agent.move(local_action, new_matrix[agent.layer_id])
+            # print(torch.nonzero(next_layer), np.unique(next_layer), torch.nonzero((next_layer==8.0).float())[0])
+            new_matrix[agent.layer_id] = next_layer
+        # Update city grid after all the agents make decisions
+        self.city_grid[idx] = new_matrix[idx]
+        current_obs["World"] = self.city_grid.clone()
+        return current_obs
+
+
+    def update(self, idx):
+        current_obs = {}
+        # state at time t
+        current_obs["World_state"] = []
+        current_obs["Expert_actions"] = []
+
         new_matrix = torch.zeros_like(self.city_grid)
         current_world = self.city_grid.clone()
         # first do local planning based on city rules
@@ -51,11 +76,11 @@ class CityEnv(City):
             # local reasoning-based action distribution
             # global trajectory-based action or sampling from local action distribution
             if agent.layer_id == idx: 
-                current_obs["Agent_actions"].append(action)
                 current_obs["World_state"].append(agent_action_dist["{}_grounding".format(agent_name)])
+                new_matrix[agent.layer_id] = self.city_grid[agent.layer_id].clone()
                 if "{}_action".format(agent_name) in agent_action_dist:
                     current_obs["Expert_actions"].append(agent_action_dist["{}_action".format(agent_name)].clone())
-                local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, action)
+                continue
             else: 
                 local_action_dist = agent_action_dist[agent_name]
                 local_action, new_matrix[agent.layer_id] = agent.get_next_action(self.city_grid, local_action_dist)

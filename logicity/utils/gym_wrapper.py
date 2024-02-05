@@ -93,28 +93,31 @@ class GymCityWrapper(gym.core.Env):
         agent_layer[start[0], start[1]] = agent_code
         agent_layer[goal[0], goal[1]] = agent_code + AGENT_GOAL_PLUS
         self.env.city_grid[self.agent_layer_id] = agent_layer
-        one_hot_action = torch.zeros_like(self.agent.action_dist, dtype=torch.float32)
-        one_hot_action[-1] = 1
-        ob_dict = self.env.update(one_hot_action, self.agent_layer_id)
+        ob_dict = self.env.update(self.agent_layer_id)
+
         if self.use_expert:
             self.expert_action = self.full_action2one_hot(ob_dict["Expert_actions"][0])
         obs = self._flatten_obs(ob_dict)
         self.last_dist = -1
         self.last_pos = None
-        return obs
+        self.current_obs = obs
+        return self.current_obs
 
     def step(self, action):
         self.t += 1
+        info = {}
         index = np.argmax(action) # if action is a numpy array
         one_hot_action = torch.tensor(self.action_mapping[index], dtype=torch.float32)
-        info = {}
-        ob_dict = self.env.update(one_hot_action, self.agent_layer_id)
+        # move and get reward
+        current_obs = self.env.move_rl_agent(one_hot_action, self.agent_layer_id)
+        rew = self._get_reward(current_obs)
+        info.update(current_obs)
+        new_ob_dict = self.env.update(self.agent_layer_id)
         if self.use_expert:
-            self.expert_action = self.full_action2one_hot(ob_dict["Expert_actions"][0])
+            self.expert_action = self.full_action2one_hot(new_ob_dict["Expert_actions"][0])
         # ob_dict = self.env.update()
-        info.update(ob_dict)
-        obs = self._flatten_obs(ob_dict)
-        rew = self._get_reward(ob_dict)
+        obs = self._flatten_obs(new_ob_dict)
+        self.current_obs = obs
         
         # offset the index by 3 layers 0,1,2 are static in world matrix
         done = self.agent.reach_goal
@@ -131,7 +134,7 @@ class GymCityWrapper(gym.core.Env):
             logger.info("Reset agent by overtime")
             self.reset()
             
-        return obs, rew, done, info
+        return self.current_obs, rew, done, info
     
     def render(self):
         return self.env.render()
