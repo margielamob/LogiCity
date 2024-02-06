@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class ExpertCollector:
-    def __init__(self, env, num_episodes, return_full_world=False):
+    def __init__(self, env, num_episodes=1, return_full_world=False):
         """
         Expert data collector for rollouts using an expert policy, collecting data by trajectory with dictionaries.
         
@@ -70,3 +70,17 @@ class ExpertCollector:
         """
         with open(filename, 'wb') as f:
             pickle.dump(self.trajectories, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def predict(self, observation, deterministic=True):
+        """
+        Predict the expert action for the given observation.
+
+        :param observation: The current observation from the environment.
+        :param deterministic: A flag indicating whether the prediction should be deterministic. For an expert policy,
+                              this can typically be ignored as expert actions are deterministic by nature.
+        :return: The predicted action and the internal state which is None for the expert policy.
+        """
+        # Assuming the environment's expert policy does not depend on the observation
+        # directly and is determined by the internal state of the environment.
+        action = self.env.expert_action
+        return action, None

@@ -61,7 +61,7 @@ def parse_arguments():
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/RL/ppo.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/RL/expert_test.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -180,24 +180,37 @@ def main_gym(args, logger):
     
     # Checkpoint evaluation
     rew_list = []
-    
+    worlds = []
+
     for ts in range(10): 
         eval_env, cached_observation = make_env(simulation_config, True)
-        model = PPO.load(rl_config["checkpoint_path"], env=eval_env)
+        if rl_config["algorithm"] == "ExpertCollector":
+            model = algorithm_class(eval_env)
+        else:
+            model = algorithm_class.load(rl_config["checkpoint_path"], env=eval_env)
         o = eval_env.reset()
         ep_rew_list = []
         rew = 0    
         step = 0    
+        collected = False
         while step<300:
-            action, _states = model.predict(o, deterministic=True)
+            step += 1
+            action, _ = model.predict(o, deterministic=True)
             o, r, d, i = eval_env.step(action)
+            if not d and not collected:
+                cached_observation["Time_Obs"][step] = i
+            if d:
+                collected = True
             action = model.predict(o)[0]
             ep_rew_list.append(r)
             rew += r
-            step += 1
         rew_list.append(rew)
+        worlds.append(cached_observation)
     mean_reward = np.mean(rew_list)
-    print(rew_list)
+    print(mean_reward)
+    for ts in range(len(worlds)):
+        with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
+            pkl.dump(worlds[ts], f)
 
 if __name__ == '__main__':
     args = parse_arguments()
