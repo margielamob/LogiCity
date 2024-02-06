@@ -61,7 +61,7 @@ def parse_arguments():
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/RL/expert_test.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/RL/bc.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -163,7 +163,7 @@ def main_gym(args, logger):
             train_env = make_env(simulation_config)
         eval_env = make_env(simulation_config)
         train_env.reset()
-        model = algorithm_class("MlpPolicy", \
+        model = algorithm_class(rl_config["policy_kwargs"]["policy_network"], \
                                 train_env, \
                                 **hyperparameters, \
                                 policy_kwargs=policy_kwargs)

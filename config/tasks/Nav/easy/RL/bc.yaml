@@ -32,11 +32,13 @@ eval_checkpoint:
 stable_baselines:
   algorithm: "BCAgent"
   policy_kwargs:
+    policy_network: "MlpPolicy"
     features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
     features_extractor_class: "MLPFeatureExtractor"
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
+    expert_demonstrations: "log_rl/3p6c2b_expert_expert_demonstrations.pkl"
     optimizer: "adam"             # Optimizer to use
     learning_rate: 0.0001          # Learning rate
     gamma: 0.99                   # Discount factor

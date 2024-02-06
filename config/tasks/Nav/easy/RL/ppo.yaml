@@ -32,6 +32,7 @@ eval_checkpoint:
 stable_baselines:
   algorithm: "PPO"
   policy_kwargs:
+    policy_network: "MlpPolicy"
     features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
     features_extractor_class: "MLPFeatureExtractor"
     features_extractor_kwargs:
