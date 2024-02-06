@@ -15,6 +15,7 @@ from logicity.rl_agent.policy import build_policy
 
 class BehavioralCloning:
     def __init__(self, policy, env, policy_kwargs, 
+                 num_traj,
                  expert_demonstrations,
                  optimizer,
                  device="cuda",
@@ -23,7 +24,7 @@ class BehavioralCloning:
 
         self.policy = build_policy[policy](env, **policy_kwargs)
         self.optimizer = self.build_optimizer(optimizer)
-        expert_data = self.load_expert_data(expert_demonstrations)
+        expert_data = self.load_expert_data(expert_demonstrations, num_traj)
         self.build_dataloader(expert_data, batch_size)
         # setup tensorboard
         self.tensorboard_log = tensorboard_log
@@ -32,7 +33,7 @@ class BehavioralCloning:
         self.policy.to(self.device)
 
 
-    def convert_listofrollouts(self, paths, concat_rew=True):
+    def convert_listofrollouts(self, paths, num_traj, concat_rew=True):
         """
             Take a list of rollout dictionaries
             and return separate arrays,
@@ -42,7 +43,7 @@ class BehavioralCloning:
         actions = []
         next_observations = []
         rewards = []
-        for path in paths:
+        for path in paths[:num_traj]:
             for step in path:
                 observations.append(step["state"])
                 actions.append(step["action"])
@@ -75,10 +76,10 @@ class BehavioralCloning:
         optimizer = getattr(torch.optim, optimizer_config["type"])
         return optimizer(self.policy.parameters(), **optimizer_config["args"])
     
-    def load_expert_data(self, expert_data_path):
+    def load_expert_data(self, expert_data_path, num_traj):
         with open(expert_data_path, 'rb') as f:
             data = pkl.load(f)
-        observations, actions, _, _ = self.convert_listofrollouts(data)
+        observations, actions, _, _ = self.convert_listofrollouts(data, num_traj)
         return {
             "observations": observations,
             "actions": actions
@@ -139,12 +140,8 @@ class BehavioralCloning:
             observation = observation.unsqueeze(0)
         
         with torch.no_grad():
-            action_logits = self.policy(observation)
-            if deterministic:
-                action = torch.argmax(action_logits, dim=1)
-            else:
-                action_probabilities = torch.nn.functional.softmax(action_logits, dim=1)
-                action = torch.multinomial(action_probabilities, 1)
+            action_logits, _ = self.policy(observation)
+            action = F.softmax(action_logits, dim=-1)
         
         return action.cpu().numpy(), None
     

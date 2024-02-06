@@ -38,6 +38,7 @@ stable_baselines:
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
+    num_traj: 5
     expert_demonstrations: "log_rl/3p6c2b_expert_expert_demonstrations.pkl"
     optimizer: 
       type: "Adam"             # Optimizer to use
