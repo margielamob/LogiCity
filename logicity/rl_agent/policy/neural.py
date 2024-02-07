@@ -51,3 +51,24 @@ class MLPFeatureExtractor(BaseFeaturesExtractor):
 
     def forward(self, observations):
         return self.net(observations)
+    
+class MlpPolicy(nn.Module):
+    def __init__(self, gym_env, features_extractor_class, features_extractor_kwargs):
+        super(MlpPolicy, self).__init__()
+
+        self.features_extractor = features_extractor_class(gym_env.observation_space, **features_extractor_kwargs)
+        action_space = gym_env.action_space
+        n_output = action_space.shape[0]
+
+        # Create the output layer
+        self.action_net = nn.Linear(self.features_extractor.features_dim, n_output)
+        self.value_net = nn.Linear(self.features_extractor.features_dim, 1)
+
+    def forward(self, observations):
+        # Extract features
+        features = self.features_extractor(observations)
+        # Get the action logits
+        action_logits = self.action_net(features)
+        # Get the value
+        values = self.value_net(features)
+        return action_logits, values
