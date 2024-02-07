@@ -61,7 +61,7 @@ def parse_arguments():
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/RL/bc.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/RL/bctest.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -187,6 +187,10 @@ def main_gym(args, logger):
         if rl_config["algorithm"] == "ExpertCollector":
             model = algorithm_class(eval_env)
         else:
+            model = algorithm_class(rl_config["policy_network"], \
+                                eval_env, \
+                                **hyperparameters, \
+                                policy_kwargs=policy_kwargs)
             model = algorithm_class.load(rl_config["checkpoint_path"], env=eval_env)
         o = eval_env.reset()
         ep_rew_list = []

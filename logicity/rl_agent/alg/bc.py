@@ -13,6 +13,9 @@ from collections import deque
 from torch.utils.tensorboard import SummaryWriter
 from logicity.rl_agent.policy import build_policy
 
+import logging
+logger = logging.getLogger(__name__)
+
 class BehavioralCloning:
     def __init__(self, policy, env, policy_kwargs, 
                  num_traj,
@@ -20,7 +23,8 @@ class BehavioralCloning:
                  optimizer,
                  device="cuda",
                  batch_size=64,
-                 tensorboard_log=None):
+                 tensorboard_log=None,
+                 log_interval=10):
 
         self.policy = build_policy[policy](env, **policy_kwargs)
         self.optimizer = self.build_optimizer(optimizer)
@@ -28,12 +32,13 @@ class BehavioralCloning:
         self.build_dataloader(expert_data, batch_size)
         # setup tensorboard
         self.tensorboard_log = tensorboard_log
+        self.log_interval = log_interval
         self.device = device
         self.loss = nn.MSELoss()
         self.policy.to(self.device)
 
 
-    def convert_listofrollouts(self, paths, num_traj, concat_rew=True):
+    def convert_listofrollouts(self, paths, num_traj):
         """
             Take a list of rollout dictionaries
             and return separate arrays,
@@ -53,23 +58,16 @@ class BehavioralCloning:
         actions = np.array(actions)
         next_observations = np.array(next_observations)
         rewards = np.array(rewards)
+        self.num_timesteps = 0
 
         return observations, actions, rewards, next_observations
 
     def build_dataloader(self, expert_data, batch_size):
         observations, actions = expert_data["observations"], expert_data["actions"]
         # split train and validation data, random shuffle
-        ratio = 0.95
-        n = len(observations)
-        split = int(n * ratio)
-        indices = np.random.permutation(n)
-        train_indices, val_indices = indices[:split], indices[split:]
-        train_observations, train_actions = observations[train_indices], actions[train_indices]
-        val_observations, val_actions = observations[val_indices], actions[val_indices]
+        train_observations, train_actions = observations, actions
         train_dataset = TensorDataset(torch.tensor(train_observations), torch.tensor(train_actions))
-        val_dataset = TensorDataset(torch.tensor(val_observations), torch.tensor(val_actions))
         self.train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        self.val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
         return
 
     def build_optimizer(self, optimizer_config):
@@ -101,6 +99,7 @@ class BehavioralCloning:
         # setup tensorboard
         if self.tensorboard_log is not None:
             self.writer = SummaryWriter(log_dir=self.tensorboard_log + "/" + tb_log_name)
+            logger.info(f"Tensorboard log saved at {self.tensorboard_log}/{tb_log_name}")
 
         total_timesteps, callback = self._setup_learn(
             total_timesteps,
@@ -111,7 +110,7 @@ class BehavioralCloning:
         self.policy.train()
         callback.on_training_start(locals(), globals())
         step = 0
-        while step < total_timesteps:
+        while self.num_timesteps < total_timesteps:
             for batch in self.train_loader:
                 observations, actions = batch
                 observations = observations.to(self.device).float()
@@ -123,12 +122,12 @@ class BehavioralCloning:
                 loss.backward()
                 self.optimizer.step()
                 step += 1
+                self.num_timesteps += observations.shape[0]
                 # use the callback to signal the training step
                 callback.on_step()
-                if self.tensorboard_log is not None:
+                if self.tensorboard_log is not None and step % self.log_interval == 0:
                     self.writer.add_scalar("Loss", loss, step)
-
-        callback.on_training_end()
+                    logger.info(f"Step: {step}/{total_timesteps}, Loss: {loss}")
         return self
 
     
@@ -203,7 +202,7 @@ class BehavioralCloning:
         callback.init_callback(self)
         return callback
     
-    def load(self, load_path):
+    def load(self, load_path, env=None):
         """
         Load the model from a zip-file
 
