@@ -1,1 +1,1 @@
-python3 main.py --config config/tasks/Nav/easy/RL/ppo.yaml --exp p3c6b2_ppo2 --use_gym
+python3 main.py --config config/tasks/Nav/easy/RL/ppo.yaml --exp p3c6b2_ppo3 --use_gym

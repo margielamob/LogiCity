@@ -75,7 +75,7 @@ class GymCityWrapper(gym.core.Env):
         :param dict obs_dict: the observation dictionary
         :return: the reward
         '''
-        return obs_dict["Reward"][0] - 10/self.horizon
+        return (obs_dict["Reward"][0] - 5)/self.horizon
     
     
     def reset(self, return_info=False):
