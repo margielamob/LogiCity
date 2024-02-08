@@ -187,11 +187,8 @@ def main_gym(args, logger):
         if rl_config["algorithm"] == "ExpertCollector":
             model = algorithm_class(eval_env)
         else:
-            model = algorithm_class(rl_config["policy_network"], \
-                                eval_env, \
-                                **hyperparameters, \
-                                policy_kwargs=policy_kwargs)
-            model = algorithm_class.load(rl_config["checkpoint_path"], env=eval_env)
+            model = algorithm_class.load(rl_config["checkpoint_path"], \
+                                eval_env)
         o = eval_env.reset()
         ep_rew_list = []
         rew = 0    

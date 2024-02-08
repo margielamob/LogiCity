@@ -5,9 +5,12 @@ import pathlib
 import time
 import torch
 import torch.nn as nn
+from abc import ABC
 from torch.utils.data import DataLoader, TensorDataset
 from stable_baselines3.common.callbacks import BaseCallback, CallbackList, ConvertCallback, ProgressBarCallback
-from stable_baselines3.common.save_util import load_from_zip_file, save_to_zip_file
+from stable_baselines3.common.save_util import load_from_zip_file, save_to_zip_file, recursive_getattr, recursive_setattr
+from typing import TypeVar
+
 import torch.nn.functional as F
 from collections import deque
 from torch.utils.tensorboard import SummaryWriter
@@ -16,7 +19,9 @@ from logicity.rl_agent.policy import build_policy
 import logging
 logger = logging.getLogger(__name__)
 
-class BehavioralCloning:
+SelfBehavioralCloning = TypeVar("SelfBehavioralCloning", bound="BehavioralCloning")
+
+class BehavioralCloning(ABC):
     def __init__(self, policy, env, policy_kwargs, 
                  num_traj,
                  expert_demonstrations,
@@ -25,7 +30,11 @@ class BehavioralCloning:
                  batch_size=64,
                  tensorboard_log=None,
                  log_interval=10):
-
+        self.policy_class = policy
+        self.policy_kwargs = policy_kwargs
+        self.num_traj = num_traj
+        self.expert_demonstrations = expert_demonstrations
+        self.optimizer_config = optimizer
         self.policy = build_policy[policy](env, **policy_kwargs)
         self.optimizer = self.build_optimizer(optimizer)
         expert_data = self.load_expert_data(expert_demonstrations, num_traj)
@@ -109,7 +118,6 @@ class BehavioralCloning:
         # use the callback to signal the start of the training
         self.policy.train()
         callback.on_training_start(locals(), globals())
-        step = 0
         while self.num_timesteps < total_timesteps:
             for batch in self.train_loader:
                 observations, actions = batch
@@ -121,13 +129,12 @@ class BehavioralCloning:
                 loss = self.loss(action_probs, actions)
                 loss.backward()
                 self.optimizer.step()
-                step += 1
-                self.num_timesteps += observations.shape[0]
+                self.num_timesteps += 1
                 # use the callback to signal the training step
                 callback.on_step()
-                if self.tensorboard_log is not None and step % self.log_interval == 0:
-                    self.writer.add_scalar("Loss", loss, step)
-                    logger.info(f"Step: {step}/{total_timesteps}, Loss: {loss}")
+                if self.tensorboard_log is not None and self.num_timesteps % self.log_interval == 0:
+                    self.writer.add_scalar("Loss", loss, self.num_timesteps)
+                    logger.info(f"Step: {self.num_timesteps}/{total_timesteps}, Loss: {loss}")
         return self
 
     
@@ -202,25 +209,231 @@ class BehavioralCloning:
         callback.init_callback(self)
         return callback
     
-    def load(self, load_path, env=None):
-        """
-        Load the model from a zip-file
+    @classmethod
+    def load(
+        cls: SelfBehavioralCloning,
+        path,
+        env,
+        device="cuda",
+        **kwargs
+    ):
 
-        :param load_path: the path to the zip file
-        """
-        data, params = load_from_zip_file(load_path)
-        self.__dict__.update(params)
-        self.policy.load_state_dict(data["policy"])
-        self.optimizer.load_state_dict(data["optimizer"])
 
-    def save(self, save_path):
-        """
-        Save the current parameters to file
+        data, params, pytorch_variables = load_from_zip_file(
+            path,
+            device=device
+        )
 
-        :param save_path: The path to the file
+        assert data is not None, "No data found in the saved file"
+        assert params is not None, "No params found in the saved file"
+
+        model = cls(
+            policy=data["policy_class"],
+            env=env,
+            policy_kwargs=data["policy_kwargs"],
+            num_traj=data["num_traj"],
+            expert_demonstrations=data["expert_demonstrations"],
+            optimizer=data["optimizer_config"],
+            device=device,
+            **kwargs
+        )
+
+        # load parameters
+        model.__dict__.update(data)
+        model.__dict__.update(kwargs)
+
+        try:
+            # put state_dicts back in place
+            model.set_parameters(params, exact_match=True, device=device)
+        except RuntimeError as e:
+            # Patch to load Policy saved using SB3 < 1.7.0
+            # the error is probably due to old policy being loaded
+            # See https://github.com/DLR-RM/stable-baselines3/issues/1233
+            if "pi_features_extractor" in str(e) and "Missing key(s) in state_dict" in str(e):
+                model.set_parameters(params, exact_match=False, device=device)
+            else:
+                raise e
+        # put other pytorch variables back in place
+        if pytorch_variables is not None:
+            for name in pytorch_variables:
+                # Skip if PyTorch variable was not defined (to ensure backward compatibility).
+                # This happens when using SAC/TQC.
+                # SAC has an entropy coefficient which can be fixed or optimized.
+                # If it is optimized, an additional PyTorch variable `log_ent_coef` is defined,
+                # otherwise it is initialized to `None`.
+                if pytorch_variables[name] is None:
+                    continue
+                # Set the data attribute directly to avoid issue when using optimizers
+                # See https://github.com/DLR-RM/stable-baselines3/issues/391
+                recursive_setattr(model, f"{name}.data", pytorch_variables[name].data)
+
+        return model
+    
+    def get_parameters(self):
         """
-        data = {
-            "policy": self.policy,
-            "optimizer": self.optimizer
-        }
-        save_to_zip_file(save_path, data)
+        Return the parameters of the agent. This includes parameters from different networks, e.g.
+        critics (value functions) and policies (pi functions).
+
+        :return: Mapping of from names of the objects to PyTorch state-dicts.
+        """
+        state_dicts_names, _ = self._get_torch_save_params()
+        params = {}
+        for name in state_dicts_names:
+            attr = recursive_getattr(self, name)
+            # Retrieve state dict
+            params[name] = attr.state_dict()
+        return params
+
+
+    def save(
+        self,
+        path,
+        ):
+        """
+        Save all the attributes of the object and the model parameters in a zip-file.
+
+        :param path: path to the file where the rl agent should be saved
+        :param exclude: name of parameters that should be excluded in addition to the default ones
+        :param include: name of parameters that might be excluded but should be included anyway
+        """
+        # Copy parameter list so we don't mutate the original dict
+        data = self.__dict__.copy()
+
+        # Exclude is union of specified parameters (if any) and standard exclusions
+        exclude = []
+        exclude = set(exclude).union(self._excluded_save_params())
+
+
+        state_dicts_names, torch_variable_names = self._get_torch_save_params()
+        all_pytorch_variables = state_dicts_names + torch_variable_names
+        for torch_var in all_pytorch_variables:
+            # We need to get only the name of the top most module as we'll remove that
+            var_name = torch_var.split(".")[0]
+            # Any params that are in the save vars must not be saved by data
+            exclude.add(var_name)
+
+        # Remove parameter entries of parameters which are to be excluded
+        for param_name in exclude:
+            data.pop(param_name, None)
+
+        # Build dict of torch variables
+        pytorch_variables = None
+        if torch_variable_names is not None:
+            pytorch_variables = {}
+            for name in torch_variable_names:
+                attr = recursive_getattr(self, name)
+                pytorch_variables[name] = attr
+
+        # Build dict of state_dicts
+        params_to_save = self.get_parameters()
+
+        save_to_zip_file(path, data=data, params=params_to_save, pytorch_variables=pytorch_variables)
+
+    def _get_torch_save_params(self):
+        """
+        Get the name of the torch variables that will be saved with
+        PyTorch ``th.save``, ``th.load`` and ``state_dicts`` instead of the default
+        pickling strategy. This is to handle device placement correctly.
+
+        Names can point to specific variables under classes, e.g.
+        "policy.optimizer" would point to ``optimizer`` object of ``self.policy``
+        if this object.
+
+        :return:
+            List of Torch variables whose state dicts to save (e.g. th.nn.Modules),
+            and list of other Torch variables to store with ``th.save``.
+        """
+        state_dicts = ["policy"]
+
+        return state_dicts, []
+    
+    def set_parameters(
+        self,
+        load_path_or_dict,
+        exact_match,
+        device="auto",
+    ):
+        """
+        Load parameters from a given zip-file or a nested dictionary containing parameters for
+        different modules (see ``get_parameters``).
+
+        :param load_path_or_iter: Location of the saved data (path or file-like, see ``save``), or a nested
+            dictionary containing nn.Module parameters used by the policy. The dictionary maps
+            object names to a state-dictionary returned by ``torch.nn.Module.state_dict()``.
+        :param exact_match: If True, the given parameters should include parameters for each
+            module and each of their parameters, otherwise raises an Exception. If set to False, this
+            can be used to update only specific parameters.
+        :param device: Device on which the code should run.
+        """
+        params = {}
+        if isinstance(load_path_or_dict, dict):
+            params = load_path_or_dict
+        else:
+            _, params, _ = load_from_zip_file(load_path_or_dict, device=device)
+
+        # Keep track which objects were updated.
+        # `_get_torch_save_params` returns [params, other_pytorch_variables].
+        # We are only interested in former here.
+        objects_needing_update = set(self._get_torch_save_params()[0])
+        updated_objects = set()
+
+        for name in params:
+            attr = None
+            try:
+                attr = recursive_getattr(self, name)
+            except Exception as e:
+                # What errors recursive_getattr could throw? KeyError, but
+                # possible something else too (e.g. if key is an int?).
+                # Catch anything for now.
+                raise ValueError(f"Key {name} is an invalid object name.") from e
+
+            if isinstance(attr, torch.optim.Optimizer):
+                # Optimizers do not support "strict" keyword...
+                # Seems like they will just replace the whole
+                # optimizer state with the given one.
+                # On top of this, optimizer state-dict
+                # seems to change (e.g. first ``optim.step()``),
+                # which makes comparing state dictionary keys
+                # invalid (there is also a nesting of dictionaries
+                # with lists with dictionaries with ...), adding to the
+                # mess.
+                #
+                # TL;DR: We might not be able to reliably say
+                # if given state-dict is missing keys.
+                #
+                # Solution: Just load the state-dict as is, and trust
+                # the user has provided a sensible state dictionary.
+                attr.load_state_dict(params[name])  # type: ignore[arg-type]
+            else:
+                # Assume attr is th.nn.Module
+                attr.load_state_dict(params[name], strict=exact_match)
+            updated_objects.add(name)
+
+        if exact_match and updated_objects != objects_needing_update:
+            raise ValueError(
+                "Names of parameters do not match agents' parameters: "
+                f"expected {objects_needing_update}, got {updated_objects}"
+            )
+        
+
+    def _excluded_save_params(self):
+        """
+        Returns the names of the parameters that should be excluded from being
+        saved by pickling. E.g. replay buffers are skipped by default
+        as they take up a lot of space. PyTorch variables should be excluded
+        with this so they can be stored with ``th.save``.
+
+        :return: List of parameters that should be excluded from being saved with pickle.
+        """
+        return [
+            "policy",
+            "device",
+            "env",
+            "replay_buffer",
+            "rollout_buffer",
+            "writer",
+            "_vec_normalize_env",
+            "_episode_storage",
+            "_logger",
+            "_custom_logger",
+        ]
