@@ -208,7 +208,7 @@ def main_gym(args, logger):
         rew_list.append(rew)
         worlds.append(cached_observation)
     mean_reward = np.mean(rew_list)
-    print(mean_reward)
+    logger.info("Score achieved: {}".format(mean_reward))
     for ts in range(len(worlds)):
         with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
             pkl.dump(worlds[ts], f)
