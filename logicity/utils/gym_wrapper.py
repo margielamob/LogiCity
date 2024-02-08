@@ -75,7 +75,26 @@ class GymCityWrapper(gym.core.Env):
         :param dict obs_dict: the observation dictionary
         :return: the reward
         '''
-        return (obs_dict["Reward"][0] - 5)/self.horizon
+        moving_cost = self.action2cost(obs_dict["Agent_actions"][0])
+        return (obs_dict["Reward"][0]*5 + moving_cost)/self.horizon
+    
+    def action2cost(self, action):
+        ''' Convert the action to cost.
+        :param list action: the action list
+        :return: the cost
+        '''
+        if action[0] == 1:
+            # Slow
+            return -2
+        elif action[4] == 1:
+            # Normal
+            return -1
+        elif action[8] == 1:
+            # Fast
+            return 0
+        else:
+            # Stop
+            return -3
     
     
     def reset(self, return_info=False):
