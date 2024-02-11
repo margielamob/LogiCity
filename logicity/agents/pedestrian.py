@@ -52,6 +52,7 @@ class Pedestrian(Agent):
         # get global traj on the occupacy map
         self.global_traj = self.global_planner(self.movable_region, self.start, self.goal)
         self.reach_goal = False
+        self.last_move_dir = None
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
     def get_start(self, world_state_matrix):
@@ -150,6 +151,7 @@ class Pedestrian(Agent):
             self.global_traj = self.global_planner(self.movable_region, self.start, self.goal)
             logger.info("Generating new goal and gloabl plans for {}_{} done!".format(self.type, self.id))
             self.reach_goal = False
+            self.last_move_dir = None
             # delete past traj
             world_state_matrix[self.layer_id] *= 0
             world_state_matrix[self.layer_id][self.goal[0], self.goal[1]] = TYPE_MAP[self.type] + AGENT_GOAL_PLUS

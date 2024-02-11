@@ -1,92 +1,19 @@
-EntityTypes:
-  - Agent
-  - Intersection
-
-Predicates:
-  - IsAt:
-      arity: 2
-      method: IsAt(Agent, Intersection)
-      function: logicity.utils.pred_converter.z3_local.IsAt
-      description: Checks if agent x is at intersection y.
-  - IsPedestrian:
-      arity: 1
-      method: IsPed(Agent)
-      function: logicity.utils.pred_converter.z3_local.IsPed
-      description: Checks if agent x is a pedestrian.
-  - IsCar:
-      arity: 1
-      method: IsCar(Agent)
-      function: logicity.utils.pred_converter.z3_local.IsCar
-      description: Checks if agent x is a car.
-  - IsInterEmpty:
-      arity: 1
-      method: IsInterEmpty(Intersection)
-      function: logicity.utils.pred_converter.z3_local.IsInterEmpty
-      description: Checks if the intersection x is empty.
-  - IsInterCarEmpty:
-      arity: 1
-      method: IsInterCarEmpty(Intersection)
-      function: logicity.utils.pred_converter.z3_local.IsInterCarEmpty
-      description: Checks if the intersection x is empty with cars.
-  - HigherPri:
-      arity: 2
-      method: HigherPri(Agent, Agent)
-      function: logicity.utils.pred_converter.z3_local.HigherPri
-      description: Checks if agent x, x has higher priority to y.
-  - CollidingClose:
-      arity: 2
-      method: CollidingClose(Agent, Agent)
-      function: logicity.utils.pred_converter.z3_local.CollidingClose
-      description: Checks if agent x is about to collide with agent y.
-  - Stop:
-      arity: 1
-      method: Stop(Agent)
-      function: None
-      description: Stop action.
-
 Rules:
   - Stop:
       formula: |
-        Stop(agent) == Exists(
-          [dummyIntersection, dummyAgent], 
+        Stop(entity) == Exists(
+          [dummyEntity], 
           Or(
             And(
-              IsCar(agent), 
-              IsAt(agent, dummyIntersection), 
-              IsAt(dummyAgent, dummyIntersection), 
-              IsInterEmpty(dummyIntersection), 
-              Or(
-                HigherPri(dummyAgent, agent), 
-                IsPedestrian(dummyAgent)
-              )
+              IsAtInter(entity), 
+              IsInInter(dummyEntity), 
             ),
             And(
-              IsPedestrian(agent), 
-              IsAt(agent, dummyIntersection), 
-              Not(IsInterCarEmpty(dummyIntersection))
+              IsAtInter(entity), 
+              IsAtInter(dummyEntity), 
+              HigherPri(dummyEntity, entity),
             ),
-            And(
-              IsCar(agent), 
-              IsAt(agent, dummyIntersection), 
-              Not(
-                And(
-                  IsInterEmpty(dummyIntersection), 
-                  IsInterCarEmpty(dummyIntersection)
-                )
-              )
-            ),
-            CollidingClose(agent, dummyAgent)
+            CollidingClose(entity, dummyEntity)
           )
         )
-      description: Or version of the following 3 stop rule.
-#   - Cars_Stop1:
-#       formula: And(IsCar(agent), IsAt(agent, dummyIntersection), Not(IsInterEmpty(dummyIntersection)))) == Stop(agent)
-#       description: cars at intersection, not intersection empty, stop
-#   - Cars_Stop2:
-#       formula: And(IsCar(agent), IsAt(agent, dummyIntersection), IsAt(dummyAgent, dummyIntersection), IsInterEmpty(dummyIntersection), Or(HigherPri(dummyAgent, agent), IsPedestrian(dummyAgent))) == Stop(agent)
-#       description: cars at intersection, intersection empty, higher priority car or ped is at intersection, stop
-#   - Pedestrians_Stop1:
-#       formula: And(IsPedestrian(agent), IsAt(agent, dummyIntersection), Not(IsInterCarEmpty(dummyIntersection)))) == Stop(agent)
-#       description: pedestrians at intersection, not intersection empty with cars, stop
-#   - Collision_Stop:
-#      formula: CollidingClose(agent, dummyAgent) == Stop(agent)
+      description: Or version of the 3 stop rule.

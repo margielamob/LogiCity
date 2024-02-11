@@ -2,8 +2,9 @@
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
   agent_yaml_file: "config/agents/3p6c.yaml" # Agents in the simulation
+  ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
   rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/task/easy_expert.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/easy/expert.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
@@ -19,10 +20,9 @@ simulation:
       2: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0]
       3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     fov_entities:
-      Agent: 5                        # Maximum number of agents in the FOV, include the RL agent
-      Intersection: 1                 # Maximum number of intersections in the FOV, these correspond to the definition of rules
+      Entity: 5                        # Maximum number of agents in the FOV, include the RL agent
 
 # Stable Baselines specific settings
 collecting_config:
-  num_episodes: 10000    # Total number of episodes to collect data for.
-  return_full_world: False
+  num_episodes: 5    # Total number of episodes to collect data for.
+  return_full_world: True

@@ -20,8 +20,8 @@ WRAPPER = {
 
 
 class CityEnv(City):
-    def __init__(self, grid_size, local_planner, rule_file, rl_agent, use_multi=False):
-        super().__init__(grid_size, local_planner, rule_file, use_multi=use_multi)
+    def __init__(self, grid_size, local_planner, logic_engine_file, rl_agent, use_multi=False):
+        super().__init__(grid_size, local_planner, logic_engine_file, use_multi=use_multi)
         self.rl_agent = rl_agent
         self.logic_grounding_shape = self.local_planner.logic_grounding_shape(self.rl_agent["fov_entities"])
 

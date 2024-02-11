@@ -1,10 +1,13 @@
 from yaml import load, FullLoader
 
 class LocalPlanner:
-    def __init__(self, yaml_path):        
+    def __init__(self, logic_engine_file):        
         # Load the yaml file, create the predicates and rules
-        with open(yaml_path, 'r') as file:
+        onotology_yaml, rule_yaml = logic_engine_file['ontology'], logic_engine_file['rule']
+        with open(onotology_yaml, 'r') as file:
             self.data = load(file, Loader=FullLoader)
+        with open(rule_yaml, 'r') as file:
+            self.data.update(load(file, Loader=FullLoader))
         
         self._create_entities()
         self._create_predicates()

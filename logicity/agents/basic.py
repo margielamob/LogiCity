@@ -7,6 +7,7 @@ class Agent:
         self.size = size
         self.concepts = concepts
         self.type = concepts["type"]
+        self.priority = concepts["priority"]
         self.id = id
         # -1 is always the stop action
         # Actions: ["left", "right", "up", "down", "stop"]
