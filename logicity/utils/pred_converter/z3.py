@@ -256,6 +256,8 @@ def CollidingClose(world_matrix, intersect_matrix, agents, entity1, entity2):
         dist = torch.sqrt(torch.sum((agent_position1 - agent_position2)**2))
         if dist > OCC_CHECK_RANGE[agent_type1]:
             return 0
+        elif dist == 0:
+            return np.random.choice([0, 1], p=[0.5, 0.5])
         else:
             agent1_dire_vec = torch.tensor(DIRECTION_VECTOR[agent1_dire])
             angle = torch.acos(torch.dot(agent1_dire_vec, (agent_position2 - agent_position1)) / dist)

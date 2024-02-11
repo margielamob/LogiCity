@@ -141,35 +141,6 @@ class Z3PlannerRL(Z3Planner):
                              self.last_rl_obs["last_obs_dict"], self.last_rl_obs["last_obs"])
         self.last_rl_obs = None
         return result
-    
-    def get_fov(self, position, direction, width, height):
-        # Calculate the region of the city image that falls within the ego agent's field of view
-        if direction == None:
-            x_start = max(position[0]-AGENT_FOV, 0)
-            y_start = max(position[1]-AGENT_FOV, 0)
-            x_end = min(position[0]+AGENT_FOV+1, width)
-            y_end = min(position[1]+AGENT_FOV+1, height)
-        elif direction == "Left":
-            x_start = max(position[0]-AGENT_FOV, 0)
-            y_start = max(position[1]-AGENT_FOV, 0)
-            x_end = min(position[0]+AGENT_FOV+1, width)
-            y_end = min(position[1]+2, height)
-        elif direction == "Right":
-            x_start = max(position[0]-AGENT_FOV, 0)
-            y_start = max(position[1]-2, 0)
-            x_end = min(position[0]+AGENT_FOV+1, width)
-            y_end = min(position[1]+AGENT_FOV+1, height)
-        elif direction == "Up":
-            x_start = max(position[0]-AGENT_FOV, 0)
-            y_start = max(position[1]-AGENT_FOV, 0)
-            x_end = min(position[0]+2, width)
-            y_end = min(position[1]+AGENT_FOV+1, height)
-        elif direction == "Down":
-            x_start = max(position[0]-2, 0)
-            y_start = max(position[1]-AGENT_FOV, 0)
-            x_end = min(position[0]+AGENT_FOV+1, width)
-            y_end = min(position[1]+AGENT_FOV+1, height)
-        return x_start, y_start, x_end, y_end
 
     def break_world_matrix(self, world_matrix, agents, intersect_matrix, layerid2listid, rl_agent):
         ego_agent = {}
@@ -200,7 +171,7 @@ class Z3PlannerRL(Z3Planner):
                 layer_nonzero_int = torch.logical_and(layer != 0, layer == layer.to(torch.int64))
                 if layer_nonzero_int.nonzero().shape[0] > 1:
                     continue
-                if len(partial_agent) >= self.fov_entities["Agent"] and rl_flag[ego_name]:
+                if len(partial_agent) >= self.fov_entities["Entity"] and rl_flag[ego_name]:
                     # can only handle fixed number of agents
                     break
                 non_zero_values = int(layer[layer_nonzero_int.nonzero()[0][0], layer_nonzero_int.nonzero()[0][1]])
@@ -215,9 +186,13 @@ class Z3PlannerRL(Z3Planner):
                     partial_agent[str(layer_id)] = PesudoAgent(agent_type, layer_id, other_agent.concepts, other_agent.last_move_dir)
             if rl_flag[ego_name]:
                 # RL agent needs fixed number of entities
-                while len(partial_agent) < self.fov_entities["Agent"]:
+                ph_concepts = {
+                    "type": "PH",
+                    "priority": 0,
+                }
+                while len(partial_agent) < self.fov_entities["Entity"]:
                     layer_id += 1
-                    place_holder_agent = PesudoAgent("PH", layer_id, None,\
+                    place_holder_agent = PesudoAgent("PH", layer_id, ph_concepts, \
                                                       None)
                     partial_agent["PH_{}".format(layer_id)] = place_holder_agent
                         # Additional place holder for rl agent
@@ -231,32 +206,6 @@ class Z3PlannerRL(Z3Planner):
         self.fov_entities = fov_entities
         self.rl_input_shape = logic_grounding_shape(self.entity_types, self.predicates, self.z3_vars, fov_entities)
         return self.rl_input_shape
-
-    def format_rule_string(self, rule_str):
-        indent_level = 0
-        formatted_str = ""
-        bracket_stack = []  # Stack to keep track of brackets
-
-        for char in rule_str:
-            if char == ',':
-                formatted_str += ',\n' + ' ' * 4 * indent_level
-            elif char == '(':
-                bracket_stack.append('(')
-                formatted_str += '(\n' + ' ' * 4 * (indent_level + 1)
-                indent_level += 1
-            elif char == ')':
-                if not bracket_stack or bracket_stack[-1] != '(':
-                    raise ValueError("Unmatched closing bracket detected.")
-                bracket_stack.pop()
-                indent_level -= 1
-                formatted_str += '\n' + ' ' * 4 * indent_level + ')'
-            else:
-                formatted_str += char
-
-        if bracket_stack:
-            raise ValueError("Unmatched opening bracket detected.")
-
-        return formatted_str
 
 def logic_grounding_shape(
                       entity_types, 
@@ -363,7 +312,7 @@ def solve_sub_problem(ego_name,
         local_rule_tem = copy.deepcopy(rule_tem)
         for rule_name, rule_template in local_rule_tem.items():
             # the first entity is the ego agent
-            agent = local_entities["Agent"][0]
+            entity = local_entities["Entity"][0]
             # Replace placeholder in the rule template with the actual agent entity
             instantiated_rule = eval(rule_template)
             local_solver.add(instantiated_rule)
@@ -388,7 +337,7 @@ def solve_sub_problem(ego_name,
                         action.append(action_id)
                 if len(action)>0:
                     for a in action:
-                        if is_true(model.evaluate(local_predicates[key]["instance"](local_entities["Agent"][0]))):
+                        if is_true(model.evaluate(local_predicates[key]["instance"](local_entities["Entity"][0]))):
                             action_dist[a] = 1.0
             # No action specified, use the default action, Normal
             if action_dist.sum() == 0:
@@ -397,14 +346,8 @@ def solve_sub_problem(ego_name,
                         action_dist[action_id] = 1.0
 
             agents_actions = {ego_name: action_dist}
-            # if rl_flag:
-            #     agents_actions["{}_grounding".format(ego_name)] = np.array(grounding, dtype=np.float32)
-            #     assert len(agents_actions["{}_grounding".format(ego_name)]) == rl_input_shape
             return agents_actions
         else:
-            # raise ValueError("No solution means do not exist intersection/agent in the field of view")
-        #     # No solution means do not exist intersection/agent in the field of view, Normal
-        #     # Interpret the solution to the FOL problem
             action_mapping = ego_action_mapping
             action_dist = torch.zeros_like(ego_action_dist)
 
@@ -507,10 +450,10 @@ def eval_action(rl_action,
             action_name = get_action_name(rl_action)
             if pred_name == action_name:
                 for rule_name, rule_template in rule_tem.items():
-                    local_solvers[rule_name].add(eval_pred(entities["Agent"][0]))
+                    local_solvers[rule_name].add(eval_pred(entities["Entity"][0]))
             else:
                 for rule_name, rule_template in rule_tem.items():
-                    local_solvers[rule_name].add(Not(eval_pred(entities["Agent"][0])))
+                    local_solvers[rule_name].add(Not(eval_pred(entities["Entity"][0])))
             continue
 
         if arity == 1:
@@ -545,7 +488,7 @@ def eval_action(rl_action,
     local_rule_tem = copy.deepcopy(rule_tem)
     for rule_name, rule_template in local_rule_tem.items():
         # the first entity is the ego agent
-        agent = entities["Agent"][0]
+        entity = entities["Entity"][0]
         # Replace placeholder in the rule template with the actual agent entity
         instantiated_rule = eval(rule_template["content"])
         local_solvers[rule_name].add(instantiated_rule)
@@ -586,14 +529,13 @@ def split_into_batches(keys, batch_size):
         yield keys[i:i + batch_size]
 
 def world2entity(entity_sorts, partial_intersect, partial_agents, fov_entities, rl_flag):
-    assert "Agent" in entity_sorts.keys() and "Intersection" in entity_sorts.keys()
     # all the enitities are stored in self.entities
     entities = {}
     for entity_type in entity_sorts.keys():
         entities[entity_type] = []
         flag = False
         # For Agents
-        if entity_type == "Agent":
+        if entity_type == "Entity":
             for key, agent in partial_agents.items():
                 if "ego" in key:
                     ego_agent = agent
@@ -601,49 +543,22 @@ def world2entity(entity_sorts, partial_intersect, partial_agents, fov_entities, 
                     continue
                 if "PH" in key:
                     agent_id = agent.layer_id
-                    agent_name = f"Agent_PH_{agent_id}"
+                    agent_name = f"Entity_PH_{agent_id}"
                 else:
                     agent_id = agent.layer_id
                     agent_type = agent.type
-                    agent_name = f"Agent_{agent_type}_{agent_id}"
+                    agent_name = f"Entity_{agent_type}_{agent_id}"
                 # Create a Z3 constant for the agent
-                agent_entity = Const(agent_name, entity_sorts['Agent'])
+                agent_entity = Const(agent_name, entity_sorts['Entity'])
                 entities[entity_type].append(agent_entity)
             assert flag, logger.info(partial_agents)
             agent_id = ego_agent.layer_id
             agent_type = ego_agent.type
-            agent_name = f"Agent_{agent_type}_{agent_id}"
+            agent_name = f"Entity_{agent_type}_{agent_id}"
             # Create a Z3 constant for the agent
-            agent_entity = Const(agent_name, entity_sorts['Agent'])
+            agent_entity = Const(agent_name, entity_sorts['Entity'])
             # ego agent is the first
             entities[entity_type] = [agent_entity] + entities[entity_type]
             if rl_flag:
-                assert len(entities[entity_type]) == fov_entities["Agent"], logger.info(entities)
-        elif entity_type == "Intersection":
-            # For Intersections
-            unique_intersections = np.unique(partial_intersect[0])
-            unique_intersections = unique_intersections[unique_intersections != 0]
-            if not rl_flag:
-                for intersection_id in unique_intersections:
-                    intersection_name = f"Intersection_{intersection_id}"
-                    # Create a Z3 constant for the intersection
-                    intersection_entity = Const(intersection_name, entity_sorts['Intersection'])
-                    entities[entity_type].append(intersection_entity)
-            else:
-                for intersection_id in unique_intersections:
-                    if len(entities[entity_type]) == fov_entities["Intersection"]:
-                        break
-                    intersection_name = f"Intersection_{intersection_id}"
-                    # Create a Z3 constant for the intersection
-                    intersection_entity = Const(intersection_name, entity_sorts['Intersection'])
-                    entities[entity_type].append(intersection_entity)
-                if len(entities[entity_type]) < fov_entities["Intersection"]:
-                    current = len(entities[entity_type]) + 100
-                    while len(entities[entity_type]) < fov_entities["Intersection"]:
-                        intersection_name = "Intersection_PH_{}".format(current)
-                        # Create a Z3 constant for the intersection
-                        intersection_entity = Const(intersection_name, entity_sorts['Intersection'])
-                        entities[entity_type].append(intersection_entity)
-                        current += 1
-                assert len(entities[entity_type]) == fov_entities["Intersection"]
+                assert len(entities[entity_type]) == fov_entities["Entity"], logger.info(entities)
     return entities

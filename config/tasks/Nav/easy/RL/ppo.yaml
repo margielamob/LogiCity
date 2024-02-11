@@ -19,8 +19,7 @@ simulation:
       2: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0]
       3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     fov_entities:
-      Agent: 5                        # Maximum number of agents in the FOV, include the RL agent
-      Intersection: 1                 # Maximum number of intersections in the FOV, these correspond to the definition of rules
+      Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
 
 eval_checkpoint:
   eval_freq: 20000                        # This is the frequency of evaluation, will be multiplied by num_envs
