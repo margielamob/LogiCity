@@ -1,12 +1,12 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/debug.yaml" # Agents in the simulation
+  agent_yaml_file: "config/agents/42.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
   rule_type: "Z3"               # z3 
   rule_yaml_file: "config/rules/sim/easy/easy_rule.yaml"                 # Whether to render the environment
   rl: false
-  debug: true
+  debug: false
   use_multi: false
   agent_region: 240
   

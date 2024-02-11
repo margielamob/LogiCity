@@ -16,7 +16,7 @@ from ..utils.gen import gen_occ
 logger = logging.getLogger(__name__)
 
 class City:
-    def __init__(self, grid_size, local_planner, rule_file=None, use_multi=False):
+    def __init__(self, grid_size, local_planner, logic_engine_file=None, use_multi=False):
         self.grid_size = grid_size
         self.layers = BASIC_LAYER
         # 0 for blocks
@@ -32,7 +32,7 @@ class City:
         self.label2type = LABEL_MAP
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
         # city rule defines local decision of all the agents
-        self.local_planner = LPlanner_mapper[local_planner](rule_file)
+        self.local_planner = LPlanner_mapper[local_planner](logic_engine_file)
         self.use_multi = use_multi
         self.logic_grounds = {}
         # vis color map

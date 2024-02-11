@@ -21,6 +21,7 @@ class PesudoAgent:
         self.type = type
         self.layer_id = layer_id
         self.type = concepts["type"]
+        self.priority = concepts["priority"]
         self.concepts = concepts
         self.moving_direction = moving_direction
 
@@ -340,7 +341,7 @@ def solve_sub_problem(ego_name,
     local_rule_tem = copy.deepcopy(rule_tem)
     for rule_name, rule_template in local_rule_tem.items():
         # the first entity is the ego agent
-        agent = local_entities["Agent"][0]
+        entity = local_entities["Entity"][0]
         # Replace placeholder in the rule template with the actual agent entity
         instantiated_rule = eval(rule_template)
         local_solver.add(instantiated_rule)
@@ -365,7 +366,7 @@ def solve_sub_problem(ego_name,
                     action.append(action_id)
             if len(action)>0:
                 for a in action:
-                    if is_true(model.evaluate(local_predicates[key]["instance"](local_entities["Agent"][0]))):
+                    if is_true(model.evaluate(local_predicates[key]["instance"](local_entities["Entity"][0]))):
                         action_dist[a] = 1.0
         # No action specified, use the default action, Normal
         if action_dist.sum() == 0:
@@ -394,37 +395,28 @@ def split_into_batches(keys, batch_size):
         yield keys[i:i + batch_size]
 
 def world2entity(entity_sorts, partial_intersect, partial_agents):
-    assert "Agent" in entity_sorts.keys() and "Intersection" in entity_sorts.keys()
     # all the enitities are stored in self.entities
     entities = {}
     for entity_type in entity_sorts.keys():
         entities[entity_type] = []
         # For Agents
-        if entity_type == "Agent":
+        if entity_type == "Entity":
+            # all entities are agents
             for key, agent in partial_agents.items():
                 if "ego" in key:
                     ego_agent = agent
                     continue
                 agent_id = agent.layer_id
                 agent_type = agent.type
-                agent_name = f"Agent_{agent_type}_{agent_id}"
+                agent_name = f"Entity_{agent_type}_{agent_id}"
                 # Create a Z3 constant for the agent
-                agent_entity = Const(agent_name, entity_sorts['Agent'])
+                agent_entity = Const(agent_name, entity_sorts[entity_type])
                 entities[entity_type].append(agent_entity)
             agent_id = ego_agent.layer_id
             agent_type = ego_agent.type
-            agent_name = f"Agent_{agent_type}_{agent_id}"
+            agent_name = f"Entity_{agent_type}_{agent_id}"
             # Create a Z3 constant for the agent
-            agent_entity = Const(agent_name, entity_sorts['Agent'])
+            agent_entity = Const(agent_name, entity_sorts[entity_type])
             # ego agent is the first
             entities[entity_type] = [agent_entity] + entities[entity_type]
-        elif entity_type == "Intersection":
-            # For Intersections
-            unique_intersections = np.unique(partial_intersect[0])
-            unique_intersections = unique_intersections[unique_intersections != 0]
-            for intersection_id in unique_intersections:
-                intersection_name = f"Intersection_{intersection_id}"
-                # Create a Z3 constant for the intersection
-                intersection_entity = Const(intersection_name, entity_sorts['Intersection'])
-                entities[entity_type].append(intersection_entity)
     return entities

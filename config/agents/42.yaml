@@ -29,6 +29,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    young: 1.0
 
 - class: Pedestrian
   id: 5
@@ -59,6 +60,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    old: 1.0
 
 - class: Pedestrian
   id: 9
@@ -81,6 +83,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    young: 1.0
 
 - class: Pedestrian
   id: 12
@@ -146,6 +149,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    old: 1.0
 
 - class: Pedestrian
   id: 21
@@ -174,6 +178,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    old: 1.0
 
 - class: Pedestrian
   id: 25
@@ -279,6 +284,7 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
+    reckless: 1.0
 
 - class: Private_car
   id: 9
@@ -286,6 +292,7 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
+    police: 1.0
 
 - class: Private_car
   id: 10
@@ -293,7 +300,6 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
-    tiro: 1.0
 
 - class: Private_car
   id: 11

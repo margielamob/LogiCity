@@ -5,11 +5,15 @@ Rules:
           [dummyEntity], 
           Or(
             And(
-              IsInInter(entity), 
+              IsAtInter(entity), 
               IsInInter(dummyEntity), 
+            ),
+            And(
+              IsAtInter(entity), 
+              IsAtInter(dummyEntity), 
               HigherPri(dummyEntity, entity),
             ),
             CollidingClose(entity, dummyEntity)
           )
         )
-      description: Or version of the following 3 stop rule.
+      description: Or version of the 3 stop rule.
