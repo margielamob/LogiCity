@@ -12,18 +12,9 @@ from multiprocessing import Pool
 from ...utils.find import find_agent
 from ...utils.sample import split_into_subsets
 from .z3 import Z3Planner
+from .z3 import PesudoAgent
 
 logger = logging.getLogger(__name__)
-
-
-# used for grounding
-class PesudoAgent:
-    def __init__(self, type, layer_id, concepts, moving_direction):
-        self.type = type
-        self.layer_id = layer_id
-        self.type = concepts["type"] if concepts else None
-        self.concepts = concepts
-        self.moving_direction = moving_direction
 
 class Z3PlannerRL(Z3Planner):
     def __init__(self, yaml_path):        

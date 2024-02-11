@@ -6,6 +6,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
     old: 1.0
 
 - class: Pedestrian
@@ -14,6 +15,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 3
@@ -21,6 +23,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 4
@@ -29,6 +32,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
     young: 1.0
 
 - class: Pedestrian
@@ -37,6 +41,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 6
@@ -44,6 +49,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
     old: 1.0
 
 - class: Pedestrian
@@ -53,6 +59,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 8
@@ -60,6 +67,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
     old: 1.0
 
 - class: Pedestrian
@@ -68,6 +76,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 10
@@ -76,6 +85,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 11
@@ -83,6 +93,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
     young: 1.0
 
 - class: Pedestrian
@@ -91,6 +102,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 13
@@ -98,6 +110,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 14
@@ -105,6 +118,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
     old: 1.0
 
 - class: Pedestrian
@@ -113,6 +127,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
     
 
 - class: Pedestrian
@@ -121,6 +136,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 17
@@ -128,6 +144,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 18
@@ -135,6 +152,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 19
@@ -142,6 +160,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 20
@@ -149,6 +168,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
     old: 1.0
 
 - class: Pedestrian
@@ -157,6 +177,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 22
@@ -164,6 +185,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 23
@@ -171,6 +193,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 24
@@ -178,6 +201,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
     old: 1.0
 
 - class: Pedestrian
@@ -186,6 +210,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 26
@@ -193,6 +218,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 27
@@ -200,6 +226,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 28
@@ -207,6 +234,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 29
@@ -214,6 +242,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Pedestrian
   id: 30
@@ -221,6 +250,7 @@ agents:
   gplanner: A*
   concepts:
     type: Pedestrian
+    priority: 0
 
 - class: Private_car
   id: 1
@@ -228,6 +258,7 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
+    priority: 1
     ambulance: 1.0
 
 - class: Private_car
@@ -236,6 +267,7 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
+    priority: 2
     ambulance: 1.0
 
 - class: Private_car
@@ -244,6 +276,7 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
+    priority: 3
 
 - class: Private_car
   id: 4
@@ -251,6 +284,7 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
+    priority: 4
     tiro: 1.0
 
 - class: Bus
@@ -259,6 +293,7 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
+    priority: 5
     bus: 1.0
     no.: 61A # no. is used to define the bus routes 
 
@@ -268,6 +303,7 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
+    priority: 6
     tiro: 1.0
 
 - class: Private_car
@@ -276,6 +312,7 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
+    priority: 7
     tiro: 1.0
 
 - class: Private_car
@@ -284,6 +321,7 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
+    priority: 8
     reckless: 1.0
 
 - class: Private_car
@@ -292,6 +330,7 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
+    priority: 9
     police: 1.0
 
 - class: Private_car
@@ -299,6 +338,7 @@ agents:
   size: 2
   gplanner: A*vg
   concepts:
+    priority: 10
     type: Car
 
 - class: Private_car
@@ -306,6 +346,7 @@ agents:
   size: 2
   gplanner: A*vg
   concepts:
+    priority: 11
     type: Car
 
 - class: Private_car
@@ -314,3 +355,4 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
+    priority: 12
