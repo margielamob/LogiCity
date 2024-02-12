@@ -6,11 +6,13 @@ Rules:
           Or(
             And(
               Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
               IsAtInter(entity), 
               IsInInter(dummyEntity), 
             ),
             And(
               Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
               IsAtInter(entity), 
               IsAtInter(dummyEntity), 
               HigherPri(dummyEntity, entity),
