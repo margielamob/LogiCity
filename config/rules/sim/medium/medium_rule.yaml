@@ -28,14 +28,15 @@ Rules:
               IsAmbulance(dummyEntity)
             ),
             And(
-              Not(IsAmbulance(agent)),
-              CollidingClose(agent, dummyAgent)
+              Not(IsAmbulance(entity)),
+              CollidingClose(entity, dummyEntity)
             )
           )
         )
       description: Medium stop rule.
   - Fast:
-      formula: Fast(agent) == Exists(
+      formula: |
+        Fast(entity) == Exists(
           [dummyEntity], 
           Or(
             And(
@@ -48,13 +49,13 @@ Rules:
               IsReckless(entity), 
               IsPedestrian(dummyEntity), 
               IsClose(entity, dummyEntity)
-            ),
+            )
           )
         )
       description: If not stop, ambulances moves fast, reckless driver drives fast when close to pedestrian.
   - Slow:
       formula: |
-        Slow(agent) == Exists(
+        Slow(entity) == Exists(
           [dummyEntity], 
           Or(
             And(
@@ -66,7 +67,7 @@ Rules:
             And(
               Not(Stop(entity)), 
               IsCar(entity), 
-              IsInInter(entity, dummyEntity)
+              IsInInter(entity)
             )
           )
         )
