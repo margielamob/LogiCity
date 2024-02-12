@@ -25,7 +25,7 @@ eval_checkpoint:
   eval_freq: 20000                        # This is the frequency of evaluation, will be multiplied by num_envs
   save_freq: 20000
   save_path: './checkpoints/'
-  name_prefix: '3p6c2b_ppo3'
+  name_prefix: '3p6c2b_ppo4'
 
 # Stable Baselines specific settings
 stable_baselines:

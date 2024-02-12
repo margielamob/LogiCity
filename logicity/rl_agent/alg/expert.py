@@ -1,5 +1,6 @@
 import pickle
 import copy
+import time
 
 import logging
 logger = logging.getLogger(__name__)
@@ -30,6 +31,7 @@ class ExpertCollector:
         total_steps = 0
         for episode in range(self.num_episodes):
             logger.info(f"Collecting data for episode {episode + 1}/{self.num_episodes}...")
+            s = time.time()
             obs = self.env.reset()
             done = False
             trajectory = []
@@ -52,8 +54,10 @@ class ExpertCollector:
                 })
                 
                 obs = new_obs
+            e = time.time()
             # Store the complete trajectory
             logger.info(f"Trajectory {episode + 1} collected with {len(trajectory)} steps. Total steps: {total_steps}")
+            logger.info(f"FPS for episode {episode + 1}: {len(trajectory) / (e - s)}")
             self.trajectories.append(trajectory)
             if self.return_full_world:
                 self.full_world.append(world)

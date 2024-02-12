@@ -1,5 +1,6 @@
 from .basic import Agent
 import torch
+from numpy import random
 import torch.nn.functional as F
 from torch.distributions import Categorical
 from ..utils.gen import gen_occ
@@ -85,6 +86,9 @@ class Car(Agent):
         self.last_move_dir = None
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
+    def reset_priority(self, max_priority):
+        self.priority = random.randint(1, max_priority)
+
     def get_start(self, world_state_matrix):
         # Define the labels for different entities
         building = [TYPE_MAP[b] for b in CAR_GOAL_START]
@@ -146,18 +150,18 @@ class Car(Agent):
                 if not self.debug:
                     self.reach_goal = True
                     self.reach_goal_buffer += REACH_GOAL_WAITING
-                    logger.info("{}_{} reached goal! Will change goal in the next {} step!".format(self.type, self.id, self.reach_goal_buffer))
-                else:
-                    logger.info("{}_{} reached goal! In Debug, it will stop".format(self.type, self.id))
+                    # logger.info("{}_{} reached goal! Will change goal in the next {} step!".format(self.type, self.id, self.reach_goal_buffer))
+                # else:
+                    # logger.info("{}_{} reached goal! In Debug, it will stop".format(self.type, self.id))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
                 return self.get_action(local_action_dist), world_state_matrix[self.layer_id]
         else:
             if self.reach_goal_buffer > 0:
                 self.reach_goal_buffer -= 1
-                logger.info("{}_{} reached goal! Will change goal in the next {} step!".format(self.type, self.id, self.reach_goal_buffer))
+                # logger.info("{}_{} reached goal! Will change goal in the next {} step!".format(self.type, self.id, self.reach_goal_buffer))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
-            logger.info("Generating new goal and gloabl plans for {}_{}...".format(self.type, self.id))
+            # logger.info("Generating new goal and gloabl plans for {}_{}...".format(self.type, self.id))
             self.start = self.goal.clone()
             desired_locations = self.desired_locations.detach().clone()
 
@@ -183,7 +187,7 @@ class Car(Agent):
             # Fetch the corresponding location
             self.goal = torch.tensor(goal_point_list[random_index])
             self.global_traj = self.global_planner.plan(self.start, self.goal, 1)
-            logger.info("Generating new goal and gloabl plans for {}_{} done!".format(self.type, self.id))
+            # logger.info("Generating new goal and gloabl plans for {}_{} done!".format(self.type, self.id))
             self.reach_goal = False
             self.last_move_dir = None
             # delete past traj
