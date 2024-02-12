@@ -10,6 +10,7 @@ simulation:
   use_multi: false
   agent_region: 100
   rl_agent: 
+    max_priority: 7
     use_expert: true
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
     max_horizon: 200                          # Maximum steps in each episode 
@@ -24,5 +25,5 @@ simulation:
 
 # Stable Baselines specific settings
 collecting_config:
-  num_episodes: 5    # Total number of episodes to collect data for.
-  return_full_world: True
+  num_episodes: 10000    # Total number of episodes to collect data for.
+  return_full_world: False

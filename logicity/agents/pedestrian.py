@@ -112,18 +112,18 @@ class Pedestrian(Agent):
                 if not self.debug:
                     self.reach_goal = True
                     self.reach_goal_buffer += REACH_GOAL_WAITING
-                    logger.info("{}_{} reached goal! Will change goal in the next {} step!".format(self.type, self.id, self.reach_goal_buffer))
-                else:
-                    logger.info("{}_{} reached goal! In Debug, it will stop".format(self.type, self.id))
+                #     logger.info("{}_{} reached goal! Will change goal in the next {} step!".format(self.type, self.id, self.reach_goal_buffer))
+                # else:
+                #     logger.info("{}_{} reached goal! In Debug, it will stop".format(self.type, self.id))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
             else:
                 return self.get_action(local_action_dist), world_state_matrix[self.layer_id]
         else:
             if self.reach_goal_buffer > 0:
                 self.reach_goal_buffer -= 1
-                logger.info("{}_{} reached goal! Will change goal in the next {} step!".format(self.type, self.id, self.reach_goal_buffer))
+                # logger.info("{}_{} reached goal! Will change goal in the next {} step!".format(self.type, self.id, self.reach_goal_buffer))
                 return self.action_space[-1], world_state_matrix[self.layer_id]
-            logger.info("Generating new goal and gloabl plans for {}_{}...".format(self.type, self.id))
+            # logger.info("Generating new goal and gloabl plans for {}_{}...".format(self.type, self.id))
             self.start = self.goal.clone()
             desired_locations = self.desired_locations.detach().clone()
 
@@ -149,7 +149,7 @@ class Pedestrian(Agent):
             # Fetch the corresponding location
             self.goal = torch.tensor(goal_point_list[random_index])
             self.global_traj = self.global_planner(self.movable_region, self.start, self.goal)
-            logger.info("Generating new goal and gloabl plans for {}_{} done!".format(self.type, self.id))
+            # logger.info("Generating new goal and gloabl plans for {}_{} done!".format(self.type, self.id))
             self.reach_goal = False
             self.last_move_dir = None
             # delete past traj
