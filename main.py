@@ -181,8 +181,10 @@ def main_gym(args, logger):
     # Checkpoint evaluation
     rew_list = []
     worlds = []
+    vis_id = [10, 20, 70]
 
-    for ts in range(10): 
+    for ts in range(100): 
+        logger.info("Evaluating episode {}...".format(ts))
         eval_env, cached_observation = make_env(simulation_config, True)
         if rl_config["algorithm"] == "ExpertCollector":
             model = algorithm_class(eval_env)
@@ -192,23 +194,23 @@ def main_gym(args, logger):
         o = eval_env.reset()
         ep_rew_list = []
         rew = 0    
-        step = 0    
-        collected = False
-        while step<300:
+        step = 0   
+        d = False
+        while not d:
             step += 1
             action, _ = model.predict(o, deterministic=True)
             o, r, d, i = eval_env.step(action)
-            if not d and not collected:
+            if ts in vis_id:
                 cached_observation["Time_Obs"][step] = i
-            if d:
-                collected = True
             action = model.predict(o)[0]
             ep_rew_list.append(r)
             rew += r
         rew_list.append(rew)
-        worlds.append(cached_observation)
+        logger.info("Episode {} achieved a score of {}".format(ts, rew))
+        if ts in vis_id:
+            worlds.append(cached_observation)
     mean_reward = np.mean(rew_list)
-    logger.info("Score achieved: {}".format(mean_reward))
+    logger.info("Mean Score achieved: {}".format(mean_reward))
     for ts in range(len(worlds)):
         with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
             pkl.dump(worlds[ts], f)
