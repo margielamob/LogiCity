@@ -21,6 +21,7 @@ class CityLoader:
                   debug=False, 
                   rl_agent=None, 
                   use_multi=False, 
+                  episode_cache=None,
                   agent_region=240):
 
         cached_observation = {
