@@ -30,7 +30,7 @@ def parse_arguments():
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--config', default='config/tasks/sim/med.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/RL/ppo.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -203,8 +203,9 @@ def main_gym(args, logger):
             o, r, d, i = eval_env.step(action)
             if ts in vis_id:
                 cached_observation["Time_Obs"][step] = i
-            if i["fail"]:
+            if i["Fail"][0]:
                 fail = True
+                rew += r
                 break
             action = model.predict(o)[0]
             rew += r

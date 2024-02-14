@@ -147,7 +147,6 @@ class GymCityWrapper(gym.core.Env):
         # offset the index by 3 layers 0,1,2 are static in world matrix
         done = self.agent.reach_goal
         fail = current_obs["Fail"][0]
-        info["fail"] = fail
 
         if done:
             info["succcess"] = True
