@@ -192,24 +192,33 @@ def main_gym(args, logger):
             model = algorithm_class.load(rl_config["checkpoint_path"], \
                                 eval_env)
         o = eval_env.reset()
-        ep_rew_list = []
+        success = []
         rew = 0    
         step = 0   
         d = False
+        fail = False
         while not d:
             step += 1
             action, _ = model.predict(o, deterministic=True)
             o, r, d, i = eval_env.step(action)
             if ts in vis_id:
                 cached_observation["Time_Obs"][step] = i
+            if i["fail"]:
+                fail = True
+                break
             action = model.predict(o)[0]
-            ep_rew_list.append(r)
             rew += r
+        if fail:
+            success.append(0)
+        else:
+            success.append(1)
         rew_list.append(rew)
-        logger.info("Episode {} achieved a score of {}".format(ts, rew))
+        logger.info("Episode {} Succ: {}".format(ts, success[-1]))
+        logger.info("Episode {} achieved a Score of: {}".format(ts, rew))
         if ts in vis_id:
             worlds.append(cached_observation)
     mean_reward = np.mean(rew_list)
+    logger.info("Success Rate achieved: {}".format(np.mean(success)))
     logger.info("Mean Score achieved: {}".format(mean_reward))
     for ts in range(len(worlds)):
         with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:

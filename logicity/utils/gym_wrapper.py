@@ -76,8 +76,11 @@ class GymCityWrapper(gym.core.Env):
         :param dict obs_dict: the observation dictionary
         :return: the reward
         '''
-        moving_cost = self.action2cost(obs_dict["Agent_actions"][0])
-        return (obs_dict["Reward"][0]*5 + moving_cost)/self.horizon
+        if obs_dict["Fail"][0]:
+            return -20
+        else:
+            moving_cost = self.action2cost(obs_dict["Agent_actions"][0])
+            return moving_cost/self.horizon
     
     def action2cost(self, action):
         ''' Convert the action to cost.
@@ -143,6 +146,9 @@ class GymCityWrapper(gym.core.Env):
         
         # offset the index by 3 layers 0,1,2 are static in world matrix
         done = self.agent.reach_goal
+        fail = current_obs["Fail"][0]
+        info["fail"] = fail
+
         if done:
             info["succcess"] = True
             logger.info("will reset agent by success")
@@ -150,12 +156,18 @@ class GymCityWrapper(gym.core.Env):
         
         if self.t >= self.horizon: 
             done = True
-            rew -= 2
+            rew -= 10
             info["success"] = False
             info["overtime"] = True
             logger.info("Reset agent by overtime")
             self.reset()
             
+        if fail: 
+            done = True
+            info["success"] = False
+            logger.info("Reset agent by failing")
+            self.reset()
+
         return self.current_obs, rew, done, info
     
     def render(self):

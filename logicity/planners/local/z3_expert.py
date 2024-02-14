@@ -465,12 +465,12 @@ def eval_action(rl_action,
     # 6. solve for reward
     obs = np.array(grounding, dtype=np.float32)
     assert np.all(obs == last_obs), print(obs, last_obs)
-    reward = 0
+    fail = False
     for rule_name, rule_solver in local_solvers.items():
         if rule_solver.check() == sat:
             continue
         else:
-            reward -= rule_tem[rule_name]["weight"]
+            fail = True
 
-    assert reward == 0, "Expert reward should always be 0"
-    return reward
+    assert not fail, "Expert never obeys rules"
+    return fail

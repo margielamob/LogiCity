@@ -24,8 +24,8 @@ simulation:
       Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
 
 eval_checkpoint:
-  eval_freq: 5000                        # This is the frequency of evaluation, will be multiplied by num_envs
-  save_freq: 5000
+  eval_freq: 100                        # This is the frequency of evaluation, will be multiplied by num_envs
+  save_freq: 100
   save_path: './checkpoints/'
   name_prefix: '3p6c2b_ppo'
 
