@@ -20,4 +20,5 @@ debug_traj/
 checkpoints/
 profile*.txt
 src
+*.zip
 
