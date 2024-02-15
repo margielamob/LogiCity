@@ -64,7 +64,7 @@ class EvalCheckpointCallback(CheckpointCallback):
 
             # Log the mean reward
             with open(os.path.join(self.save_path, "{}_eval_rewards.txt".format(self.exp_name)), "a") as file:
-                file.write(f"Step: {self.n_calls} - Success Rate: {sr} - Mean Reward: {mean_reward}")
+                file.write(f"Step: {self.n_calls} - Success Rate: {sr} - Mean Reward: {mean_reward} \n")
 
             # Update the best model if current mean reward is better
             if mean_reward > self.best_mean_reward:
