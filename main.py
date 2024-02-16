@@ -190,7 +190,7 @@ def main_gym(args, logger):
         worlds = []
         vis_id = [1, 2, 3, 4, 5]
 
-        for ts in trange(len(episode_data.keys())): 
+        for ts in list(episode_data.keys()): 
             logger.info("Evaluating episode {}...".format(ts))
             episode_cache = episode_data[ts]
             eval_env, cached_observation = make_env(simulation_config, episode_cache, True)
@@ -200,7 +200,6 @@ def main_gym(args, logger):
                 model = algorithm_class.load(rl_config["checkpoint_path"], \
                                     eval_env)
             o = eval_env.reset()
-            ep_rew_list = []
             rew = 0    
             step = 0   
             d = False
@@ -211,7 +210,6 @@ def main_gym(args, logger):
                 if ts in vis_id:
                     cached_observation["Time_Obs"][step] = i
                 action = model.predict(o)[0]
-                ep_rew_list.append(r)
                 rew += r
             rew_list.append(rew)
             logger.info("Episode {} achieved a score of {}".format(ts, rew))
