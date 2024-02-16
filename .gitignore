@@ -19,4 +19,6 @@ debug_traj/
 *.egg-info/
 checkpoints/
 profile*.txt
+src
+*.zip
 

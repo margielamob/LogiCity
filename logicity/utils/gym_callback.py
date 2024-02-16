@@ -36,24 +36,35 @@ class EvalCheckpointCallback(CheckpointCallback):
         # Perform evaluation at specified intervals
         if self.n_calls % self.eval_freq == 0:
             rewards_list = []
+            success = []
             for episode in range(100):  # Number of episodes for evaluation
                 obs = self.eval_env.reset()
                 episode_rewards = 0
                 step = 0
                 done = False
+                fail = False
                 while not done:
                     action, _states = self.model.predict(obs, deterministic=True)
-                    obs, reward, done, _info = self.eval_env.step(action)
+                    obs, reward, done, info = self.eval_env.step(action)
+                    if info["Fail"][0]:
+                        fail = True
+                        episode_rewards += reward
+                        break
                     episode_rewards += reward
                     step += 1
+                if fail:
+                    success.append(0)
+                else:
+                    success.append(1)
                 rewards_list.append(episode_rewards)
 
             mean_reward = np.mean(rewards_list)
-            logger.info(f"Step: {self.n_calls} - Mean Reward: {mean_reward}")
+            sr = np.mean(success)
+            logger.info(f"Step: {self.n_calls} - Success Rate: {sr} - Mean Reward: {mean_reward}")
 
             # Log the mean reward
             with open(os.path.join(self.save_path, "{}_eval_rewards.txt".format(self.exp_name)), "a") as file:
-                file.write(f"Step: {self.n_calls} - Mean Reward: {mean_reward}\n")
+                file.write(f"Step: {self.n_calls} - Success Rate: {sr} - Mean Reward: {mean_reward} \n")
 
             # Update the best model if current mean reward is better
             if mean_reward > self.best_mean_reward:

@@ -28,7 +28,6 @@ agents:
 - class: Pedestrian
   id: 4
   size: 1
-  lplanner: LNN
   gplanner: A*
   concepts:
     type: Pedestrian
@@ -55,7 +54,6 @@ agents:
 - class: Pedestrian
   id: 7
   size: 1
-  lplanner: LNN
   gplanner: A*
   concepts:
     type: Pedestrian
@@ -81,7 +79,6 @@ agents:
 - class: Pedestrian
   id: 10
   size: 1
-  lplanner: LNN
   gplanner: A*
   concepts:
     type: Pedestrian

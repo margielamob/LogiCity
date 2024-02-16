@@ -57,12 +57,14 @@ class BehavioralCloning(ABC):
         actions = []
         next_observations = []
         rewards = []
+        logger.info("Loaded {} trajectories".format(num_traj))
         for path in paths[:num_traj]:
             for step in path:
                 observations.append(step["state"])
                 actions.append(step["action"])
                 next_observations.append(step["next_state"])
                 rewards.append(step["reward"])
+        logger.info("Loaded {} steps".format(len(observations)))
         observations = np.array(observations)
         actions = np.array(actions)
         next_observations = np.array(next_observations)

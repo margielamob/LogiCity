@@ -27,11 +27,11 @@ class CityEnv(City):
 
     def move_rl_agent(self, action, idx):
         current_obs = {}
-        current_obs["Reward"] = []
+        current_obs["Fail"] = []
         current_obs["Agent_actions"] = []
         
-        reward = self.local_planner.eval(action)
-        current_obs["Reward"].append(reward)
+        fail = self.local_planner.eval(action)
+        current_obs["Fail"].append(fail)
         new_matrix = torch.zeros_like(self.city_grid)
         
         for agent in self.agents:
