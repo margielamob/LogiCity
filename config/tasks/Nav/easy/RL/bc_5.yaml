@@ -4,7 +4,7 @@ simulation:
   agent_yaml_file: "config/agents/3p6c.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
   rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/easy/rl.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/easy/rl.yaml"     
   rl: true
   debug: false
   use_multi: false
@@ -24,14 +24,14 @@ simulation:
       Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
 
 eval_checkpoint:
-  eval_freq: 20000                        # This is the frequency of evaluation, will be multiplied by num_envs
-  save_freq: 20000
+  eval_freq: 200                        # This is the frequency of evaluation, will be multiplied by num_envs
+  save_freq: 200
   save_path: './checkpoints/'
-  name_prefix: '3p6c2b_ppo'
+  name_prefix: '3p6c2b_bc_5'
 
 # Stable Baselines specific settings
 stable_baselines:
-  algorithm: "PPO"
+  algorithm: "BehavioralCloning"
   policy_network: "MlpPolicy"
   policy_kwargs:
     features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
@@ -39,13 +39,16 @@ stable_baselines:
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
-    learning_rate: 0.001          # Learning rate
-    gamma: 0.99                   # Discount factor
-    n_steps: 100                 # Number of steps to run for each environment per update
-    ent_coef: 0.0                 # Entropy coefficient
-    verbose: 1                    # Verbosity level
+    num_traj: 5
+    expert_demonstrations: "dataset/easy/2p6c_2b_10k.pkl"
+    optimizer: 
+      type: "Adam"             # Optimizer to use
+      args:
+        lr: 0.0001          # Learning rate
+    batch_size: 2048                # Batch size for training
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
+    log_interval: 20
   train: true                   # Whether to train the model
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
-  num_envs: 2                   # Number of environments to run in parallel
-  total_timesteps: 1000000    # Total number of timesteps to run for all environments combined
+  num_envs: 1                   # Number of environments to run in parallel
+  total_timesteps: 2000    # Total number of timesteps to run for all environments combined

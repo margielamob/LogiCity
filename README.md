@@ -31,12 +31,9 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
   pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu116
   # others
   pip install -r requirements.txt
-  # requirements for lnn
-  cd src/lnn
-  pip install -r requirements.txt
-  pip install -e .
   # pyastar
-  cd src/pyastar
+  cd src
+  git clone https://github.com/Jaraxxus-Me/pyastar2d.git
   pip install -e .
   # install logicity-lib
   cd ..
@@ -48,7 +45,6 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
   ```shell
   docker pull bowenli1024/logicity:v3
   docker run bowenli1024/logicity:v3
-  # you may need to re-build the lnn/satnet lib
   pip install -r requirements.txt
   ```
 
