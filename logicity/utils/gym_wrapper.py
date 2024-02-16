@@ -165,15 +165,15 @@ class GymCityWrapper(gym.core.Env):
         return self.env.close()
     
     def save_episode(self):
-        city_grid = self.env.city_grid
+        city_grid = self.env.city_grid.clone()
         agents = {}
         for agent in self.env.agents:
             name = agent.type + "_" + str(agent.id)
             agents[name] = {
-                "start": agent.start.numpy(),
-                "goal": agent.goal.numpy(),
+                "start": agent.start.clone().numpy(),
+                "goal": agent.goal.clone().numpy(),
                 "concepts": agent.concepts,
-                "pos": agent.pos.numpy(),
+                "pos": agent.pos.clone().numpy(),
                 "layer_id": agent.layer_id,
                 "id": agent.id,
             }

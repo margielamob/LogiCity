@@ -97,12 +97,15 @@ class CityLoader:
         # Add agents to the city
         logger.info("Adding {} agents, they are constrained in {} region".format(len(city_config["agents"]), agent_region))
         for agents_data in tqdm(city_config["agents"]):
+            name = "{}_{}".format(agents_data["concepts"]["type"], agents_data["id"])
+            init_info = episode_cache["agents"][name] if episode_cache is not None else None
             agent = Agent_mapper[agents_data["class"]](
                 size=agents_data["size"],
                 id=agents_data["id"],
                 global_planner=agents_data['gplanner'],
                 concepts=agents_data['concepts'],
                 world_state_matrix=city.city_grid,
+                init_info=init_info,
                 debug=debug,
                 region=agent_region
             )
@@ -118,6 +121,9 @@ class CityLoader:
                 # ONLY Arity-1 predicate is supported
                 cached_observation["Static Info"]["Logic"]["Groundings"][predicate].append(agent_name)
 
+                # check if the city is the same as cache
+        # if episode_cache is not None:
+        #     assert (episode_cache["city_grid"] == city.city_grid).all(), "The city is not the same as the cache!"
         logger.info("Done!")
         city.logic_grounds = cached_observation["Static Info"]["Logic"]["Groundings"]
         return city, cached_observation

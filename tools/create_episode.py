@@ -102,7 +102,7 @@ def main(args, logger):
     success = []
     all_episodes = {}
     key = 0
-    vis_id = [1, 4]
+    vis_id = [0, 1, 2, 3, 4]
 
     while key < args.max_episodes: 
         logger.info("Trying to creat episode {} ...".format(key))
@@ -127,10 +127,11 @@ def main(args, logger):
             rew += r
         if save:
             all_episodes[key] = tem_episodes
-            key += 1
             rew_list.append(rew)
             success.append(1)
-            worlds.append(cached_observation)
+            if key in vis_id:
+                worlds.append(cached_observation)
+            key += 1
             logger.info("Episode {} achieved a score of {}".format(key, rew))
     assert len(rew_list) == len(worlds) == len(success) == args.max_episodes
     mean_reward = np.mean(rew_list)
