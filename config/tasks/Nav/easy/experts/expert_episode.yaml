@@ -8,7 +8,7 @@ simulation:
   rl: true
   debug: false
   use_multi: false
-  agent_region: 100
+  agent_region: 140
   rl_agent: 
     max_priority: 7
     use_expert: true
@@ -44,4 +44,4 @@ stable_baselines:
   train: false                   # Whether to train the model
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
-  episode_data: "dataset/easy/5episodes.pkl"
+  total_timesteps: 1000000    # Total number of timesteps to run for all environments combined

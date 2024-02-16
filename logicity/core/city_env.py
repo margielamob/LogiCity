@@ -55,7 +55,6 @@ class CityEnv(City):
         current_obs["World"] = self.city_grid.clone()
         return current_obs
 
-
     def update(self, idx):
         current_obs = {}
         # state at time t
