@@ -14,11 +14,11 @@ logger = logging.getLogger(__name__)
 TYPE_MAP = {v: k for k, v in LABEL_MAP.items()}
 
 class Pedestrian(Agent):
-    def __init__(self, size, id, world_state_matrix, global_planner, concepts, debug=False, region=240):
+    def __init__(self, size, id, world_state_matrix, global_planner, concepts, init_info=None, debug=False, region=240):
         self.start_point_list = None
         self.goal_point_list = None
         self.global_planner = GPlanner_mapper[global_planner]
-        super().__init__(size, id, world_state_matrix, concepts, debug=debug, region=region)
+        super().__init__(size, id, world_state_matrix, concepts, init_info=init_info, debug=debug, region=region)
         # pedestrian use A*, which is just a function
         self.action_mapping = {
             0: "Left_Normal", 
@@ -37,16 +37,21 @@ class Pedestrian(Agent):
             self.action_to_move[k]: k for k in self.action_to_move
         }
     
-    def init(self, world_state_matrix, debug=False):
+    def init(self, world_state_matrix, init_info=None, debug=False):
         WALKING_STREET = TYPE_MAP['Walking Street']
         CROSSING_STREET = TYPE_MAP['Overlap']
-        if debug:
-            self.start, self.goal = sample_determine_start_goal(self.type, self.id)
-            self.pos = self.start.clone()
+        if init_info is not None:
+            self.init_from_dict(init_info)
+            _ = self.get_start(world_state_matrix)
+            _ = self.get_goal(world_state_matrix, self.start)
         else:
-            self.start = torch.tensor(self.get_start(world_state_matrix))
-            self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
-            self.pos = self.start.clone()
+            if debug:
+                self.start, self.goal = sample_determine_start_goal(self.type, self.id)
+                self.pos = self.start.clone()
+            else:
+                self.start = torch.tensor(self.get_start(world_state_matrix))
+                self.goal = torch.tensor(self.get_goal(world_state_matrix, self.start))
+                self.pos = self.start.clone()
         # specify the occupacy map
         self.movable_region = (world_state_matrix[STREET_ID] == WALKING_STREET) | (world_state_matrix[STREET_ID] == CROSSING_STREET)
         # get global traj on the occupacy map
