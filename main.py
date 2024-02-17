@@ -188,7 +188,7 @@ def main_gym(args, logger):
         # Checkpoint evaluation
         rew_list = []
         worlds = []
-        vis_id = [1, 2, 3, 4, 5]
+        vis_id = [0, 1, 2, 3, 4, 5]
 
         for ts in list(episode_data.keys()): 
             logger.info("Evaluating episode {}...".format(ts))
@@ -199,7 +199,7 @@ def main_gym(args, logger):
             else:
                 model = algorithm_class.load(rl_config["checkpoint_path"], \
                                     eval_env)
-            o = eval_env.reset()
+            o = eval_env.init()
             rew = 0    
             step = 0   
             d = False

@@ -93,6 +93,7 @@ class Car(Agent):
 
     def reset_priority(self, max_priority):
         self.priority = random.randint(1, max_priority)
+        self.concepts["priority"] = self.priority
 
     def get_start(self, world_state_matrix):
         # Define the labels for different entities

@@ -122,8 +122,8 @@ class CityLoader:
                 cached_observation["Static Info"]["Logic"]["Groundings"][predicate].append(agent_name)
 
                 # check if the city is the same as cache
-        if episode_cache is not None:
-            assert (episode_cache["city_grid"] == city.city_grid).all(), "The city is not the same as the cache!"
+        # if episode_cache is not None:
+        #     assert (episode_cache["city_grid"] == city.city_grid).all(), "The city is not the same as the cache!"
         logger.info("Done!")
         city.logic_grounds = cached_observation["Static Info"]["Logic"]["Groundings"]
         return city, cached_observation

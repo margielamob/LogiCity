@@ -107,7 +107,7 @@ class GymCityWrapper(gym.core.Env):
         self.agent.init(self.env.city_grid)
         self.agent.reset_priority(self.max_priority)
         logger.info("Agent reset priority to {}/{}".format(self.agent.priority, self.max_priority))
-        self.horizon = min(self.max_horizon, len(self.agent.global_traj))
+        self.horizon = min(self.max_horizon, len(self.agent.global_traj)*2)
         agent_code = self.type2label[self.agent_type]
         self.env.local_planner.reset()
         # draw agent
@@ -118,6 +118,8 @@ class GymCityWrapper(gym.core.Env):
         agent_layer[start[0], start[1]] = agent_code
         agent_layer[goal[0], goal[1]] = agent_code + AGENT_GOAL_PLUS
         self.env.city_grid[self.agent_layer_id] = agent_layer
+        if return_info:
+            episode = self.save_episode()
         ob_dict = self.env.update(self.agent_layer_id)
 
         if self.use_expert:
@@ -126,8 +128,26 @@ class GymCityWrapper(gym.core.Env):
         self.last_dist = -1
         self.last_pos = None
         self.current_obs = obs
+        if return_info:
+            return self.current_obs, episode
+        else:
+            return self.current_obs
+    
+    def init(self):
+        # init does not reset the agent
+        logger.info("***Init RL Agent in Env***")
+        self.t = 0
+        self.horizon = min(self.max_horizon, len(self.agent.global_traj))
+        self.env.local_planner.reset()
+        ob_dict = self.env.update(self.agent_layer_id)
+        if self.use_expert:
+            self.expert_action = self.full_action2one_hot(ob_dict["Expert_actions"][0])
+        obs = self._flatten_obs(ob_dict)
+        self.last_dist = -1
+        self.last_pos = None
+        self.current_obs = obs
         return self.current_obs
-
+    
     def step(self, action):
         self.t += 1
         info = {}
@@ -184,6 +204,8 @@ class GymCityWrapper(gym.core.Env):
                 "start": agent.start.clone().numpy(),
                 "goal": agent.goal.clone().numpy(),
                 "concepts": agent.concepts,
+                "type": agent.type,
+                "priority": agent.priority,
                 "pos": agent.pos.clone().numpy(),
                 "layer_id": agent.layer_id,
                 "id": agent.id,
