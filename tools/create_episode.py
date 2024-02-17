@@ -22,11 +22,11 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="expert_100episode")
+    parser.add_argument('--exp', type=str, default="expert_2episode")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
     parser.add_argument('--seed', type=int, default=1)
-    parser.add_argument('--max-episodes', type=int, default=100)
+    parser.add_argument('--max-episodes', type=int, default=2)
     # RL
     parser.add_argument('--config', default='config/tasks/Nav/easy/experts/expert_episode.yaml', help='Configure file for this RL exp.')
 
@@ -102,7 +102,7 @@ def main(args, logger):
     success = []
     all_episodes = {}
     key = 0
-    vis_id = [0, 1, 2, 3, 4]
+    vis_id = [0, 8, 75, 62, 95]
 
     while key < args.max_episodes: 
         logger.info("Trying to creat episode {} ...".format(key))
@@ -132,7 +132,7 @@ def main(args, logger):
                 worlds.append(cached_observation)
             logger.info("Episode {} achieved a score of {}".format(key, rew))
             key += 1
-    assert len(rew_list) == len(worlds) == len(success) == args.max_episodes
+    assert len(rew_list) == len(success) == args.max_episodes
     mean_reward = np.mean(rew_list)
     logger.info("Success rate: {}".format(np.mean(success)))
     logger.info("Mean Score achieved: {}".format(mean_reward))
