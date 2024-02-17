@@ -30,7 +30,7 @@ def parse_arguments():
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/experts/expert_test.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/experts/expert_collect_train.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -161,7 +161,6 @@ def main_gym(args, logger):
             train_env = SubprocVecEnv([make_envs(simulation_config, i) for i in range(num_envs)])
         else:
             train_env = make_env(simulation_config)
-        eval_env = make_env(simulation_config)
         train_env.reset()
         model = algorithm_class(rl_config["policy_network"], \
                                 train_env, \
@@ -170,6 +169,8 @@ def main_gym(args, logger):
         # RL training mode
         # Create the custom checkpoint and evaluation callback
         eval_checkpoint_callback = EvalCheckpointCallback(eval_env=eval_env, exp_name=args.exp, \
+                                                          simulation_config=simulation_config, \
+                                                          episode_data=rl_config["episode_data"], \
                                                           **eval_checkpoint_config)
         # Train the model
         model.learn(total_timesteps=total_timesteps, callback=eval_checkpoint_callback\
@@ -187,6 +188,7 @@ def main_gym(args, logger):
         logger.info("Loaded episode data with {} episodes.".format(len(episode_data.keys())))
         # Checkpoint evaluation
         rew_list = []
+        success = []
         worlds = []
         vis_id = [0, 1, 2, 3, 4, 5]
 
@@ -203,20 +205,32 @@ def main_gym(args, logger):
             rew = 0    
             step = 0   
             d = False
+            fail = False
             while not d:
                 step += 1
                 action, _ = model.predict(o, deterministic=True)
                 o, r, d, i = eval_env.step(action)
                 if ts in vis_id:
                     cached_observation["Time_Obs"][step] = i
+                if i["Fail"][0]:
+                    fail = True
+                    rew += r
+                    break
                 action = model.predict(o)[0]
                 rew += r
+            if not fail and i["success"]:
+                success.append(1)
+            else:
+                success.append(0)
             rew_list.append(rew)
             logger.info("Episode {} achieved a score of {}".format(ts, rew))
+            logger.info("Episode {} Success: {}".format(ts, success[-1]))
             if ts in vis_id:
                 worlds.append(cached_observation)
         mean_reward = np.mean(rew_list)
+        sr = np.mean(success)
         logger.info("Mean Score achieved: {}".format(mean_reward))
+        logger.info("Success Rate: {}".format(sr))
         for ts in range(len(worlds)):
             with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
                 pkl.dump(worlds[ts], f)
