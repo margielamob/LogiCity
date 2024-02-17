@@ -44,4 +44,4 @@ stable_baselines:
   train: false                   # Whether to train the model
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
-  episode_data: "dataset/easy/5episodes.pkl"
+  episode_data: "log_rl/expert_2episode_episodes.pkl"

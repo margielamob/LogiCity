@@ -116,6 +116,9 @@ class Agent:
         self.start = torch.tensor(init_info["start"])
         self.pos = self.start.clone()
         self.goal = torch.tensor(init_info["goal"])
-        for k, v in init_info["concepts"].items():
-            assert k in self.concepts, "Concept {} not in the concepts of car!".format(k)
-            assert self.concepts[k] == v, "Concept {} not match the concepts of car!".format(k)
+        self.type = init_info["type"]
+        self.priority = init_info["priority"]
+        self.concepts = init_info["concepts"]
+        # for k, v in init_info["concepts"].items():
+        #     assert k in self.concepts, "Concept {} not in the concepts of car!".format(k)
+        #     assert self.concepts[k] == v, "Concept {} not match the concepts of car!".format(k)

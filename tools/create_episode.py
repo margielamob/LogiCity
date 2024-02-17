@@ -22,11 +22,11 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="easy_test_expert")
+    parser.add_argument('--exp', type=str, default="expert_100episode")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
-    parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--max-episodes', type=int, default=5)
+    parser.add_argument('--seed', type=int, default=1)
+    parser.add_argument('--max-episodes', type=int, default=100)
     # RL
     parser.add_argument('--config', default='config/tasks/Nav/easy/experts/expert_episode.yaml', help='Configure file for this RL exp.')
 
@@ -109,8 +109,7 @@ def main(args, logger):
         eval_env, cached_observation = make_env(simulation_config, True)
         assert rl_config["algorithm"] == "ExpertCollector"
         model = algorithm_class(eval_env)
-        tem_episodes = eval_env.save_episode()
-        o = eval_env.reset()
+        o, tem_episodes = eval_env.reset(True)
         rew = 0    
         step = 0   
         d = False
@@ -131,8 +130,8 @@ def main(args, logger):
             success.append(1)
             if key in vis_id:
                 worlds.append(cached_observation)
-            key += 1
             logger.info("Episode {} achieved a score of {}".format(key, rew))
+            key += 1
     assert len(rew_list) == len(worlds) == len(success) == args.max_episodes
     mean_reward = np.mean(rew_list)
     logger.info("Success rate: {}".format(np.mean(success)))
