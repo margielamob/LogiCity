@@ -22,11 +22,11 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="expert_2episode")
+    parser.add_argument('--exp', type=str, default="expert_100episode_test")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
     parser.add_argument('--seed', type=int, default=1)
-    parser.add_argument('--max-episodes', type=int, default=2)
+    parser.add_argument('--max_episodes', type=int, default=100)
     # RL
     parser.add_argument('--config', default='config/tasks/Nav/easy/experts/expert_episode.yaml', help='Configure file for this RL exp.')
 
