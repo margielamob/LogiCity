@@ -3,7 +3,7 @@ from torch.distributions import Categorical
 from ..core.config import *
 
 class Agent:
-    def __init__(self, size, id, world_state_matrix, concepts, debug=False, region=240):
+    def __init__(self, size, id, world_state_matrix, concepts, init_info=None, debug=False, region=240):
         self.size = size
         self.concepts = concepts
         self.type = concepts["type"]
@@ -30,9 +30,9 @@ class Agent:
         self.reach_goal_buffer = 0
         self.debug = debug
         self.region = region
-        self.init(world_state_matrix, debug)
+        self.init(world_state_matrix, init_info, debug)
 
-    def init(self, world_state_matrix, debug=False):
+    def init(self, world_state_matrix, init_info=None, debug=False):
         # init global planner, global traj, local planner, start and goal point
         pass
 
@@ -111,3 +111,14 @@ class Agent:
             if torch.all(del_pos==0):
                 self.global_traj.pop(next_pos)
         return global_action_dist
+    
+    def init_from_dict(self, init_info):
+        self.start = torch.tensor(init_info["start"])
+        self.pos = self.start.clone()
+        self.goal = torch.tensor(init_info["goal"])
+        self.type = init_info["type"]
+        self.priority = init_info["priority"]
+        self.concepts = init_info["concepts"]
+        # for k, v in init_info["concepts"].items():
+        #     assert k in self.concepts, "Concept {} not in the concepts of car!".format(k)
+        #     assert self.concepts[k] == v, "Concept {} not match the concepts of car!".format(k)
