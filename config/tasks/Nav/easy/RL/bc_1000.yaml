@@ -50,7 +50,7 @@ eval_checkpoint:
       fov_entities:
         Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
   save_path: './checkpoints/'
-  name_prefix: 'easy_bc_50'
+  name_prefix: 'easy_bc_1k'
   episode_data: "dataset/easy/expert_episode_val_40_episodes.pkl"
 
 # Stable Baselines specific settings
@@ -63,7 +63,7 @@ stable_baselines:
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
-    num_traj: 50
+    num_traj: 1000
     expert_demonstrations: "dataset/easy/2p6c_2b_10k.pkl"
     optimizer: 
       type: "Adam"             # Optimizer to use

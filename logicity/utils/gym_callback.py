@@ -17,9 +17,8 @@ def make_env(simulation_config, episode_cache=None, return_cache=False):
         return env
 
 class EvalCheckpointCallback(CheckpointCallback):
-    def __init__(self, eval_env, exp_name, simulation_config, episode_data, eval_freq=50000, *args, **kwargs):
+    def __init__(self, exp_name, simulation_config, episode_data, eval_freq=50000, *args, **kwargs):
         super(EvalCheckpointCallback, self).__init__(*args, **kwargs)
-        self.eval_env = eval_env
         self.eval_freq = eval_freq
         self.exp_name = exp_name
         self.best_mean_reward = -np.inf
@@ -60,17 +59,15 @@ class EvalCheckpointCallback(CheckpointCallback):
                 episode_rewards = 0
                 step = 0
                 done = False
-                fail = False
                 while not done:
                     action, _states = self.model.predict(obs, deterministic=True)
-                    obs, reward, done, info = self.eval_env.step(action)
+                    obs, reward, done, info = eval_env.step(action)
                     if info["Fail"][0]:
-                        fail = True
                         episode_rewards += reward
                         break
                     episode_rewards += reward
                     step += 1
-                if not fail and info["succcess"]:
+                if info["success"]:
                     success.append(1)
                 else:
                     success.append(0)
