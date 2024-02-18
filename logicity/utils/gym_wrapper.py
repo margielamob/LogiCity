@@ -77,7 +77,7 @@ class GymCityWrapper(gym.core.Env):
         :return: the reward
         '''
         if obs_dict["Fail"][0]:
-            return -20
+            return -10
         else:
             moving_cost = self.action2cost(obs_dict["Agent_actions"][0])
             return moving_cost/self.horizon
