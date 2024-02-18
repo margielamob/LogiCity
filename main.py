@@ -168,10 +168,7 @@ def main_gym(args, logger):
                                 policy_kwargs=policy_kwargs)
         # RL training mode
         # Create the custom checkpoint and evaluation callback
-        eval_checkpoint_callback = EvalCheckpointCallback(eval_env=eval_env, exp_name=args.exp, \
-                                                          simulation_config=simulation_config, \
-                                                          episode_data=rl_config["episode_data"], \
-                                                          **eval_checkpoint_config)
+        eval_checkpoint_callback = EvalCheckpointCallback(exp_name=args.exp, **eval_checkpoint_config)
         # Train the model
         model.learn(total_timesteps=total_timesteps, callback=eval_checkpoint_callback\
                     , tb_log_name=args.exp)
