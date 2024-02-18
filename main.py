@@ -187,7 +187,7 @@ def main_gym(args, logger):
         rew_list = []
         success = []
         worlds = []
-        vis_id = [0, 1, 2, 3, 4, 5]
+        vis_id = [10, 40, 85]
 
         for ts in list(episode_data.keys()): 
             logger.info("Evaluating episode {}...".format(ts))
@@ -202,7 +202,6 @@ def main_gym(args, logger):
             rew = 0    
             step = 0   
             d = False
-            fail = False
             while not d:
                 step += 1
                 action, _ = model.predict(o, deterministic=True)
@@ -210,12 +209,11 @@ def main_gym(args, logger):
                 if ts in vis_id:
                     cached_observation["Time_Obs"][step] = i
                 if i["Fail"][0]:
-                    fail = True
                     rew += r
                     break
                 action = model.predict(o)[0]
                 rew += r
-            if not fail and i["success"]:
+            if i["success"]:
                 success.append(1)
             else:
                 success.append(0)
