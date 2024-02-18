@@ -8,7 +8,7 @@ simulation:
   rl: true
   debug: false
   use_multi: false
-  agent_region: 100
+  agent_region: 140
   rl_agent: 
     max_priority: 7
     use_expert: true
