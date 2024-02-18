@@ -180,6 +180,7 @@ def solve_sub_problem(ego_name,
                       rl_input_shape=None):
     grounding = []
     grounding_dic = {}
+    scene_graph = {}
     # 1. create sorts and variables
     entity_sorts = {}
     for entity_type in entity_types:

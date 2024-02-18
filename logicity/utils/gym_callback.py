@@ -1,16 +1,31 @@
 from stable_baselines3.common.callbacks import CheckpointCallback
+from logicity.utils.load import CityLoader
+from logicity.utils.gym_wrapper import GymCityWrapper
 import numpy as np
 import os
 import logging
+import pickle as pkl
 logger = logging.getLogger(__name__)
 
+def make_env(simulation_config, episode_cache=None, return_cache=False): 
+    # Unpack arguments from simulation_config and pass them to CityLoader
+    city, cached_observation = CityLoader.from_yaml(**simulation_config, episode_cache=episode_cache)
+    env = GymCityWrapper(city)
+    if return_cache: 
+        return env, cached_observation
+    else:
+        return env
+
 class EvalCheckpointCallback(CheckpointCallback):
-    def __init__(self, eval_env, exp_name, eval_freq=50000, *args, **kwargs):
+    def __init__(self, eval_env, exp_name, simulation_config, episode_data, eval_freq=50000, *args, **kwargs):
         super(EvalCheckpointCallback, self).__init__(*args, **kwargs)
         self.eval_env = eval_env
         self.eval_freq = eval_freq
         self.exp_name = exp_name
         self.best_mean_reward = -np.inf
+        self.simulation_config = simulation_config
+        with open(episode_data, "rb") as f:
+            self.episode_data = pkl.load(f)
 
     def _on_step(self) -> bool:
         if self.n_calls % self.save_freq == 0:
@@ -37,8 +52,11 @@ class EvalCheckpointCallback(CheckpointCallback):
         if self.n_calls % self.eval_freq == 0:
             rewards_list = []
             success = []
-            for episode in range(100):  # Number of episodes for evaluation
-                obs = self.eval_env.reset()
+            for ts in list(self.episode_data.keys()):  # Number of episodes for evaluation
+                logger.info("Evaluating episode {}...".format(ts))
+                episode_cache = self.episode_data[ts]
+                eval_env = make_env(self.simulation_config, episode_cache, False)
+                obs = eval_env.init()
                 episode_rewards = 0
                 step = 0
                 done = False
@@ -52,15 +70,15 @@ class EvalCheckpointCallback(CheckpointCallback):
                         break
                     episode_rewards += reward
                     step += 1
-                if fail:
-                    success.append(0)
-                else:
+                if not fail and info["succcess"]:
                     success.append(1)
+                else:
+                    success.append(0)
                 rewards_list.append(episode_rewards)
 
             mean_reward = np.mean(rewards_list)
             sr = np.mean(success)
-            logger.info(f"Step: {self.n_calls} - Success Rate: {sr} - Mean Reward: {mean_reward}")
+            logger.info(f"Step: {self.n_calls} - Success Rate: {sr} - Mean Reward: {mean_reward} \n")
 
             # Log the mean reward
             with open(os.path.join(self.save_path, "{}_eval_rewards.txt".format(self.exp_name)), "a") as file:
