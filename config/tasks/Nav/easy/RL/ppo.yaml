@@ -50,7 +50,7 @@ eval_checkpoint:
       fov_entities:
         Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
   save_path: './checkpoints/'
-  name_prefix: 'easy_ppo'
+  name_prefix: 'easy_ppo2'
   episode_data: "dataset/easy/expert_episode_val_40_episodes.pkl"
 
 # Stable Baselines specific settings
@@ -63,12 +63,11 @@ stable_baselines:
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
-<<<<<<< HEAD
-    learning_rate: 0.0001          # Learning rate
-=======
-    learning_rate: 0.00005          # Learning rate
->>>>>>> b00c4c28c7a4f421887cff1a751cb7437e4c2be7
+    learning_rate: 0.00003          # Learning rate
     gamma: 0.99                   # Discount factor
+    gae_lambda: 0.95              # Lambda for GAE
+    sde_sample_freq: 4            # Sample frequency for SDE
+    vf_coef: 0.5                  # Value function coefficient
     n_steps: 100                 # Number of steps to run for each environment per update
     ent_coef: 0.0                 # Entropy coefficient
     verbose: 1                    # Verbosity level

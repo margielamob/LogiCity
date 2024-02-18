@@ -77,7 +77,7 @@ class GymCityWrapper(gym.core.Env):
         :return: the reward
         '''
         if obs_dict["Fail"][0]:
-            return -10
+            return -3
         else:
             moving_cost = self.action2cost(obs_dict["Agent_actions"][0])
             return moving_cost/self.horizon
@@ -174,7 +174,7 @@ class GymCityWrapper(gym.core.Env):
         
         if self.t >= self.horizon: 
             done = True
-            rew -= 10
+            rew -= 3
             info["success"] = False
             info["overtime"] = True
             logger.info("Reset agent by overtime")
