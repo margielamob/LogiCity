@@ -107,7 +107,7 @@ class GymCityWrapper(gym.core.Env):
         self.agent.init(self.env.city_grid)
         self.agent.reset_priority(self.max_priority)
         logger.info("Agent reset priority to {}/{}".format(self.agent.priority, self.max_priority))
-        self.horizon = min(self.max_horizon, len(self.agent.global_traj)*2)
+        self.horizon = max(self.max_horizon, len(self.agent.global_traj)*4)
         agent_code = self.type2label[self.agent_type]
         self.env.local_planner.reset()
         # draw agent

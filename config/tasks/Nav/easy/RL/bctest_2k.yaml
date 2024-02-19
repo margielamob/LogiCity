@@ -3,15 +3,15 @@ simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
   agent_yaml_file: "config/agents/easy/test.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
-  rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/easy/expert.yaml"                    # Whether to render the environment
+  rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
+  rule_yaml_file: "config/rules/Nav/easy/rl.yaml"              # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
   agent_region: 140
   rl_agent: 
     max_priority: 7
-    use_expert: true
+    use_expert: false
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
     max_horizon: 500                          # Maximum steps in each episode 
     action_space: 4                       # Number of discrete actions, 4 means slow/normal/fast/stop
@@ -21,21 +21,28 @@ simulation:
       2: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0]
       3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     fov_entities:
-      Entity: 5                        # Maximum number of agents in the FOV, include the RL agent
+      Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
 
 # Stable Baselines specific settings
 stable_baselines:
-  algorithm: "ExpertCollector"
+  algorithm: "BehavioralCloning"
+  policy_network: "MlpPolicy"
   policy_kwargs:
-    num_episodes: -1    # Total number of episodes to collect data for.
-    return_full_world: False
     features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
     features_extractor_class: "MLPFeatureExtractor"
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
-    None
+    num_traj: 10000
+    expert_demonstrations: "dataset/easy/2p6c_2b_10k.pkl"
+    optimizer: 
+      type: "Adam"             # Optimizer to use
+      args:
+        lr: 0.0001          # Learning rate
+    batch_size: 2048                # Batch size for training
+    tensorboard_log: "./tb_logs"  # Tensorboard log directory
+    log_interval: 20
   train: false                   # Whether to train the model
-  checkpoint_path: ""           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/easy_bc_2k_3200_steps.zip"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   episode_data: "dataset/easy/expert_episode_test_100_episodes.pkl"
