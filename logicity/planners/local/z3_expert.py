@@ -180,7 +180,6 @@ def solve_sub_problem(ego_name,
                       rl_input_shape=None):
     grounding = []
     grounding_dic = {}
-    scene_graph = {}
     # 1. create sorts and variables
     entity_sorts = {}
     for entity_type in entity_types:
@@ -278,6 +277,11 @@ def solve_sub_problem(ego_name,
             return agents_actions
     else:
         # SAT solver helps build an expert
+        scene_graph = {
+        'width': 0,
+        'height': 0,
+        }
+        scene_graph["objects"] = {}
         local_solver = Solver()
         for pred_name, pred_info in local_predicates.items():
             k = 0
