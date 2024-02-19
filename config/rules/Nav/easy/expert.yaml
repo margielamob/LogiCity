@@ -60,6 +60,16 @@ Rules:
             CollidingClose(entity, dummyEntity)
           )
         )
+    - name: Slow
+      description: Never take slow action.
+      weight: 1
+      formula: |
+        Not(Slow(entity))
+    - name: Normal
+      description: Never take Normal action.
+      weight: 1
+      formula: |
+        Not(Normal(entity))
     - name: Fast
       description: If not stop, then fast.
       weight: 1

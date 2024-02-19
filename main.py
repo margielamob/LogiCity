@@ -77,7 +77,7 @@ def main_collect(args, logger):
     # Check if expert data collection is requested
     logger.info("Collecting expert demonstration data...")
     # Create an environment instance for collecting expert demonstrations
-    expert_data_env, cached_observation = make_env(simulation_config, True)  # Use your existing environment setup function
+    expert_data_env, cached_observation = make_env(simulation_config, None, True)  # Use your existing environment setup function
     assert expert_data_env.use_expert  # Ensure the environment uses expert actions
     
     # Initialize the ExpertCollector with the environment and total timesteps

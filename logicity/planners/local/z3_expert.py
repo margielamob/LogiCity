@@ -280,8 +280,20 @@ def solve_sub_problem(ego_name,
         scene_graph = {
         'width': 0,
         'height': 0,
+        'objects': {}
         }
-        scene_graph["objects"] = {}
+        for ent in local_entities["Entity"]:
+            entity_name = ent.decl().name()
+            _, obj_name, layer_id = entity_name.split("_")
+            scene_graph["objects"][layer_id] = {
+                'name': obj_name,
+                'h': 0,
+                'w': 0,
+                'x': 0,
+                'y': 0,
+                'relations': [],
+                'attributes': []
+            }
         local_solver = Solver()
         for pred_name, pred_info in local_predicates.items():
             k = 0
@@ -303,8 +315,10 @@ def solve_sub_problem(ego_name,
                 # Unary predicate grounding
                 for entity in local_entities[eval_pred.domain(0).name()]:
                     entity_name = entity.decl().name()
+                    _, _, layer_id = entity_name.split("_")
                     value = method(partial_world, partial_intersections, partial_agents, entity_name)
                     if value:
+                        scene_graph["objects"][layer_id]["attributes"].append(pred_name)
                         local_solver.add(eval_pred(entity))
                         grounding_dic["{}_{}".format(pred_name, k)] = 1
                         grounding.append(1)
@@ -318,10 +332,17 @@ def solve_sub_problem(ego_name,
                 # Binary predicate grounding
                 for entity1 in local_entities[eval_pred.domain(0).name()]:
                     entity1_name = entity1.decl().name()
+                    _, _, layer_id1 = entity1_name.split("_")
                     for entity2 in local_entities[eval_pred.domain(1).name()]:
                         entity2_name = entity2.decl().name()
+                        _, _, layer_id2 = entity2_name.split("_")
                         value = method(partial_world, partial_intersections, partial_agents, entity1_name, entity2_name)
                         if value:
+                            relation_info = {
+                                "name": pred_name,
+                                "object": layer_id2
+                            }
+                            scene_graph["objects"][layer_id1]["relations"].append(relation_info)
                             local_solver.add(eval_pred(entity1, entity2))
                             grounding_dic["{}_{}".format(pred_name, k)] = 1
                             grounding.append(1)
@@ -363,6 +384,9 @@ def solve_sub_problem(ego_name,
                     for a in action:
                         if is_true(model.evaluate(local_predicates[key]["instance"](local_entities["Entity"][0]))):
                             action_dist[a] = 1.0
+                            _, _, layer_id = local_entities["Entity"][0].decl().name().split("_")
+                            if key not in scene_graph["objects"][layer_id]["attributes"]:
+                                scene_graph["objects"][layer_id]["attributes"].append(key)
             # No action specified, use the default action, Normal
             if action_dist.sum() == 0:
                 for action_id, action_name in action_mapping.items():
@@ -372,7 +396,8 @@ def solve_sub_problem(ego_name,
         agents_actions = {
             "{}_action".format(ego_name): action_dist,
             "{}_grounding".format(ego_name): np.array(grounding, dtype=np.float32),
-            "{}_grounding_dic".format(ego_name): grounding_dic
+            "{}_grounding_dic".format(ego_name): grounding_dic,
+            "{}_scene_graph".format(ego_name): scene_graph
         }
         assert len(grounding) == rl_input_shape
 
