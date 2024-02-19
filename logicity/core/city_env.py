@@ -60,6 +60,8 @@ class CityEnv(City):
         # state at time t
         current_obs["World_state"] = []
         current_obs["Expert_actions"] = []
+        current_obs["Expert_sg"] = []
+        current_obs["Ground_dic"] = []
 
         new_matrix = torch.zeros_like(self.city_grid)
         current_world = self.city_grid.clone()
@@ -77,6 +79,11 @@ class CityEnv(City):
             if agent.layer_id == idx: 
                 current_obs["World_state"].append(agent_action_dist["{}_grounding".format(agent_name)])
                 new_matrix[agent.layer_id] = self.city_grid[agent.layer_id].clone()
+                # expert will provide the action and scene graph and groundings
+                if "{}_grounding_dic".format(agent_name) in agent_action_dist:
+                    current_obs["Ground_dic"].append(agent_action_dist["{}_grounding_dic".format(agent_name)])
+                if "{}_scene_graph".format(agent_name) in agent_action_dist:
+                    current_obs["Expert_sg"].append(agent_action_dist["{}_scene_graph".format(agent_name)])
                 if "{}_action".format(agent_name) in agent_action_dist:
                     current_obs["Expert_actions"].append(agent_action_dist["{}_action".format(agent_name)].clone())
                 continue

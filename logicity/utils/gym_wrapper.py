@@ -121,13 +121,16 @@ class GymCityWrapper(gym.core.Env):
         if return_info:
             episode = self.save_episode()
         ob_dict = self.env.update(self.agent_layer_id)
-
-        if self.use_expert:
-            self.expert_action = self.full_action2one_hot(ob_dict["Expert_actions"][0])
         obs = self._flatten_obs(ob_dict)
-        self.last_dist = -1
-        self.last_pos = None
-        self.current_obs = obs
+        if self.use_expert:
+            expert_info = {}
+            self.expert_action = self.full_action2one_hot(ob_dict["Expert_actions"][0])
+            expert_info["Next_grounding"] = ob_dict["Ground_dic"][0]
+            expert_info["Next_sg"] = ob_dict["Expert_sg"][0]
+            self.last_dist = -1
+            self.last_pos = None
+            self.current_obs = obs
+            return self.current_obs, expert_info
         if return_info:
             return self.current_obs, episode
         else:
@@ -160,6 +163,8 @@ class GymCityWrapper(gym.core.Env):
         new_ob_dict = self.env.update(self.agent_layer_id)
         if self.use_expert:
             self.expert_action = self.full_action2one_hot(new_ob_dict["Expert_actions"][0])
+            info["Next_grounding"] = new_ob_dict["Ground_dic"][0]
+            info["Next_sg"] = new_ob_dict["Expert_sg"][0]
         # ob_dict = self.env.update()
         obs = self._flatten_obs(new_ob_dict)
         self.current_obs = obs

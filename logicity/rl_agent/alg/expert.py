@@ -32,7 +32,9 @@ class ExpertCollector:
         for episode in range(self.num_episodes):
             logger.info(f"Collecting data for episode {episode + 1}/{self.num_episodes}...")
             s = time.time()
-            obs = self.env.reset()
+            obs, expert_info = self.env.reset()
+            sg = expert_info["Next_sg"]
+            grounding = expert_info["Next_grounding"]
             done = False
             trajectory = []
             cuurent_step = 0
@@ -43,16 +45,21 @@ class ExpertCollector:
                 action = self.env.expert_action  # Assuming this gives the expert action directly from the environment
                 new_obs, reward, done, info = self.env.step(action)
                 world["Time_Obs"][cuurent_step] = info
+                next_sg = info["Next_sg"]
+                next_grounding = info["Next_grounding"]
                 
                 # Store the step in the current trajectory as a dictionary
                 trajectory.append({
                     'state': obs,
                     'action': action,
+                    'sg': sg,
+                    'grounding': grounding,
                     'reward': reward,
                     'next_state': new_obs,
                     'done': done
                 })
-                
+                sg = next_sg
+                grounding = next_grounding
                 obs = new_obs
             e = time.time()
             # Store the complete trajectory
