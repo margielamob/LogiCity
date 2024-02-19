@@ -25,5 +25,5 @@ simulation:
 
 # Stable Baselines specific settings
 collecting_config:
-  num_episodes: 10000    # Total number of episodes to collect data for.
+  num_episodes: 2000    # Total number of episodes to collect data for.
   return_full_world: False
