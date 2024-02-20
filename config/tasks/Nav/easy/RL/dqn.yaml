@@ -24,8 +24,8 @@ simulation:
       Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
 
 eval_checkpoint:
-  eval_freq: 10000                        # This is the frequency of evaluation, will be multiplied by num_envs
-  save_freq: 10000
+  eval_freq: 5000                        # This is the frequency of evaluation, will be multiplied by num_envs
+  save_freq: 5000
   simulation_config:
     map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
     agent_yaml_file: "config/agents/easy/val.yaml" # Agents in the simulation
@@ -64,9 +64,9 @@ stable_baselines:
       features_dim: 64
   hyperparameters:
     learning_rate: 0.00003          # Learning rate
-    buffer_size: 10000            # Size of the replay buffer
-    learning_starts: 10000
-    target_update_interval: 1000
+    buffer_size: 1000            # Size of the replay buffer
+    learning_starts: 1000
+    target_update_interval: 500
     train_freq: 4
     gradient_steps: 1
     exploration_fraction: 0.1
