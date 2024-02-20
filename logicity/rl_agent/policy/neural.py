@@ -57,8 +57,12 @@ class MlpPolicy(nn.Module):
         super(MlpPolicy, self).__init__()
 
         self.features_extractor = features_extractor_class(gym_env.observation_space, **features_extractor_kwargs)
-        action_space = gym_env.action_space
-        n_output = action_space.shape[0]
+        # Adjust for discrete action spaces
+        if isinstance(gym_env.action_space, gym.spaces.Discrete):
+            n_output = gym_env.action_space.n  # Number of discrete actions
+        else:
+            # This is just a fallback for continuous spaces; adjust as necessary
+            n_output = gym_env.action_space.shape[0]
 
         # Create the output layer
         self.action_net = nn.Linear(self.features_extractor.features_dim, n_output)

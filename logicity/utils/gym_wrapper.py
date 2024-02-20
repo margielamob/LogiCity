@@ -25,7 +25,7 @@ class GymCityWrapper(gym.core.Env):
         #     "map": Box(low=-1.0, high=1.0, shape=(3, self.fov, self.fov), dtype=np.float32),  # Adjust the shape as needed
         #     "position": Box(low=0.0, high=1.0, shape=(6,), dtype=np.float32)
         # })
-        self.observation_space = Box(low=-1.0, high=1.0, shape=(self.logic_grounding_shape, ), dtype=np.float32)
+        self.observation_space = Box(low=0.0, high=1.0, shape=(self.logic_grounding_shape, ), dtype=np.float32)
         self.last_dist = -1
         self.agent_name = env.rl_agent["agent_name"]
         self.max_horizon = env.rl_agent["max_horizon"]
@@ -44,7 +44,7 @@ class GymCityWrapper(gym.core.Env):
             self.expert_action = np.zeros(action_space, dtype=np.float32)
         else:
             self.expert_action = -1
-        self.action_space = gym.spaces.Box(low=0, high=1, shape=(action_space, ), dtype=np.float32)
+        self.action_space = gym.spaces.Discrete(action_space)
         self.action_mapping = env.rl_agent["action_mapping"]
         self.max_priority = env.rl_agent["max_priority"]
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
@@ -52,21 +52,16 @@ class GymCityWrapper(gym.core.Env):
         self.mini_scale = [0, 0, -1, 0]
         self.t = 0
 
-    def full_action2one_hot(self, action):
-        one_hot_action = np.zeros(self.action_space.shape[0], dtype=np.float32)
+    def full_action2index(self, action):
         # see agents/car.py
         if action[0] == 1:
-            one_hot_action[0] = 1
-            return one_hot_action
+            return 0
         elif action[4] == 1:
-            one_hot_action[1] = 1
-            return one_hot_action
+            return 1
         elif action[8] == 1:
-            one_hot_action[2] = 1
-            return one_hot_action
+            return 2
         else:
-            one_hot_action[-1] = 1
-            return one_hot_action
+            return 3
     
     def _flatten_obs(self, obs_dict):
         return obs_dict["World_state"][0]
@@ -122,14 +117,14 @@ class GymCityWrapper(gym.core.Env):
             episode = self.save_episode()
         ob_dict = self.env.update(self.agent_layer_id)
         obs = self._flatten_obs(ob_dict)
+        self.current_obs = obs
         if self.use_expert:
             expert_info = {}
-            self.expert_action = self.full_action2one_hot(ob_dict["Expert_actions"][0])
+            self.expert_action = self.full_action2index(ob_dict["Expert_actions"][0])
             expert_info["Next_grounding"] = ob_dict["Ground_dic"][0]
             expert_info["Next_sg"] = ob_dict["Expert_sg"][0]
             self.last_dist = -1
             self.last_pos = None
-            self.current_obs = obs
             return self.current_obs, expert_info
         if return_info:
             return self.current_obs, episode
@@ -144,7 +139,7 @@ class GymCityWrapper(gym.core.Env):
         self.env.local_planner.reset()
         ob_dict = self.env.update(self.agent_layer_id)
         if self.use_expert:
-            self.expert_action = self.full_action2one_hot(ob_dict["Expert_actions"][0])
+            self.expert_action = self.full_action2index(ob_dict["Expert_actions"][0])
         obs = self._flatten_obs(ob_dict)
         self.last_dist = -1
         self.last_pos = None
@@ -154,15 +149,14 @@ class GymCityWrapper(gym.core.Env):
     def step(self, action):
         self.t += 1
         info = {}
-        index = np.argmax(action) # if action is a numpy array
-        one_hot_action = torch.tensor(self.action_mapping[index], dtype=torch.float32)
+        one_hot_action = torch.tensor(self.action_mapping[action], dtype=torch.float32)
         # move and get reward
         current_obs = self.env.move_rl_agent(one_hot_action, self.agent_layer_id)
         rew = self._get_reward(current_obs)
         info.update(current_obs)
         new_ob_dict = self.env.update(self.agent_layer_id)
         if self.use_expert:
-            self.expert_action = self.full_action2one_hot(new_ob_dict["Expert_actions"][0])
+            self.expert_action = self.full_action2index(new_ob_dict["Expert_actions"][0])
             info["Next_grounding"] = new_ob_dict["Ground_dic"][0]
             info["Next_sg"] = new_ob_dict["Expert_sg"][0]
         # ob_dict = self.env.update()
