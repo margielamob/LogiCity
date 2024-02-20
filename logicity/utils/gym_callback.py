@@ -61,7 +61,7 @@ class EvalCheckpointCallback(CheckpointCallback):
                 done = False
                 while not done:
                     action, _states = self.model.predict(obs, deterministic=True)
-                    obs, reward, done, info = eval_env.step(action)
+                    obs, reward, done, info = eval_env.step(int(action))
                     if info["Fail"][0]:
                         episode_rewards += reward
                         break
