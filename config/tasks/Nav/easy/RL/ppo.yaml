@@ -63,11 +63,12 @@ stable_baselines:
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
-    learning_rate: 1e-5
+    learning_rate: 0.00003          # Learning rate
     clip_range: 0.2              # Clip range for PPO
     vf_coef: 0.5                  # Value function coefficient
     batch_size: 256                # Batch size for training
     n_steps: 128                 # Number of steps to run for each environment per update
+    n_epochs: 4                  # Number of epochs to run for each update
     ent_coef: 0.01                 # Entropy coefficient
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
