@@ -187,9 +187,11 @@ def main_gym(args, logger):
         rew_list = []
         success = []
         worlds = []
-        vis_id = [10, 40, 85]
+        vis_id = [0,1,2,3,4]
 
         for ts in list(episode_data.keys()): 
+            if ts not in vis_id:
+                continue
             logger.info("Evaluating episode {}...".format(ts))
             episode_cache = episode_data[ts]
             eval_env, cached_observation = make_env(simulation_config, episode_cache, True)
@@ -205,7 +207,7 @@ def main_gym(args, logger):
             while not d:
                 step += 1
                 action, _ = model.predict(o, deterministic=True)
-                o, r, d, i = eval_env.step(action)
+                o, r, d, i = eval_env.step(int(action))
                 if ts in vis_id:
                     cached_observation["Time_Obs"][step] = i
                 if i["Fail"][0]:
