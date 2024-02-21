@@ -187,11 +187,11 @@ def main_gym(args, logger):
         rew_list = []
         success = []
         worlds = []
-        vis_id = [0,1,2,3,4]
+        vis_id = [10, 50, 85]
 
         for ts in list(episode_data.keys()): 
-            if ts not in vis_id:
-                continue
+            # if ts not in vis_id:
+            #     continue
             logger.info("Evaluating episode {}...".format(ts))
             episode_cache = episode_data[ts]
             eval_env, cached_observation = make_env(simulation_config, episode_cache, True)
