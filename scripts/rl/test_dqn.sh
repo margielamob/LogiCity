@@ -1,7 +1,7 @@
 # Description: Test RL agent
 # /bin/bash
-CONFIG=config/tasks/Nav/easy/RL/ppotest.yaml
+CONFIG=config/tasks/Nav/easy/RL/dqntest.yaml
 python3 main.py --config $CONFIG \
-    --exp easy_ppo2 \
+    --exp easy_dqn1 \
     --log_dir log_rl \
     --use_gym

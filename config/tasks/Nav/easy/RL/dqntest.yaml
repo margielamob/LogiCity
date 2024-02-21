@@ -4,11 +4,11 @@ simulation:
   agent_yaml_file: "config/agents/easy/test.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
   rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/easy/rl.yaml"              # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/easy/rl.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
-  agent_region: 140
+  agent_region: 100
   rl_agent: 
     max_priority: 7
     use_expert: false
@@ -25,7 +25,7 @@ simulation:
 
 # Stable Baselines specific settings
 stable_baselines:
-  algorithm: "BehavioralCloning"
+  algorithm: "DQN"
   policy_network: "MlpPolicy"
   policy_kwargs:
     features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
@@ -33,16 +33,19 @@ stable_baselines:
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
-    num_traj: 10000
-    expert_demonstrations: "dataset/easy/2p6c_2b_10k.pkl"
-    optimizer: 
-      type: "Adam"             # Optimizer to use
-      args:
-        lr: 0.0001          # Learning rate
-    batch_size: 2048                # Batch size for training
+    learning_rate: 0.00003          # Learning rate
+    buffer_size: 1000            # Size of the replay buffer
+    learning_starts: 1000
+    target_update_interval: 500
+    train_freq: 4
+    gradient_steps: 1
+    exploration_fraction: 0.1
+    exploration_final_eps: 0.01
+    batch_size: 128               # Number of samples in each batch
+    verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
-    log_interval: 20
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/easy_bc_2k_3200_steps.zip"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/easy_dqn1.zip"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   episode_data: "dataset/easy/expert_episode_test_100_episodes.pkl"
+  vis_id: -1

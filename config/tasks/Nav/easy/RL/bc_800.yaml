@@ -50,7 +50,7 @@ eval_checkpoint:
       fov_entities:
         Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
   save_path: './checkpoints/'
-  name_prefix: 'easy_bc_5k'
+  name_prefix: 'easy_bc_800'
   episode_data: "dataset/easy/expert_episode_val_40_episodes.pkl"
 
 # Stable Baselines specific settings
@@ -63,8 +63,8 @@ stable_baselines:
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
-    num_traj: 5000
-    expert_demonstrations: "dataset/easy/2p6c_2b_10k.pkl"
+    num_traj: 800
+    expert_demonstrations: "dataset/easy/expert_demon_train_1k_trajs.pkl"
     optimizer: 
       type: "Adam"             # Optimizer to use
       args:
@@ -76,4 +76,3 @@ stable_baselines:
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   total_timesteps: 4000    # Total number of timesteps to run for all environments combined
-  episode_data: "dataset/easy/expert_episode_val_40_episodes.pkl"
