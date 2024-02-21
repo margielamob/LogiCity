@@ -43,7 +43,8 @@ class BehavioralCloning(ABC):
         self.tensorboard_log = tensorboard_log
         self.log_interval = log_interval
         self.device = device
-        self.loss = nn.MSELoss()
+        # discrete action space
+        self.loss = nn.CrossEntropyLoss()
         self.policy.to(self.device)
 
 
@@ -124,11 +125,10 @@ class BehavioralCloning(ABC):
             for batch in self.train_loader:
                 observations, actions = batch
                 observations = observations.to(self.device).float()
-                actions = actions.to(self.device).float()
+                actions = actions.to(self.device).long()
                 self.optimizer.zero_grad()
                 action_logits, _ = self.policy(observations)
-                action_probs = F.softmax(action_logits, dim=-1)
-                loss = self.loss(action_probs, actions)
+                loss = self.loss(action_logits, actions)
                 loss.backward()
                 self.optimizer.step()
                 self.num_timesteps += 1
@@ -150,6 +150,7 @@ class BehavioralCloning(ABC):
         with torch.no_grad():
             action_logits, _ = self.policy(observation)
             action = F.softmax(action_logits, dim=-1)
+            action = action.argmax(dim=-1)
         
         return action.cpu().numpy(), None
     

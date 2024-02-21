@@ -50,7 +50,7 @@ eval_checkpoint:
       fov_entities:
         Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
   save_path: './checkpoints/'
-  name_prefix: 'easy_bc_100'
+  name_prefix: 'easy_bc_10'
   episode_data: "dataset/easy/expert_episode_val_40_episodes.pkl"
 
 # Stable Baselines specific settings
@@ -63,13 +63,13 @@ stable_baselines:
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
-    num_traj: 100
+    num_traj: 10
     expert_demonstrations: "dataset/easy/expert_demon_train_1k_trajs.pkl"
     optimizer: 
       type: "Adam"             # Optimizer to use
       args:
         lr: 0.0001          # Learning rate
-    batch_size: 2048                # Batch size for training
+    batch_size: 128                # Batch size for training
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
     log_interval: 20
   train: true                   # Whether to train the model
