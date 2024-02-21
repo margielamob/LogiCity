@@ -135,7 +135,7 @@ class GymCityWrapper(gym.core.Env):
         # init does not reset the agent
         logger.info("***Init RL Agent in Env***")
         self.t = 0
-        self.horizon = min(self.max_horizon, len(self.agent.global_traj))
+        self.horizon = max(self.max_horizon, len(self.agent.global_traj)*4)
         self.env.local_planner.reset()
         ob_dict = self.env.update(self.agent_layer_id)
         if self.use_expert:

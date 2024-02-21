@@ -39,3 +39,4 @@ stable_baselines:
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   episode_data: "dataset/easy/expert_episode_test_100_episodes.pkl"
+  vis_id: [11, 20, 22, 34, 35, 37, 42, 46, 51, 63, 65, 70, 78, 82, 83, 93, 98]

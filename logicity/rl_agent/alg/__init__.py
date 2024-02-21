@@ -1,10 +1,9 @@
 # vanilla RL
-from .ppo import PPO
-from .dqn import DQN
-# from .sac import SAC
-# from .td3 import TD3
-# from .trpo import TRPO
-# from .ddpg import DDPG
+from stable_baselines3 import PPO
+from stable_baselines3 import DQN
+from stable_baselines3 import A2C
+from stable_baselines3 import TD3
+from stable_baselines3 import DDPG
 # NS RL
 # from .nudge import NUDGE
 # from .nsrl import NSRL
