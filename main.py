@@ -205,7 +205,7 @@ def main_gym(args, logger):
             while not d:
                 step += 1
                 action, _ = model.predict(o, deterministic=True)
-                o, r, d, i = eval_env.step(action)
+                o, r, d, i = eval_env.step(int(action))
                 if ts in vis_id:
                     cached_observation["Time_Obs"][step] = i
                 if i["Fail"][0]:
