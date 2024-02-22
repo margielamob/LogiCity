@@ -118,16 +118,16 @@ class GymCityWrapper(gym.core.Env):
         ob_dict = self.env.update(self.agent_layer_id)
         obs = self._flatten_obs(ob_dict)
         self.current_obs = obs
+        self.last_dist = -1
+        self.last_pos = None
         if self.use_expert:
-            expert_info = {}
             self.expert_action = self.full_action2index(ob_dict["Expert_actions"][0])
+            if return_info:
+                return self.current_obs, episode
+            expert_info = {}
             expert_info["Next_grounding"] = ob_dict["Ground_dic"][0]
             expert_info["Next_sg"] = ob_dict["Expert_sg"][0]
-            self.last_dist = -1
-            self.last_pos = None
             return self.current_obs, expert_info
-        if return_info:
-            return self.current_obs, episode
         else:
             return self.current_obs
     
