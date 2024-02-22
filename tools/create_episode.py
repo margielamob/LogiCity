@@ -25,7 +25,7 @@ def parse_arguments():
     parser.add_argument('--exp', type=str, default="expert_100episode_test")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
-    parser.add_argument('--seed', type=int, default=1)
+    parser.add_argument('--seed', type=int, default=2)
     parser.add_argument('--max_episodes', type=int, default=100)
     # RL
     parser.add_argument('--config', default='config/tasks/Nav/easy/experts/expert_episode.yaml', help='Configure file for this RL exp.')
@@ -121,10 +121,10 @@ def main(args, logger):
             if key in vis_id:
                 cached_observation["Time_Obs"][step] = i
             action = model.predict(o)[0]
-            if action[-1]:
+            if action==3:
                 save = True
             rew += r
-        if save:
+        if save and i["success"]:
             all_episodes[key] = tem_episodes
             rew_list.append(rew)
             success.append(1)
