@@ -24,8 +24,8 @@ simulation:
       Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
 
 eval_checkpoint:
-  eval_freq: 5000                        # This is the frequency of evaluation, will be multiplied by num_envs
-  save_freq: 5000
+  eval_freq: 10000                        # This is the frequency of evaluation, will be multiplied by num_envs
+  save_freq: 10000
   simulation_config:
     map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
     agent_yaml_file: "config/agents/easy/val.yaml" # Agents in the simulation
@@ -50,7 +50,7 @@ eval_checkpoint:
       fov_entities:
         Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
   save_path: './checkpoints/'
-  name_prefix: 'easy_a2c1'
+  name_prefix: 'easy_a2c2'
   episode_data: "dataset/easy/expert_episode_val_40_episodes.pkl"
 
 # Stable Baselines specific settings
@@ -66,9 +66,11 @@ stable_baselines:
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
+    n_steps: 128
     learning_rate: 0.00003          # Learning rate
     ent_coef: 0.01
-    vf_coef: 0.25
+    vf_coef: 0.5
+    verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: true                   # Whether to train the model
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
