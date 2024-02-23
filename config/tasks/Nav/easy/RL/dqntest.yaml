@@ -8,7 +8,7 @@ simulation:
   rl: true
   debug: false
   use_multi: false
-  agent_region: 100
+  agent_region: 140
   rl_agent: 
     max_priority: 7
     use_expert: false
@@ -45,7 +45,6 @@ stable_baselines:
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/easy_dqn1.zip"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/final_models/easy/easy_dqn1.zip"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
-  episode_data: "dataset/easy/expert_episode_test_100_episodes.pkl"
-  vis_id: -1
+  episode_data: "dataset/easy/test_100_episodes.pkl"

@@ -4,8 +4,8 @@ conda activate logicity
 # /bin/bash
 # easy
 CONFIG_FILE="config/tasks/Nav/easy/experts/expert_episode_test.yaml"
-python3 tools/create_episode.py --config $CONFIG_FILE --exp "expert_episode_test_40" \
-    --max_episodes 40
+python3 tools/create_episode.py --config $CONFIG_FILE --exp "expert_episode_test_10" \
+    --max_episodes 10
 CONFIG_FILE="config/tasks/Nav/easy/experts/expert_episode_val.yaml"
-python3 tools/create_episode.py --config $CONFIG_FILE --exp "expert_episode_val_20" \
-    --max_episodes 20
+python3 tools/create_episode.py --config $CONFIG_FILE --exp "expert_episode_val_10" \
+    --max_episodes 10

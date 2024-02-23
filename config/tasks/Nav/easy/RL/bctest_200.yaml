@@ -43,6 +43,6 @@ stable_baselines:
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
     log_interval: 20
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/final_models/easy/easy_bc500.zip"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/final_models/easy/easy_bc200.zip"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   episode_data: "dataset/easy/test_100_episodes.pkl"
