@@ -32,9 +32,9 @@ stable_baselines:
     num_features: 34
     max_depth: 3
     tgt_arity: 1
-    predicate_labels: ['CollidingClose', 'Fast', 'HigherPri', 'IsAmbulance', 'IsAtInter', 'IsCar', 'IsClose', 'IsInInter', 'IsOld', 'IsPedestrian', 'IsTiro', 'Stop', 'ident']
+    predicates_labels: ['CollidingClose', 'Fast', 'HigherPri', 'IsAmbulance', 'IsAtInter', 'IsCar', 'IsClose', 'IsInInter', 'IsOld', 'IsPedestrian', 'IsTiro', 'Stop', 'ident']
   hyperparameters:
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/final_models/easy/easy_bc50.zip"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/final_models/easy/easy_hri50.pth"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   episode_data: "dataset/easy/test_100_episodes.pkl"

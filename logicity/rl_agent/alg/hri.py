@@ -15,7 +15,7 @@ import torch.nn.functional as F
 from collections import deque
 from torch.utils.tensorboard import SummaryWriter
 from logicity.rl_agent.policy import build_policy
-from logicity.rl_agent.policy.hri.Utils import get_unifs
+from logicity.rl_agent.policy.hri_helper.Utils import get_unifs
 
 import logging
 logger = logging.getLogger(__name__)
@@ -23,10 +23,11 @@ logger = logging.getLogger(__name__)
 SelfHRI = TypeVar("SelfHRI", bound="HRI")
 
 class HRI(ABC):
-    def __init__(self, policy, env, policy_kwargs):
+    def __init__(self, policy, env, policy_kwargs, device="cuda:0"):
         self.policy_class = policy
         self.policy_kwargs = policy_kwargs
         self.policy = build_policy[policy](env, **policy_kwargs)
+        self.device = device
         self.policy.to(self.device)
 
     

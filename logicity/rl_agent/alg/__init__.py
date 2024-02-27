@@ -11,6 +11,6 @@ from stable_baselines3 import DDPG
 # Expert data
 from .expert import ExpertCollector
 from .bc import BehavioralCloning
-# from .hri import HRI
+from .hri import HRI
 # from .loa import LOA
 # from .ailp import aILP

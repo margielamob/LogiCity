@@ -1,21 +1,11 @@
 import os
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
-import torch.nn.functional as F
-import pdb
-from .OriginalData import OriginalTrainingData
-from .Dataset import deterministic_tasks
-import math
-import numpy as np
-import copy
-import random
-from tensorboardX import SummaryWriter
 #from line_profiler import LineProfiler
 
-from hri.Infer import infer_tgt_vectorise, infer_one_step_vectorise_neo
-from hri.utils.Initialise import init_rules_embeddings, init_predicates_embeddings_plain, init_aux_valuation, init_rule_templates
-from hri.utils.Masks import init_mask, get_hierarchical_mask
+from .hri_helper.Infer import infer_tgt_vectorise, infer_one_step_vectorise_neo
+from .hri_helper.utils.Initialise import init_rules_embeddings, init_predicates_embeddings_plain, init_aux_valuation, init_rule_templates
+from .hri_helper.utils.Masks import init_mask, get_hierarchical_mask
 
 # ------------------
 # -----------------------------------------------------------------------------
@@ -74,7 +64,6 @@ class HriPolicy(nn.Module):
         init_body = init_rules_embeddings(self)
         self.rules = nn.Parameter(init_body, requires_grad=True)
         self.embeddings = nn.Parameter(init_predicates, requires_grad=True)
-        self.num_params = self.get_num_params()
 
         # NOTE: TEMPORARY here to later merge w/ Progressive Model and use same procedure inference
         self.num_soft_predicates = self.num_rules
@@ -92,16 +81,14 @@ class HriPolicy(nn.Module):
         self.num_body = 3
         self.two_rules = False  # default one predicate one rule
         # ----2-create template and number rules etc
-        self.idx_background, self.idx_aux, self.rules_str, self.predicates_labels, self.rules_arity, self.depth_predicates = init_rule_templates(self.args,
-                                                                                                                                                    num_background=self.num_background,
-                                                                                                                                                    max_depth=self.max_depth,
-                                                                                                                                                    tgt_arity=self.tgt_arity,
-                                                                                                                                                    templates_unary=self.templates_set[
-                                                                                                                                                        "unary"],
-                                                                                                                                                    templates_binary=self.templates_set[
-                                                                                                                                                        "binary"],
-                                                                                                                                                    predicates_labels=self.predicates_labels
-                                                                                                                                                    )
+        self.idx_background, self.idx_aux, self.rules_str, \
+        self.predicates_labels, self.rules_arity, self.depth_predicates = init_rule_templates(num_background=self.num_background,
+                                                                                            max_depth=self.max_depth,
+                                                                                            tgt_arity=self.tgt_arity,
+                                                                                            templates_unary=self.templates_set["unary"],
+                                                                                            templates_binary=self.templates_set["binary"],
+                                                                                            predicates_labels=self.predicates_labels
+                                                                                            )
         # Add one to tgt depth if unified and hierarchical
         self.depth_predicates[-1] = self.depth_predicates[-2]+1
         self.num_aux = len(self.idx_aux)  # include tgt
@@ -116,11 +103,8 @@ class HriPolicy(nn.Module):
         # ---mask hierarchical for unifications
         init_mask(self)
 
-        if self.args.hierarchical and self.args.unified_templates:
-            self.hierarchical_mask = get_hierarchical_mask(
-                self.depth_predicates, self.num_rules, self.num_predicates, self.num_body, self.rules_str, recursivity=self.args.recursivity)
-        else:
-            self.hierarchical_mask = None
+        self.hierarchical_mask = get_hierarchical_mask(
+            self.depth_predicates, self.num_rules, self.num_predicates, self.num_body, self.rules_str, recursivity='none')
 
     def infer(self, valuation, num_constants, unifs, steps=1, permute_masks=None, task_idx=None, num_predicates=None, numFixedVal=None):
         """

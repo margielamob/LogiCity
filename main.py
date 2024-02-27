@@ -30,7 +30,7 @@ def parse_arguments():
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/RL/bc_1000.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/RL/hritest_50.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -132,15 +132,18 @@ def main_gym(args, logger):
     rl_config = config['stable_baselines']
     logger.info("RL config: {}".format(rl_config))
     # Dynamic import of the features extractor class
-    features_extractor_class = dynamic_import(
-        rl_config["policy_kwargs"]["features_extractor_module"],
-        rl_config["policy_kwargs"]["features_extractor_class"]
-    )
-    # Prepare policy_kwargs with the dynamically imported class
-    policy_kwargs = {
-        "features_extractor_class": features_extractor_class,
-        "features_extractor_kwargs": rl_config["policy_kwargs"]["features_extractor_kwargs"]
-    }
+    if "features_extractor_module" in rl_config:
+        features_extractor_class = dynamic_import(
+            rl_config["policy_kwargs"]["features_extractor_module"],
+            rl_config["policy_kwargs"]["features_extractor_class"]
+        )
+        # Prepare policy_kwargs with the dynamically imported class
+        policy_kwargs = {
+            "features_extractor_class": features_extractor_class,
+            "features_extractor_kwargs": rl_config["policy_kwargs"]["features_extractor_kwargs"]
+        }
+    else:
+        policy_kwargs = rl_config["policy_kwargs"]
     # Dynamic import of the RL algorithm
     algorithm_class = dynamic_import(
         "logicity.rl_agent.alg",  # Adjust the module path as needed
@@ -200,7 +203,6 @@ def main_gym(args, logger):
             elif rl_config["algorithm"] == "HRI":
                 model = algorithm_class(rl_config["policy_network"], \
                                         eval_env, \
-                                        **hyperparameters, \
                                         policy_kwargs=policy_kwargs)
                 model.load(rl_config["checkpoint_path"])
             else:

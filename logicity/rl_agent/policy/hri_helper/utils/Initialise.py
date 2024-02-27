@@ -35,70 +35,7 @@ def init_predicates_embeddings_plain(model):
     """
     Initialise predicates embeddings.
     """
-    if model.num_feat == model.num_predicates:
-        init_predicates=torch.eye(model.num_predicates-2*int(model.args.add_p0))
-    else:
-        init_predicates=torch.rand((model.num_predicates-2*int(model.args.add_p0), model.num_feat-2*int(model.args.add_p0)))
-    if model.args.task_name in ['MT_GQA','MT_WN']:
-        return init_predicates
-        
-    if model.args.pretrained_pred_emb:
-        if model.args.emb_type == 'NLIL':
-            # From the data_generator, we have all bg preds
-            flr_bg_pred = list(model.data_generator.dataset.pred_register.pred_dict.keys())
-            
-            if model.args.use_gpu:
-                pre_tgt_model = torch.load(joinpath(model.args.pretrained_model_path, model.args.gqa_tgt))
-            else:
-                pre_tgt_model = torch.load(
-                    joinpath(model.args.pretrained_model_path, model.args.gqa_tgt), 
-                    map_location=torch.device('cpu')
-                    )
-            pre_pred_emb = pre_tgt_model['pred_emb_table.ent_embeds.weight'] # size 214*32
-
-            nlil_bg_pred = {} # dict: key->pred name, value->pred index
-            with open(joinpath(model.args.pretrained_model_path, 'pred.txt')) as f:
-                nlil_bg_id = 0
-                for line in f:
-                    parts = line.replace('(', ' ').replace('\r','').replace('\n','').replace('\t','').strip().split()
-                    nlil_bg_pred[parts[0]] = nlil_bg_id
-                    nlil_bg_id += 1
-                nlil_bg_pred['ident'] = nlil_bg_id
-
-            assert (model.num_feat-2*int(model.args.add_p0)) == pre_pred_emb.shape[1]
-            assert len(flr_bg_pred) == (model.num_background-2*int(model.args.add_p0))
-            # TODO:
-            for i in range(len(flr_bg_pred)):
-                pre_id = nlil_bg_pred[flr_bg_pred[i]]
-                init_predicates[i] = pre_pred_emb[pre_id]
-        elif model.args.emb_type == 'WN':
-            flr_bg_pred = list(model.data_generator.dataset.pred_register.pred_dict.keys())
-            nlp_model = GPT2LMHeadModel.from_pretrained('gpt2')  # or any other checkpoint
-            tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-
-            temp_index = tokenizer.encode(model.args.gqa_tgt, add_prefix_space=True)
-            temp_feat = nlp_model.transformer.wte.weight[temp_index,:].shape[1]
-
-            temp_predicates=torch.rand(
-                (model.num_predicates-2*int(model.args.add_p0), temp_feat)
-                )
-
-            # not_used = 0
-            for i in range(len(flr_bg_pred)):
-                # TODO: embedding pooling
-                wn_idx = tokenizer.encode(flr_bg_pred[i], add_prefix_space=True)
-                
-                if len(wn_idx) > 1:
-                    # not_used += 1
-                    continue
-                wn_emb = nlp_model.transformer.wte.weight[wn_idx,:]
-                temp_predicates[i] = wn_emb
-            
-            temp_predicates = PCA(n_components = model.num_feat-2*int(model.args.add_p0)).fit_transform(temp_predicates.detach().numpy())
-            init_predicates = torch.from_numpy(temp_predicates)
-            
-        else:
-            raise NotImplementedError
+    init_predicates=torch.rand((model.num_predicates-2, model.num_feat-2))
 
     return init_predicates
 
@@ -108,34 +45,7 @@ def init_rules_embeddings(model, num_rules=None):
     """
     if num_rules is None:
         num_rules=model.num_rules
-
-    if not model.args.add_p0:
-        body=torch.rand(num_rules, model.num_feat * model.num_body)
-    
-    elif model.args.init_rules=="random":
-        body = model.args.noise_p0 * torch.rand(num_rules, model.num_feat * model.num_body)
-        
-    elif model.args.init_rules=="F.T.F":#ie False for body 1 and body3, True for body 2 + Noise
-        body = torch.zeros(num_rules, model.num_feat*model.num_body)
-        body[:,1] = torch.ones(1, num_rules) # b1, add p1=False
-        body[:,model.num_feat] = torch.ones(1, num_rules) # b2, add p0=True
-        if model.num_body == 3:
-            body[:,1+model.num_feat*2] = torch.ones(1, num_rules) # b3, add p1=False 
-        body += model.args.noise_p0 * torch.rand(num_rules, model.num_feat * model.num_body)
-
-    elif model.args.init_rules=="FT.FT.F":#ie False&True for body 1 and body 2 + noise
-        body = torch.zeros(num_rules, model.num_feat*model.num_body)
-        body[:,1] = torch.ones(1, num_rules) # b1, add p1=False
-        body[:,0] = torch.ones(1, num_rules) # b1, add p0=True
-        body[:,model.num_feat] = torch.ones(1, num_rules) # b2, add p0=True
-        body[:,1+model.num_feat] = torch.ones(1, num_rules) # b2, add p1=False
-        if model.num_body == 3:
-            body[:,1+model.num_feat*2] = torch.ones(1, num_rules) # b3, add p1=False 
-        body += model.args.noise_p0 * torch.rand(num_rules, model.num_feat * model.num_body)
-
-    else:
-        raise NotImplementedError
-
+    body = 0.5 * torch.rand(num_rules, model.num_feat * model.num_body)
     return body
 
 
@@ -200,22 +110,12 @@ def init_aux_valuation(model, valuation_init, num_constants, steps=1):
 
 
 
-def init_rule_templates(args, num_background=1, max_depth=0, tgt_arity=1, templates_unary=[], templates_binary=[], predicates_labels=None):
+def init_rule_templates(num_background=1, max_depth=0, tgt_arity=1, templates_unary=[], templates_binary=[], predicates_labels=None):
     """
     Initialise Rule Templates
     
     """
-    # if args.hierarchical and args.use_progressive_model and args.num_pred_per_arity>0:
-    #     #Here sample from template set
-    #     tuplet=sample_template_hierarchical(num_background, max_depth, tgt_arity, templates_unary, templates_binary, predicates_labels=predicates_labels, num_sample=args.num_pred_per_arity)
-    if args.hierarchical:
-        #here take full template set at each depth
-        tuplet=create_template_hierarchical(num_background, max_depth, tgt_arity, templates_unary, templates_binary, args.add_p0, predicates_labels=predicates_labels)
-    else:
-        #not hierarchical models
-        tuplet=create_template_plain(num_background, tgt_arity, templates_unary, templates_binary, predicates_labels=predicates_labels)
-        
-
+    tuplet=create_template_hierarchical(num_background, max_depth, tgt_arity, templates_unary, templates_binary, True, predicates_labels=predicates_labels)
     return tuplet
 
 def create_template_hierarchical(num_background, max_depth, tgt_arity, templates_unary, templates_binary, add_p0, predicates_labels=None):
