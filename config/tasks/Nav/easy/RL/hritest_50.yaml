@@ -25,23 +25,15 @@ simulation:
 
 # Stable Baselines specific settings
 stable_baselines:
-  algorithm: "HieRuleInduction"
-  policy_network: "MlpPolicy"
+  algorithm: "HRI"
+  policy_network: "HriPolicy"
   policy_kwargs:
-    features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
-    features_extractor_class: "MLPFeatureExtractor"
-    features_extractor_kwargs:
-      features_dim: 64
+    num_background: 13 
+    num_features: 34
+    max_depth: 3
+    tgt_arity: 1
+    predicate_labels: ['CollidingClose', 'Fast', 'HigherPri', 'IsAmbulance', 'IsAtInter', 'IsCar', 'IsClose', 'IsInInter', 'IsOld', 'IsPedestrian', 'IsTiro', 'Stop', 'ident']
   hyperparameters:
-    num_traj: 10
-    expert_demonstrations: "dataset/easy/expert_demon_train_1k_trajs.pkl"
-    optimizer: 
-      type: "Adam"             # Optimizer to use
-      args:
-        lr: 0.0001          # Learning rate
-    batch_size: 2048                # Batch size for training
-    tensorboard_log: "./tb_logs"  # Tensorboard log directory
-    log_interval: 20
   train: false                   # Whether to train the model
   checkpoint_path: "checkpoints/final_models/easy/easy_bc50.zip"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel

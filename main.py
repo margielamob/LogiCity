@@ -197,6 +197,12 @@ def main_gym(args, logger):
             eval_env, cached_observation = make_env(simulation_config, episode_cache, True)
             if rl_config["algorithm"] == "ExpertCollector":
                 model = algorithm_class(eval_env)
+            elif rl_config["algorithm"] == "HRI":
+                model = algorithm_class(rl_config["policy_network"], \
+                                        eval_env, \
+                                        **hyperparameters, \
+                                        policy_kwargs=policy_kwargs)
+                model.load(rl_config["checkpoint_path"])
             else:
                 model = algorithm_class.load(rl_config["checkpoint_path"], \
                                     eval_env)
