@@ -141,7 +141,7 @@ class HriPolicy(nn.Module):
                                                              num_predicates=num_predicates, numFixedVal=numFixedVal)
 
         # 3---- tgt valuation computed at very end here
-        valuation_tgt = infer_tgt_vectorise(self.args, valuation, unifs.view(
+        valuation_tgt = infer_tgt_vectorise(valuation, unifs.view(
                 num_predicates, self.num_body, self.num_rules), tgt_arity=self.rules_arity[-1])
 
         return valuation, valuation_tgt

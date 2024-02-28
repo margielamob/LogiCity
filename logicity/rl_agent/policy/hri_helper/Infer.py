@@ -82,7 +82,6 @@ def infer_one_step_vectorise_neo(model, valuation, num_constants, unifs, unifs_d
         numFixedVal = model.num_all_symbolic_predicates
 
     # Sanity checks
-    assert model.num_body == 3 and model.args.unified_templates and model.args.template_name == "new"
     assert list(valuation.size()) == [
         num_predicates-1, num_constants, num_constants]  # has removed tgt
     assert list(unifs.size()) == [num_predicates, model.num_body, num_rules]
@@ -97,19 +96,15 @@ def infer_one_step_vectorise_neo(model, valuation, num_constants, unifs, unifs_d
         masks = [model.mask_rule_C, model.mask_rule_arity1,
                  model.mask_extended_rule]
 
-    if model.args.use_gpu and torch.cuda.is_available():
-        masks = [m.cuda() for m in masks]
-        if model.args.with_permutation:
-            permute_masks = [p.cuda() for p in permute_masks]
+    masks = [m.cuda() for m in masks]
+    permute_masks = [p.cuda() for p in permute_masks]
 
     mask_rule_C = masks[0]
     mask_rule_A = masks[1]
     mask_extended_rule = masks[2]
     mask_rule_Inv = torch.tensor(
         [model.rules_str[r] == "Inv" for r in range(model.num_rules-1)]).double()
-
-    if model.args.use_gpu and torch.cuda.is_available():
-        mask_rule_Inv = mask_rule_Inv.cuda()
+    mask_rule_Inv = mask_rule_Inv.cuda()
 
     # 1- init new valuations: here only non symbolic predicates. AT end would stack
     valuation_new = Variable(torch.zeros(
@@ -118,13 +113,13 @@ def infer_one_step_vectorise_neo(model, valuation, num_constants, unifs, unifs_d
         num_predicates-1, num_constants, num_constants]
     # RULE B: Q(X,Y) <- P1(X,Z) and P2(Z,Y)
     # size p-1, p-1,c,c,c.
-    fuzzy_B = fuzzy_and_B(valuation, mode=model.args.fuzzy_and)
+    fuzzy_B = fuzzy_and_B(valuation, mode='min')
     # max, existential quantifier on Z #NOTE: assume z last position here !
     fuzzy_B = torch.max(fuzzy_B, dim=4)[0]
 
     # RULE C: Q(X,Y) <- P1(X,Y) and P2(Y,X)
     fuzzy_AC = fuzzy_and_AC(
-        valuation, mode=model.args.fuzzy_and)  # size p-1, p-1,c,c
+        valuation, mode='min')  # size p-1, p-1,c,c
     assert list(fuzzy_B.shape) == list(fuzzy_AC.shape) == [
         num_predicates-1, num_predicates-1,  num_constants, num_constants]
     # RULE A: Q(X) <- P1(X,Y) and P2(Y,X) : can be seen as rule C then existential quantifier
@@ -142,33 +137,29 @@ def infer_one_step_vectorise_neo(model, valuation, num_constants, unifs, unifs_d
         'pr,pyx, r->prxy', unifs[:-1, 0, :-1], valuation, mask_rule_Inv)  # for Inv
 
     # pooling
-    score_and = pool(score_and, model.args.merging_and,
+    score_and = pool(score_and, 'sum',
                      dim=[0, 1])  # size (r,c,c)
-    score_and += pool(score_Inv, model.args.merging_and, dim=[0])
+    score_and += pool(score_Inv, 'sum', dim=[0])
 
     # --7---for extended rules, compute second part score, pool in first dimension.
     extended_rules = [bool("+" in structure) for structure in model.rules_str]
     # beware, for arity 1, has to first take max // second variable.... BEFORE POOLING!
     if np.count_nonzero(extended_rules) > 0:
-        if model.args.scaling_OR_score == "square":
-            score_b3 = torch.einsum(
-                'pr,pr, pxy->prxy', unifs[:-1, 2, :-1], unifs[:-1, 2, :-1], valuation)
-        else:
-            score_b3 = torch.einsum(
-                'pr,pxy->prxy', unifs[:-1, 2, :-1], valuation)  # size p-1,r-1, c,c
+        score_b3 = torch.einsum(
+            'pr,pxy->prxy', unifs[:-1, 2, :-1], valuation)  # size p-1,r-1, c,c
         # arity 1 need a, ax
         score_b3_A = torch.max(score_b3, dim=3)[0].unsqueeze(3)
         mask_rule_A_ = mask_rule_A.unsqueeze(1).unsqueeze(2)
         # NOTE: Use Broadcasting below
         score_or = (1-mask_rule_A_)*score_b3 + mask_rule_A_*score_b3_A
         # pool
-        score_or = pool(score_or, model.args.merging_or, dim=[0])  # r-1,c,c
+        score_or = pool(score_or, 'sum', dim=[0])  # r-1,c,c
         assert list(score_or.shape) == [
             num_rules-1, num_constants, num_constants]
 
         # NEW VALUATION
         valuation_new = fuzzy_or(
-            model.args.scaling_AND_score*score_and, score_or, mode=model.args.fuzzy_or)
+            score_and, score_or, mode='max')
     else:
         valuation_new = score_and
     assert list(valuation_new.size()) == [
@@ -178,7 +169,7 @@ def infer_one_step_vectorise_neo(model, valuation, num_constants, unifs, unifs_d
     valuation_all = torch.cat([valuation[:numFixedVal].clone(
     ), valuation_new.float()], dim=0)  # copy background val
     valuation_all = merge(valuation, valuation_all,
-                          mode=model.args.merging_val)  # rest
+                          mode='max')  # rest
     assert list(valuation_all.size()) == [
         num_predicates-1, num_constants, num_constants]  # no tgt
 
@@ -484,7 +475,7 @@ def infer_one_step_vectorise(model, valuation, num_constants, unifs, unifs_duo, 
 # @profile
 
 
-def infer_tgt_vectorise(args, valuation, unifs, tgt_arity=2):
+def infer_tgt_vectorise(valuation, unifs, tgt_arity=1):
     """
     Inference procedure computing the valuation of the target predicate, given the valuation of the other predicates.
 
@@ -506,7 +497,7 @@ def infer_tgt_vectorise(args, valuation, unifs, tgt_arity=2):
         score_tgt = torch.max(score_tgt, dim=2)[0].unsqueeze(
             2)  # exist here on second dim
         assert list(score_tgt.shape) == [num_predicates-1, num_constants, 1]
-    valuation_tgt = pool(score_tgt, mode=args.merging_tgt, dim=[0])
+    valuation_tgt = pool(score_tgt, mode='max', dim=[0])
     if tgt_arity == 1:
         assert list(valuation_tgt.shape) == [num_constants, 1]
     else:

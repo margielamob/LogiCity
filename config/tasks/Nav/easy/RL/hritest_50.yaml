@@ -34,6 +34,10 @@ stable_baselines:
     tgt_arity: 1
     predicates_labels: ['CollidingClose', 'Fast', 'HigherPri', 'IsAmbulance', 'IsAtInter', 'IsCar', 'IsClose', 'IsInInter', 'IsOld', 'IsPedestrian', 'IsTiro', 'Stop', 'ident']
   hyperparameters:
+    tgt_action: 'Stop'
+    default_action: 'Fast'
+    threshold: 0.5
+    action2idx: {'Slow': 0, 'Normal': 1, 'Fast': 2, 'Stop': 3}
     pred2ind: {'CollidingClose': 0, 'Fast': 1, 'HigherPri': 2, 'IsAmbulance': 3, 'IsAtInter': 4, 'IsCar': 5, 'IsClose': 6, 'IsInInter': 7, 'IsOld': 8, 'IsPedestrian': 9, 'IsTiro': 10, 'Stop': 11, 'ident': 12}
     if_un_pred: [False, True, False, True, True, True, False, True, True, True, True, True, False]
   train: false                   # Whether to train the model

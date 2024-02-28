@@ -11,8 +11,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 class HRI():
-    def __init__(self, policy, env, pred2ind, if_un_pred, \
+    def __init__(self, policy, env, tgt_action, default_action, \
+                 threshold, action2idx, pred2ind, if_un_pred, \
                  policy_kwargs, device="cuda:0"):
+        self.tgt_action = tgt_action
+        self.default_action = default_action
+        self.action2idx = action2idx
+        self.threshold = threshold
         self.policy_class = policy
         self.policy_kwargs = policy_kwargs
         self.predicates_labels = policy_kwargs['predicates_labels']
@@ -65,10 +70,15 @@ class HRI():
         
         action = self.get_action(valuation_tgt)
         
-        return action.cpu().numpy(), None
+        return action, None
     
     def get_action(self, valuation_tgt):
-        return torch.argmax(valuation_tgt).item()
+        prob = valuation_tgt[0]
+        if prob > self.threshold:
+            action_id = self.action2idx[self.tgt_action]
+        else:
+            action_id = self.action2idx[self.default_action]
+        return action_id
 
     def load(
         self,
