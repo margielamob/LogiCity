@@ -204,8 +204,8 @@ class Z3PlannerRL(Z3Planner):
             
     def logic_grounding_shape(self, fov_entities):
         self.fov_entities = fov_entities
-        self.rl_input_shape = logic_grounding_shape(self.entity_types, self.predicates, self.z3_vars, fov_entities)
-        return self.rl_input_shape
+        self.rl_input_shape, pred_grounding_ind = logic_grounding_shape(self.entity_types, self.predicates, self.z3_vars, fov_entities)
+        return self.rl_input_shape, pred_grounding_ind
 
 def logic_grounding_shape(
                       entity_types, 
@@ -214,6 +214,7 @@ def logic_grounding_shape(
                       fov_entities):
     # TODO: determine the shape of the logic grounding in the RL agent
     n = 0
+    pred_grounding_index = {}
     # 1. create sorts and variables
     entity_sorts = {}
     for entity_type in entity_types:
@@ -236,16 +237,20 @@ def logic_grounding_shape(
             continue
 
         if arity == 1:
+            n_start = n
             # Unary predicate grounding
             for _ in entities[eval_pred.domain(0).name()]:
                 n += 1
+            pred_grounding_index[pred_name] = (n_start, n)
         elif arity == 2:
+            n_start = n
             # Binary predicate grounding
             for _ in entities[eval_pred.domain(0).name()]:
                 for _ in entities[eval_pred.domain(1).name()]:
                     n += 1
+            pred_grounding_index[pred_name] = (n_start, n)
     logger.info("Given Predicates {}, the FOV entities {}, The logic grounding shape is: {}".format(local_predicates, fov_entities, n))
-    return n
+    return n, pred_grounding_index
 
 def solve_sub_problem(ego_name, 
                       ego_action_mapping,

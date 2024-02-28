@@ -21,6 +21,7 @@ class GymCityWrapper(gym.core.Env):
         '''        
         self.env = env
         self.logic_grounding_shape = self.env.logic_grounding_shape
+        self.pred_grounding_index = self.env.pred_grounding_index
         # self.observation_space = Dict({
         #     "map": Box(low=-1.0, high=1.0, shape=(3, self.fov, self.fov), dtype=np.float32),  # Adjust the shape as needed
         #     "position": Box(low=0.0, high=1.0, shape=(6,), dtype=np.float32)

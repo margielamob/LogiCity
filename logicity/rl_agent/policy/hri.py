@@ -128,16 +128,12 @@ class HriPolicy(nn.Module):
         if num_predicates is None:
             num_predicates = self.num_predicates
         # -1--preparation if vectorise as tensor size (pred, num cst, num_csts)
-        if self.args.vectorise:
-            unifs_ = unifs.view(num_predicates, self.num_body, self.num_rules)
-            # shape p-1, p-1, r-1 -- removed tgt from predicates
-            unifs_duo = torch.einsum(
-                'pr,qr->pqr', unifs_[:-1, 0, :-1], unifs_[:-1, 1, :-1]).view(-1, self.num_rules-1)
-            if self.args.normalise_unifs_duo:  # TODO: Which unifs ?
-                unifs_duo = unifs_duo / \
-                    torch.sum(unifs_duo, keepdim=True, dim=0)[0]
-            unifs_duo = unifs_duo.view(
-                num_predicates-1, num_predicates-1, self.num_rules-1)
+        unifs_ = unifs.view(num_predicates, self.num_body, self.num_rules)
+        # shape p-1, p-1, r-1 -- removed tgt from predicates
+        unifs_duo = torch.einsum(
+            'pr,qr->pqr', unifs_[:-1, 0, :-1], unifs_[:-1, 1, :-1]).view(-1, self.num_rules-1)
+        unifs_duo = unifs_duo.view(
+            num_predicates-1, num_predicates-1, self.num_rules-1)
 
         # 2----run inference steps, depending on template chosen
         for step in range(steps):

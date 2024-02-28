@@ -203,6 +203,7 @@ def main_gym(args, logger):
             elif rl_config["algorithm"] == "HRI":
                 model = algorithm_class(rl_config["policy_network"], \
                                         eval_env, \
+                                        **hyperparameters, \
                                         policy_kwargs=policy_kwargs)
                 model.load(rl_config["checkpoint_path"])
             else:

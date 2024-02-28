@@ -60,50 +60,26 @@ def init_aux_valuation(model, valuation_init, num_constants, steps=1):
     val_false = torch.zeros((num_constants,num_constants))
     val_true = torch.ones((num_constants,num_constants))
 
-    num_initial_predicates = len(valuation_init) if model.args.task_name in ['GQA', 'MT_GQA'] else model.num_background-2*int(model.args.add_p0)
+    num_initial_predicates = model.num_background-2
 
-    if not model.args.unified_templates: # deepcopy?
-        valuation=valuation_init
+    valuation_=[]
+    valuation_.append(Variable(val_true))
+    valuation_.append(Variable(val_false))
+    #---add initial predicate. Here all tensor dim 2 in valuation_
+    for val in valuation_init[:num_initial_predicates]:
+        if val.size()[1] == 1: #unary
+            valuation_.append(val.repeat((1, num_constants)))
+        elif val.size()[1] == num_constants:#binary
+            valuation_.append(val)
+        else:
+            raise NotImplementedError
 
-    elif not model.args.vectorise: #unified models
-        valuation=valuation_init[:num_initial_predicates]       
-        #----valuation initial predicate
-        if model.args.add_p0:
-            valuation.insert(0, Variable(val_false))
-            valuation.insert(0, Variable(val_true))
-
-        
-        #add auxiliary predicates
-        for pred in model.idx_soft_predicates:
-            if model.rules_arity[pred-model.num_background] == 1:
-                valuation.append(Variable(torch.zeros(1, num_constants).view(-1, 1)))
-            else:
-                valuation.append(Variable(torch.zeros(num_constants, num_constants)))
-        if model.args.task_name in ['GQA', 'MT_GQA']:
-            assert len(valuation)==model.num_predicates-model.num_background+len(valuation_init)+2*int( model.args.add_p0)
-        else: #TODO: maybe need to modify for WN tasks
-            assert len(valuation)==model.num_predicates#TODO with p0, p1?
-
-    else: #vectorise (and unified templates)
-        valuation_=[]
-        if model.args.add_p0:
-            valuation_.append(Variable(val_true))
-            valuation_.append(Variable(val_false))
-        #---add initial predicate. Here all tensor dim 2 in valuation_
-        for val in valuation_init[:num_initial_predicates]:
-            if val.size()[1] == 1: #unary
-                valuation_.append(val.repeat((1, num_constants)))
-            elif val.size()[1] == num_constants:#binary
-                valuation_.append(val)
-            else:
-                raise NotImplementedError
-
-        valuation_sym=torch.stack(valuation_, dim=0)
-        
-        #---add aux predicates
-        val_aux=Variable(torch.zeros((model.num_soft_predicates-1, num_constants, num_constants)))
-        valuation=torch.cat((valuation_sym, val_aux), dim=0)
-        assert list(valuation.shape)==[model.num_predicates-model.num_background+len(valuation_init)+2*int( model.args.add_p0)-1,num_constants,num_constants]
+    valuation_sym=torch.stack(valuation_, dim=0)
+    
+    #---add aux predicates
+    val_aux=Variable(torch.zeros((model.num_soft_predicates-1, num_constants, num_constants)))
+    valuation=torch.cat((valuation_sym, val_aux), dim=0)
+    assert list(valuation.shape)==[model.num_predicates-model.num_background+len(valuation_init)+2-1,num_constants,num_constants]
 
     return valuation
 

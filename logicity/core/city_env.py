@@ -11,19 +11,12 @@ import gym
 from .config import *
 from ..utils.vis import visualize_city
 from ..utils.gym_wrapper import GymCityWrapper
-from ..utils.gen import gen_occ
-
-WRAPPER = {
-    "easy": GymCityWrapper,
-    "medium": GymCityWrapper,
-}
-
 
 class CityEnv(City):
     def __init__(self, grid_size, local_planner, logic_engine_file, rl_agent, use_multi=False):
         super().__init__(grid_size, local_planner, logic_engine_file, use_multi=use_multi)
         self.rl_agent = rl_agent
-        self.logic_grounding_shape = self.local_planner.logic_grounding_shape(self.rl_agent["fov_entities"])
+        self.logic_grounding_shape, self.pred_grounding_index = self.local_planner.logic_grounding_shape(self.rl_agent["fov_entities"])
 
     def move_rl_agent(self, action, idx):
         current_obs = {}

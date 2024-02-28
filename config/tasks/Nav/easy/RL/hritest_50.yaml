@@ -34,6 +34,8 @@ stable_baselines:
     tgt_arity: 1
     predicates_labels: ['CollidingClose', 'Fast', 'HigherPri', 'IsAmbulance', 'IsAtInter', 'IsCar', 'IsClose', 'IsInInter', 'IsOld', 'IsPedestrian', 'IsTiro', 'Stop', 'ident']
   hyperparameters:
+    pred2ind: {'CollidingClose': 0, 'Fast': 1, 'HigherPri': 2, 'IsAmbulance': 3, 'IsAtInter': 4, 'IsCar': 5, 'IsClose': 6, 'IsInInter': 7, 'IsOld': 8, 'IsPedestrian': 9, 'IsTiro': 10, 'Stop': 11, 'ident': 12}
+    if_un_pred: [False, True, False, True, True, True, False, True, True, True, True, True, False]
   train: false                   # Whether to train the model
   checkpoint_path: "checkpoints/final_models/easy/easy_hri50.pth"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel

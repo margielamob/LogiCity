@@ -1,36 +1,75 @@
 import torch
+import numpy as np
 import torch.nn.functional as F
+from torch.autograd import Variable
 from logicity.rl_agent.policy import build_policy
 from logicity.rl_agent.policy.hri_helper.Utils import gumbel_softmax_sample
 from logicity.rl_agent.policy.hri_helper.Symbolic import extract_symbolic_path
+from logicity.rl_agent.policy.hri_helper.utils.Initialise import init_aux_valuation
 
 import logging
 logger = logging.getLogger(__name__)
 
 class HRI():
-    def __init__(self, policy, env, policy_kwargs, device="cuda:0"):
+    def __init__(self, policy, env, pred2ind, if_un_pred, \
+                 policy_kwargs, device="cuda:0"):
         self.policy_class = policy
         self.policy_kwargs = policy_kwargs
         self.predicates_labels = policy_kwargs['predicates_labels']
         self.policy = build_policy[policy](env, **policy_kwargs)
         self.device = device
+        self.pred2ind = pred2ind
+        self.if_un_pred = if_un_pred
+        self.pred_grounding_index = env.pred_grounding_index
+        self.num_ents = env.env.rl_agent["fov_entities"]["Entity"]
         self.policy.to(self.device)
 
+    def obs2domainArray(self, observation):
+        # TODO: Input is a 205 dim binary vector for all ontology, convert to domainData
+        # 1. convert 205 to predicate groundings
+        unp_arr_ls = []
+        bip_arr_ls = []
+        unp_name_ls = []
+        bip_name_ls = []
+        for k, v in self.pred_grounding_index.items():
+            original = observation[v[0]:v[1]]
+            if len(original) == self.num_ents:
+                if np.sum(original) > 0:
+                    unp_arr_ls.append(torch.tensor(original).unsqueeze(1))
+                    unp_name_ls.append(k)
+            elif len(original) == self.num_ents**2:
+                if np.sum(original) > 0:
+                    bip_arr_ls.append(torch.tensor(original).reshape(self.num_ents, self.num_ents))
+                    bip_name_ls.append(k)
+        unp_ind_ls = [self.pred2ind[pn] for pn in unp_name_ls]
+        bip_ind_ls = [self.pred2ind[pn] for pn in bip_name_ls]
+        valuation_init = [Variable(arr) for arr in unp_arr_ls] + [Variable(arr) for arr in bip_arr_ls]
+        pred_ind_ls = unp_ind_ls + bip_ind_ls
+        return valuation_init, pred_ind_ls, self.num_ents
     
     def predict(self, observation, deterministic=False):
-        if self.policy.training:
-            self.policy.eval()
-        observation = torch.tensor(observation).to(self.device).float()
-        if observation.dim() == 1:
-            observation = observation.unsqueeze(0)
+        valuation_eval_temp, bg_pred_ind_ls_noTF, num_constants = self.obs2domainArray(observation)
+        valuation_eval = [torch.zeros(num_constants).view(-1, 1) if tp else torch.zeros(
+            (num_constants, num_constants)) for tp in self.if_un_pred]
+        for idx, idp in enumerate(bg_pred_ind_ls_noTF):
+            assert valuation_eval[idp].shape == valuation_eval_temp[idx].shape
+            valuation_eval[idp] = valuation_eval_temp[idx]
+        assert max(bg_pred_ind_ls_noTF) < self.policy.num_background - 2
+        # ----2--add valuation other aux predicates
+        valuation_eval = init_aux_valuation(self.policy, valuation_eval, num_constants, steps=4)
+        # --3---inference steps
+        valuation_eval = valuation_eval.cuda()
         
-        with torch.no_grad():
-            action_logits, _ = self.policy(observation)
-            action = F.softmax(action_logits, dim=-1)
-            action = action.argmax(dim=-1)
+        valuation_eval, valuation_tgt = self.policy.infer(
+            valuation_eval, num_constants, unifs=self.unifs, steps=4)
+        
+        action = self.get_action(valuation_tgt)
         
         return action.cpu().numpy(), None
     
+    def get_action(self, valuation_tgt):
+        return torch.argmax(valuation_tgt).item()
+
     def load(
         self,
         path
