@@ -1,0 +1,44 @@
+Rules:
+  - Stop:
+      formula: |
+        Stop(entity) == Exists(
+          [dummyEntityA], 
+          Or(
+            And(
+              Not(IsAmbulance(entity)), 
+              IsAtInter(entity), 
+              IsInInter(dummyEntityA), 
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              IsAtInter(entity), 
+              IsAtInter(dummyEntityA), 
+              HigherPri(dummyEntityA, entity),
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              IsInInter(entity), 
+              IsInInter(dummyEntityA), 
+              IsAmbulance(dummyEntityA)
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsPolice(entity)), 
+              IsCar(entity),
+              LeftOf(dummyEntityA, entity), 
+              IsPolice(dummyEntityA)
+            ),
+            And(
+              IsBus(entity),
+              RightOf(dummyEntityA, entity), 
+              IsPedestrian(dummyEntityA)
+            ),
+            And(
+              IsAmbulance(entity), 
+              RightOf(entity, dummyEntityA), 
+              IsOld(dummyEntityA)
+            ),
+            CollidingClose(entity, dummyEntityA)
+          )
+        )
+      description: Medium stop rule.
