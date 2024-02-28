@@ -87,10 +87,9 @@ BUS_ROUTES = {
 }
 
 # Rules
-INTERSECTION_PRIORITY = ['Left', 'Bottom', 'Right', 'Top']
-AT_INTERSECTION_OFFSET = 1    
 
-CLOSE_RANGE = 5
+CLOSE_RANGE_MIN = 8
+CLOSE_RANGE_MAX = 12
 # solver processer
 NUM_PROCESS = 4
 AGENT_FOV = 25 # better be larger than intersection width

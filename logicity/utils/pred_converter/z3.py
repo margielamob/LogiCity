@@ -200,7 +200,7 @@ def IsClose(world_matrix, intersect_matrix, agents, entity1, entity2):
     agent_position1 = (agent_layer1 == TYPE_MAP[agent_type1]).nonzero()[0]
     agent_position2 = (agent_layer2 == TYPE_MAP[agent_type2]).nonzero()[0]
     eudis = torch.sqrt(torch.sum((agent_position1 - agent_position2)**2))
-    if eudis <= CLOSE_RANGE:
+    if eudis > CLOSE_RANGE_MIN and eudis <= CLOSE_RANGE_MAX:
         return 1
     else:
         return 0
@@ -284,4 +284,23 @@ def RightOf(world_matrix, intersect_matrix, agents, entity1, entity2):
 
 def NextTo(world_matrix, intersect_matrix, agents, entity1, entity2):
     # TODO: Next to checker
-    return 0
+    # Close checker for two pedestrians
+    if entity1 == entity2:
+        return 0
+    if "PH" in entity1 or "PH" in entity2:
+        return 0
+    _, agent_type1, layer_id1 = entity1.split("_")
+    _, agent_type2, layer_id2 = entity2.split("_")
+    if agent_type1 == "Car" or agent_type2 == "Car":
+        return 0
+    layer_id1 = int(layer_id1)
+    layer_id2 = int(layer_id2)
+    agent_layer1 = world_matrix[layer_id1]
+    agent_layer2 = world_matrix[layer_id2]
+    agent_position1 = (agent_layer1 == TYPE_MAP[agent_type1]).nonzero()[0]
+    agent_position2 = (agent_layer2 == TYPE_MAP[agent_type2]).nonzero()[0]
+    eudis = torch.sqrt(torch.sum((agent_position1 - agent_position2)**2))
+    if eudis < CLOSE_RANGE_MIN:
+        return 1
+    else:
+        return 0
