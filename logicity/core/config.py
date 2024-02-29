@@ -88,8 +88,8 @@ BUS_ROUTES = {
 
 # Rules
 
-CLOSE_RANGE_MIN = 8
-CLOSE_RANGE_MAX = 12
+CLOSE_RANGE_MIN = 12
+CLOSE_RANGE_MAX = 20
 # solver processer
 NUM_PROCESS = 4
 AGENT_FOV = 25 # better be larger than intersection width

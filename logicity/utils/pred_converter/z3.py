@@ -275,24 +275,76 @@ def CollidingClose(world_matrix, intersect_matrix, agents, entity1, entity2):
     return 0
 
 def LeftOf(world_matrix, intersect_matrix, agents, entity1, entity2):
-    # TODO: Left of checker
-    return 0
+    if entity1 == entity2:
+        return 0
+    if "PH" in entity1 or "PH" in entity2:
+        return 0
+    # 1. Get the position of the two agents
+    _, agent_type1, layer_id1 = entity1.split("_")
+    _, agent_type2, layer_id2 = entity2.split("_")
+    agent_layer1 = world_matrix[int(layer_id1)]
+    agent_layer2 = world_matrix[int(layer_id2)]
+    agent_position1 = (agent_layer1 == TYPE_MAP[agent_type1]).nonzero()[0]
+    agent_position2 = (agent_layer2 == TYPE_MAP[agent_type2]).nonzero()[0]
+    # 2. note: entity1 is on the left of entity2, so we get the direction of entity2
+    if layer_id2 in agents.keys():
+        agent2_dire = agents[layer_id2].moving_direction
+    else:
+        assert "ego_{}".format(layer_id2) in agents.keys()
+        agent2_dire = agents["ego_{}".format(layer_id2)].moving_direction
+    if agent2_dire == None:
+        return 0
+    else:
+        agent2_dire_vec = torch.tensor(DIRECTION_VECTOR[agent2_dire])
+        relative_pos = agent_position1 - agent_position2
+        dx, dy = agent2_dire_vec # Direction Agent 2 is facing
+        rx, ry = relative_pos # Vector from Agent 2 to Agent 1
+        z_component = dx * ry - dy * rx
+        if z_component > 0:
+            return 1
+        else:
+            return 0
 
 def RightOf(world_matrix, intersect_matrix, agents, entity1, entity2):
-    # TODO: Right of checker
-    return 0
+    if entity1 == entity2:
+        return 0
+    if "PH" in entity1 or "PH" in entity2:
+        return 0
+    # 1. Get the position of the two agents
+    _, agent_type1, layer_id1 = entity1.split("_")
+    _, agent_type2, layer_id2 = entity2.split("_")
+    agent_layer1 = world_matrix[int(layer_id1)]
+    agent_layer2 = world_matrix[int(layer_id2)]
+    agent_position1 = (agent_layer1 == TYPE_MAP[agent_type1]).nonzero()[0]
+    agent_position2 = (agent_layer2 == TYPE_MAP[agent_type2]).nonzero()[0]
+    # 2. note: entity1 is on the right of entity2, so we get the direction of entity2
+    if layer_id2 in agents.keys():
+        agent2_dire = agents[layer_id2].moving_direction
+    else:
+        assert "ego_{}".format(layer_id2) in agents.keys()
+        agent2_dire = agents["ego_{}".format(layer_id2)].moving_direction
+    if agent2_dire == None:
+        return 0
+    else:
+        agent2_dire_vec = torch.tensor(DIRECTION_VECTOR[agent2_dire])
+        relative_pos = agent_position1 - agent_position2
+        dx, dy = agent2_dire_vec # Direction Agent 2 is facing
+        rx, ry = relative_pos # Vector from Agent 2 to Agent 1
+        z_component = dx * ry - dy * rx
+        if z_component < 0:
+            return 1
+        else:
+            return 0
 
 def NextTo(world_matrix, intersect_matrix, agents, entity1, entity2):
     # TODO: Next to checker
-    # Close checker for two pedestrians
+    # Next to checker, closer than Close checker
     if entity1 == entity2:
         return 0
     if "PH" in entity1 or "PH" in entity2:
         return 0
     _, agent_type1, layer_id1 = entity1.split("_")
     _, agent_type2, layer_id2 = entity2.split("_")
-    if agent_type1 == "Car" or agent_type2 == "Car":
-        return 0
     layer_id1 = int(layer_id1)
     layer_id2 = int(layer_id2)
     agent_layer1 = world_matrix[layer_id1]

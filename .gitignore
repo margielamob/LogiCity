@@ -15,7 +15,6 @@ debug_traj/
 *.log
 *.tar
 *.pkl
-*.png
 *.egg-info/
 checkpoints/
 profile*.txt

@@ -80,42 +80,44 @@ def sample_determine_start_goal(agent_type, id):
     c4_g_x = c3_s_x
     c4_g_y = c3_s_y
     # to debug intersection rules
-    # start_goal_dict = {
-    #     'Pedestrian': {
-    #         1: (torch.tensor([p1_s_x, p1_s_y]), torch.tensor([p1_g_x, p1_g_y])),
-    #         2: (torch.tensor([p1_g_x, p1_g_y]), torch.tensor([p1_s_y, p1_s_x])),
-    #         3: (torch.tensor([p1_g_y, p1_g_x]), torch.tensor([p1_s_x, p1_s_y])),
-    #         4: (torch.tensor([p1_s_y, p1_s_x]), torch.tensor([p1_g_y, p1_g_x]))
-    #     },
-    #     'Car': {
-    #         1: (torch.tensor([c1_s_x, c1_s_y]), torch.tensor([c1_g_x, c1_g_y])),
-    #         2: (torch.tensor([c2_s_x, c2_s_y]), torch.tensor([c2_g_x-10, c2_g_y])),
-    #         3: (torch.tensor([c3_s_x, c3_s_y]), torch.tensor([c3_g_x, c3_g_y])),
-    #         4: (torch.tensor([c4_s_x, c4_s_y]), torch.tensor([c4_g_x, c4_g_y]))
-    #     }
-    # }
-    # to debug bus stop and reckless driver rules
     start_goal_dict = {
         'Pedestrian': {
-            1: (torch.tensor([p1_s_x, p1_s_y]), torch.tensor([p1_g_x, p1_g_y])),
-            2: (torch.tensor([p1_g_x, p1_g_y]), torch.tensor([p1_s_y, p1_s_x])),
+            1: (torch.tensor([p1_g_x, p1_g_y]), torch.tensor([p1_s_x, p1_s_y])),
+            2: (torch.tensor([p1_g_x-2, p1_g_y]), torch.tensor([p1_s_x, p1_s_y])),
             3: (torch.tensor([p1_g_y, p1_g_x]), torch.tensor([p1_s_x, p1_s_y])),
-            4: (torch.tensor([p1_s_y, p1_s_x]), torch.tensor([p1_g_y, p1_g_x])),
-            5: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100])),
-            6: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100])),
-            7: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100])),
-            8: (torch.tensor([p1_g_x+10, p1_g_y]), torch.tensor([p1_g_x+11, p1_g_y])),
-            9: (torch.tensor([p1_g_x+11, p1_g_y]), torch.tensor([p1_g_x+12, p1_g_y])),
-            10: (torch.tensor([p1_g_x+12, p1_g_y]), torch.tensor([p1_g_x+13, p1_g_y])),
+            4: (torch.tensor([p1_s_y, p1_s_x]), torch.tensor([p1_g_y, p1_g_x]))
         },
         'Car': {
             1: (torch.tensor([c1_s_x, c1_s_y]), torch.tensor([c1_g_x, c1_g_y])),
             2: (torch.tensor([c2_s_x, c2_s_y]), torch.tensor([c2_g_x-10, c2_g_y])),
             3: (torch.tensor([c3_s_x, c3_s_y]), torch.tensor([c3_g_x, c3_g_y])),
             4: (torch.tensor([c4_s_x, c4_s_y]), torch.tensor([c4_g_x, c4_g_y])),
-            5: (torch.tensor([c1_s_x-12, c1_s_y]), torch.tensor([c1_g_x, c1_g_y])),
+            5: (torch.tensor([19, 47]), torch.tensor([19, 54])),
+            6: (torch.tensor([80, 54]), torch.tensor([55, 19])),
         }
     }
+    # to debug bus stop and reckless driver rules
+    # start_goal_dict = {
+    #     'Pedestrian': {
+    #         1: (torch.tensor([p1_s_x, p1_s_y]), torch.tensor([p1_g_x, p1_g_y])),
+    #         2: (torch.tensor([p1_g_x, p1_g_y]), torch.tensor([p1_s_y, p1_s_x])),
+    #         3: (torch.tensor([p1_g_y, p1_g_x]), torch.tensor([p1_s_x, p1_s_y])),
+    #         4: (torch.tensor([p1_s_y, p1_s_x]), torch.tensor([p1_g_y, p1_g_x])),
+    #         5: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100])),
+    #         6: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100])),
+    #         7: (torch.tensor([p1_g_y, p1_g_x+10]), torch.tensor([p1_g_y, p1_g_x+100])),
+    #         8: (torch.tensor([p1_g_x+10, p1_g_y]), torch.tensor([p1_g_x+11, p1_g_y])),
+    #         9: (torch.tensor([p1_g_x+11, p1_g_y]), torch.tensor([p1_g_x+12, p1_g_y])),
+    #         10: (torch.tensor([p1_g_x+12, p1_g_y]), torch.tensor([p1_g_x+13, p1_g_y])),
+    #     },
+    #     'Car': {
+    #         1: (torch.tensor([c1_s_x, c1_s_y]), torch.tensor([c1_g_x, c1_g_y])),
+    #         2: (torch.tensor([c2_s_x, c2_s_y]), torch.tensor([c2_g_x-10, c2_g_y])),
+    #         3: (torch.tensor([c3_s_x, c3_s_y]), torch.tensor([c3_g_x, c3_g_y])),
+    #         4: (torch.tensor([c4_s_x, c4_s_y]), torch.tensor([c4_g_x, c4_g_y])),
+    #         5: (torch.tensor([c1_s_x-12, c1_s_y]), torch.tensor([c1_g_x, c1_g_y])),
+    #     }
+    # }
     return start_goal_dict[agent_type][id]
 
 def split_into_subsets(items, num_subsets):

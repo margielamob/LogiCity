@@ -2,24 +2,21 @@ Rules:
   - Stop:
       formula: |
         Stop(entity) == Exists(
-          [dummyEntityA, dummyEntityB], 
+          [dummyEntityA], 
           Or(
             And(
               Not(IsAmbulance(entity)), 
-              Not(IsOld(entity)),
               IsAtInter(entity), 
               IsInInter(dummyEntityA), 
             ),
             And(
               Not(IsAmbulance(entity)), 
-              Not(IsOld(entity)),
               IsAtInter(entity), 
               IsAtInter(dummyEntityA), 
               HigherPri(dummyEntityA, entity),
             ),
             And(
               Not(IsAmbulance(entity)), 
-              Not(IsOld(entity)),
               IsInInter(entity), 
               IsInInter(dummyEntityA), 
               IsAmbulance(dummyEntityA)
@@ -28,30 +25,20 @@ Rules:
               Not(IsAmbulance(entity)), 
               Not(IsPolice(entity)), 
               IsCar(entity),
-              Not(IsInInter(entity)),
-              Not(IsAtInter(entity)),
               LeftOf(dummyEntityA, entity), 
-              IsClose(dummyEntityA, entity),
               IsPolice(dummyEntityA)
             ),
             And(
               IsBus(entity),
-              Not(IsInInter(entity)),
-              Not(IsAtInter(entity)),
               RightOf(dummyEntityA, entity), 
-              NextTo(dummyEntityA, entity),
               IsPedestrian(dummyEntityA)
             ),
             And(
               IsAmbulance(entity), 
-              RightOf(dummyEntityA, entity), 
+              RightOf(entity, dummyEntityA), 
               IsOld(dummyEntityA)
             ),
-            And(
-              Not(IsAmbulance(entity)), 
-              Not(IsOld(entity)),
-              CollidingClose(entity, dummyEntityA)
-            )
+            CollidingClose(entity, dummyEntityA)
           )
         )
       description: Medium stop rule.
@@ -83,25 +70,3 @@ Rules:
           )
         )
       description: Combined Or version of the Slow rules for vehicles.
-  - Fast:
-      formula: |
-        Fast(entity) == Exists(
-          [dummyEntityA, dummyEntityB], 
-          Or(
-            And(
-              Not(Stop(entity)), 
-              IsReckless(entity), 
-              IsAtInter(dummyEntityA), 
-            ),
-            And(
-              Not(Stop(entity)), 
-              IsBus(entity),
-            ),
-            And(
-              Not(Stop(entity)), 
-              IsPolice(entity),
-              IsReckless(dummyEntityA)
-            )
-          )
-        )
-      description: Combined Or version of the Fast rules for vehicles.

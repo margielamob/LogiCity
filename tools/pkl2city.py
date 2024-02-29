@@ -13,8 +13,15 @@ IMAGE_BASE_PATH = "./imgs"
 SCALE = 4
 
 PATH_DICT = {
-    "Car": [os.path.join(IMAGE_BASE_PATH, "car{}.png").format(i) for i in range(1, 6)],
-    "Pedestrian": [os.path.join(IMAGE_BASE_PATH, "pedestrian{}.png").format(i) for i in range(1, 6)],
+    "Car": [os.path.join(IMAGE_BASE_PATH, "car{}.png").format(i) for i in range(1, 2)],
+    "Ambulance": os.path.join(IMAGE_BASE_PATH, "car_ambulance.png"),
+    "Bus": os.path.join(IMAGE_BASE_PATH, "car_bus.png"),
+    "Tiro": os.path.join(IMAGE_BASE_PATH, "car_tiro.png"),
+    "Police": os.path.join(IMAGE_BASE_PATH, "car_police.png"),
+    "Reckless": os.path.join(IMAGE_BASE_PATH, "car_reckless.png"),
+    "Pedestrian": [os.path.join(IMAGE_BASE_PATH, "pedestrian{}.png").format(i) for i in range(1, 3)],
+    "Pedestrian_old": os.path.join(IMAGE_BASE_PATH, "pedestrian_old.png"),
+    "Pedestrian_young": os.path.join(IMAGE_BASE_PATH, "pedestrian_young.png"),
     "Walking Street": os.path.join(IMAGE_BASE_PATH, "walking.png"),
     "Traffic Street": os.path.join(IMAGE_BASE_PATH, "traffic.png"),
     "Overlap": os.path.join(IMAGE_BASE_PATH, "crossing.png"),
@@ -27,7 +34,14 @@ PATH_DICT = {
 
 ICON_SIZE_DICT = {
     "Car": SCALE*6,
+    "Ambulance": SCALE*6,
+    "Bus": SCALE*6,
+    "Tiro": SCALE*6,
+    "Police": SCALE*6,
+    "Reckless": SCALE*6,
     "Pedestrian": SCALE*4,
+    "Pedestrian_old": SCALE*4,
+    "Pedestrian_young": SCALE*4,
     "Walking Street": SCALE*10,
     "Traffic Street": SCALE*10,
     "Overlap": SCALE*10,
@@ -309,8 +323,11 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
         if agents != None:
             concepts = agents[agent_name]["concepts"]
             is_ambulance = False
+            is_police = False
+            is_young = False
             is_bus = False
             is_tiro = False
+            is_reckless = False
             is_old = False
             if "tiro" in concepts.keys():
                 if concepts["tiro"] == 1.0:
@@ -324,25 +341,36 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
             if "old" in concepts.keys():
                 if concepts["old"] == 1.0:
                     is_old = True
+            if "young" in concepts.keys():
+                if concepts["young"] == 1.0:
+                    is_young = True
+            if "police" in concepts.keys():
+                if concepts["police"] == 1.0:
+                    is_police = True
+            if "reckless" in concepts.keys():
+                if concepts["reckless"] == 1.0:
+                    is_reckless = True
             if is_ambulance:
-                icon = icon_dict[agent_type][3]
+                icon = icon_dict["Ambulance"]
             elif is_bus:
-                icon = icon_dict[agent_type][4]
+                icon = icon_dict["Bus"]
             elif is_tiro:
-                icon = icon_dict[agent_type][2]
+                icon = icon_dict["Tiro"]
             elif is_old:
-                icon = icon_dict[agent_type][1]
+                icon = icon_dict["Pedestrian_old"]
+            elif is_young:
+                icon = icon_dict["Pedestrian_young"]
+            elif is_police:
+                icon = icon_dict["Police"]
+            elif is_reckless:
+                icon = icon_dict["Reckless"]
             else:
                 if agent_type == "Pedestrian":
                     icon_list = icon_dict[agent_type].copy()
-                    icon_list.pop(1)
                     icon_id = i%len(icon_list)
                     icon = icon_list[icon_id]
                 if agent_type == "Car":
                     icon_list = icon_dict[agent_type].copy()
-                    icon_list.pop(2)
-                    icon_list.pop(2)
-                    icon_list.pop(2)
                     icon_id = i%len(icon_list)
                     icon = icon_list[icon_id]
         else:
@@ -436,8 +464,8 @@ def main(pkl_path, ego_id, output_folder):
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Create an animated GIF from a sequence of images.")
-    parser.add_argument("--pkl", default='log_rl/expert_test_35.pkl', help="Path to the folder containing image files.")
-    parser.add_argument("--ego_id", type=int, default=3, help="which agent is ego agent. Visualize the ego agent's start and goal. This is layer_id")
+    parser.add_argument("--pkl", default='log_sim/med_1k_0.pkl', help="Path to the folder containing image files.")
+    parser.add_argument("--ego_id", type=int, default=-1, help="which agent is ego agent. Visualize the ego agent's start and goal. This is layer_id")
     parser.add_argument("--output_folder", default="vis", help="Output folder.")
     
     args = parser.parse_args()

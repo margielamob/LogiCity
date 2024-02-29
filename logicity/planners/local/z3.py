@@ -256,7 +256,7 @@ def solve_sub_problem(ego_name,
     entity_sorts = {}
     for entity_type in entity_types:
         entity_sorts[entity_type] = DeclareSort(entity_type)
-    z3_vars = {var_name: Const(var_name, entity_sorts[var_name.replace('dummy', '')]) \
+    z3_vars = {var_name: Const(var_name, entity_sorts['Entity']) \
                        for var_name in var_names}
     # 3. partial world to entities
     local_entities = world2entity(entity_sorts, partial_intersections, partial_agents)
@@ -307,7 +307,7 @@ def solve_sub_problem(ego_name,
 
     # **Important: Closed world quantifier rule, to ensure z3 do not add new entity to satisfy the rule and "dummy" is not part of the world**
     for var_name, z3_var in z3_vars.items():
-        entity_list = local_entities[var_name.replace('dummy', '')]
+        entity_list = local_entities['Entity']
         constraint = Or([z3_var == entity for entity in entity_list])
         local_solver.add(ForAll([z3_var], constraint))
     

@@ -1,5 +1,5 @@
-source /opt/conda/etc/profile.d/conda.sh
-conda activate logicity
+# source /opt/conda/etc/profile.d/conda.sh
+# conda activate logicity
 EXPNAME="med_1k"
 MAXSETP=1000
 
