@@ -1,8 +1,3 @@
-# reward definition
-# 1) absolute distance to the goal
-# 2) penalty off street (different agent different reward...1 agent first)
-# 3) penalty of not stopping at the stopsign? 
-
 import numpy as np
 import torch
 
@@ -22,9 +17,11 @@ class CityEnv(City):
         current_obs = {}
         current_obs["Fail"] = []
         current_obs["Agent_actions"] = []
+        current_obs["Reward"] = []
         
-        fail = self.local_planner.eval(action)
+        fail, reward = self.local_planner.eval(action)
         current_obs["Fail"].append(fail)
+        current_obs["Reward"].append(reward)
         new_matrix = torch.zeros_like(self.city_grid)
         
         for agent in self.agents:

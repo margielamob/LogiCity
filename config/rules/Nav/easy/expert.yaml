@@ -21,7 +21,7 @@ Rules:
   Task: # how the reward/score is calculated
     - name: Collision and Intersection
       description: should not collide.
-      weight: 1
+      reward: -5
       formula: |
         Implies(Exists(
           [dummyEntity], 
@@ -43,7 +43,6 @@ Rules:
   Expert: # how the expert agents should move
     - name: Stop
       description: should not disobey rules.
-      weight: 1
       formula: |
         Stop(entity) == Exists(
         [dummyEntity], 
@@ -62,16 +61,13 @@ Rules:
         )
     - name: Slow
       description: Never take slow action.
-      weight: 1
       formula: |
         Not(Slow(entity))
     - name: Normal
       description: Never take Normal action.
-      weight: 1
       formula: |
         Not(Normal(entity))
     - name: Fast
       description: If not stop, then fast.
-      weight: 1
       formula: |
         Fast(entity) == Not(Stop(entity))

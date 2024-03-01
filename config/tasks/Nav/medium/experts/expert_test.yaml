@@ -1,10 +1,10 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/easy/test.yaml" # Agents in the simulation
+  agent_yaml_file: "config/agents/medium/test.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
   rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/easy/expert.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/med/expert.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
@@ -25,7 +25,7 @@ simulation:
     action_cost:
       0: -2
       1: -1
-      2: 0
+      2: -2
       3: -3
 
 # Stable Baselines specific settings

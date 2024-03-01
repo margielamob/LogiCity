@@ -13,7 +13,7 @@ def create_gif(image_folder, output_file):
         # Save the first image as the animated GIF
         im.save(output_file, save_all=True,
                 append_images=[Image.open(os.path.join(image_folder, f"step_{k}.png")) for k in range(1, n_images - 1)],
-                duration=250, loop=0)
+                duration=200, loop=0)
 
 if __name__ == "__main__":
     # Parse command line arguments

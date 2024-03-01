@@ -26,9 +26,9 @@ def parse_arguments():
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
     parser.add_argument('--seed', type=int, default=2)
-    parser.add_argument('--max_episodes', type=int, default=100)
+    parser.add_argument('--max_episodes', type=int, default=5)
     # RL
-    parser.add_argument('--config', default='config/tasks/Nav/easy/experts/expert_episode.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/medium/experts/expert_episode_test.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -49,22 +49,6 @@ def make_env(simulation_config, return_cache=False):
     else:
         return env
     
-    
-def make_envs(simulation_config, rank):
-    """
-    Utility function for multiprocessed env.
-    
-    :param simulation_config: The configuration for the simulation.
-    :param rank: Unique index for each environment to ensure different seeds.
-    :return: A function that creates a single environment.
-    """
-    def _init():
-        env = make_env(simulation_config)
-        env.seed(rank + 1000)  # Optional: set a unique seed for each environment
-        return env
-    return _init
-
-
 def make_envs(simulation_config, rank):
     """
     Utility function for multiprocessed env.
@@ -102,7 +86,7 @@ def main(args, logger):
     success = []
     all_episodes = {}
     key = 0
-    vis_id = [0, 8, 75, 62, 95]
+    vis_id = [0, 1, 2, 3, 4]
 
     while key < args.max_episodes: 
         logger.info("Trying to creat episode {} ...".format(key))

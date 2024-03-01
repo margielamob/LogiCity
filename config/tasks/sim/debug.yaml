@@ -8,6 +8,6 @@ simulation:
   rl: false
   debug: true
   use_multi: false
-  agent_region: 240
+  agent_region: 100
   
 

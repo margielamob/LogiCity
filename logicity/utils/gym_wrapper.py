@@ -48,6 +48,7 @@ class GymCityWrapper(gym.core.Env):
         self.action_space = gym.spaces.Discrete(action_space)
         self.action_mapping = env.rl_agent["action_mapping"]
         self.max_priority = env.rl_agent["max_priority"]
+        self.action_cost = env.rl_agent["action_cost"]
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
         self.scale = [25, 7, 3.5, 8.3]
         self.mini_scale = [0, 0, -1, 0]
@@ -73,10 +74,10 @@ class GymCityWrapper(gym.core.Env):
         :return: the reward
         '''
         if obs_dict["Fail"][0]:
-            return -3
+            return obs_dict["Reward"][0]
         else:
             moving_cost = self.action2cost(obs_dict["Agent_actions"][0])
-            return moving_cost/self.horizon
+            return (moving_cost + obs_dict["Reward"][0])/self.horizon
     
     def action2cost(self, action):
         ''' Convert the action to cost.
@@ -85,16 +86,16 @@ class GymCityWrapper(gym.core.Env):
         '''
         if action[0] == 1:
             # Slow
-            return -2
+            return self.action_cost[0]
         elif action[4] == 1:
             # Normal
-            return -1
+            return self.action_cost[1]
         elif action[8] == 1:
             # Fast
-            return 0
+            return self.action_cost[2]
         else:
             # Stop
-            return -3
+            return self.action_cost[3]
     
     
     def reset(self, return_info=False):
