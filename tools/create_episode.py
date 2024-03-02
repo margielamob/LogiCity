@@ -22,13 +22,13 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="expert_100episode_test")
+    parser.add_argument('--exp', type=str, default="expert_40episode_val")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
     parser.add_argument('--seed', type=int, default=2)
     parser.add_argument('--max_episodes', type=int, default=100)
     # RL
-    parser.add_argument('--config', default='config/tasks/Nav/medium/experts/expert_episode_test.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/medium/experts/expert_episode_val.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -88,6 +88,7 @@ def main(args, logger):
     key = 0
     vis_id = [0, 1, 2, 3, 4]
     # 0: Slow, 1: Normal, 2: Fast, 3: Stop
+    # Test
     num_desired = {
         'police':{
             0: 10,
@@ -140,7 +141,33 @@ def main(args, logger):
             3: 0
         }
     }
-
+    # val
+    # num_desired = {
+    #     'police':{
+    #         0: 5,
+    #         2: 5,
+    #         3: 2
+    #     },
+    #     'ambulance':{
+    #         0: 3,
+    #         3: 5
+    #     },
+    #     'reckless':{
+    #         2: 3,
+    #         3: 2
+    #     },
+    #     'bus':{
+    #         2: 2,
+    #         3: 3
+    #     },
+    #     'tiro': {
+    #         0: 4,
+    #         3: 1
+    #     },
+    #     'normal':{
+    #         3: 5
+    #     }
+    # }
     while key < args.max_episodes: 
         # print current counter and desired in a table
         logger.info("Current counter and desired in a table:")
@@ -155,16 +182,25 @@ def main(args, logger):
         o, tem_episodes = eval_env.reset(True)
         # change cached_observation
         skip = False
+        normal = True
         cached_observation["Static Info"]["Agents"]["Car_3"]['concepts'] = tem_episodes['agents']['Car_1']['concepts']
         # check counter
         for concept in num_desired:
             if concept in tem_episodes['agents']['Car_1']['concepts']:
+                normal = False
                 for speed in num_desired[concept]:
-                    if num_counter[concept][speed] == num_desired[concept][speed]:
-                        logger.info("Skipping episode due to counter".format(key))
-                        skip = True
+                    if num_counter[concept][speed] < num_desired[concept][speed]:
                         break
+                    logger.info("Skipping episode due to counter")
+                    skip = True
                 break
+        if normal:
+            concept = 'normal'
+            for speed in num_desired[concept]:
+                if num_counter[concept][speed] < num_desired[concept][speed]:
+                    break
+                logger.info("Skipping episode due to counter")
+                skip = True
         using_dict = num_counter[concept]
         checking_dict = num_desired[concept]
         if skip:
