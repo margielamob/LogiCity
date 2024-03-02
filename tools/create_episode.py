@@ -87,17 +87,93 @@ def main(args, logger):
     all_episodes = {}
     key = 0
     vis_id = [0, 1, 2, 3, 4]
+    # 0: Slow, 1: Normal, 2: Fast, 3: Stop
+    num_desired = {
+        'police':{
+            0: 10,
+            2: 10,
+            3: 5
+        },
+        'ambulance':{
+            0: 5,
+            3: 10
+        },
+        'reckless':{
+            2: 10,
+            3: 5
+        },
+        'bus':{
+            2: 5,
+            3: 10
+        },
+        'tiro': {
+            0: 10,
+            3: 5
+        },
+        'normal':{
+            3: 15
+        }
+    }
+    num_counter = {
+        'police':{
+            0: 0,
+            2: 0,
+            3: 0
+        },
+        'ambulance':{
+            0: 0,
+            3: 0
+        },
+        'reckless':{
+            2: 0,
+            3: 0
+        },
+        'bus':{
+            2: 0,
+            3: 0
+        },
+        'tiro': {
+            0: 0,
+            3: 0
+        },
+        'normal':{
+            3: 0
+        }
+    }
 
     while key < args.max_episodes: 
+        # print current counter and desired in a table
+        logger.info("Current counter and desired in a table:")
+        logger.info("Concept | Speed | Counter | Desired")
+        for concept in num_desired:
+            for speed in num_desired[concept]:
+                logger.info("{} | {} | {} | {}".format(concept, speed, num_counter[concept][speed], num_desired[concept][speed]))
         logger.info("Trying to creat episode {} ...".format(key))
         eval_env, cached_observation = make_env(simulation_config, True)
         assert rl_config["algorithm"] == "ExpertCollector"
         model = algorithm_class(eval_env)
         o, tem_episodes = eval_env.reset(True)
+        # change cached_observation
+        skip = False
+        cached_observation["Static Info"]["Agents"]["Car_3"]['concepts'] = tem_episodes['agents']['Car_1']['concepts']
+        # check counter
+        for concept in num_desired:
+            if concept in tem_episodes['agents']['Car_1']['concepts']:
+                for speed in num_desired[concept]:
+                    if num_counter[concept][speed] == num_desired[concept][speed]:
+                        logger.info("Skipping episode due to counter".format(key))
+                        skip = True
+                        break
+                break
+        using_dict = num_counter[concept]
+        checking_dict = num_desired[concept]
+        if skip:
+            continue
         rew = 0    
         step = 0   
         d = False
         save = False
+        s = time.time()
         while not d:
             step += 1
             action, _ = model.predict(o, deterministic=True)
@@ -105,17 +181,28 @@ def main(args, logger):
             if key in vis_id:
                 cached_observation["Time_Obs"][step] = i
             action = model.predict(o)[0]
-            if action==3:
-                save = True
+            if (action in using_dict.keys()) and not save:
+                if using_dict[action] < checking_dict[action]:
+                    label_action = action
+                    save = True
+                    label_info = {
+                        'concept': concept,
+                        'action': label_action,
+                    }
             rew += r
         if save and i["success"]:
+            logger.info("Episode {} took {} steps.".format(key, step))
+            logger.info("Episode {} took {} seconds.".format(key, time.time()-s))
+            tem_episodes['label_info'] = label_info
             all_episodes[key] = tem_episodes
             rew_list.append(rew)
             success.append(1)
             if key in vis_id:
                 worlds.append(cached_observation)
             logger.info("Episode {} achieved a score of {}".format(key, rew))
+            logger.info("Episode {} has label info: {}".format(key, label_info))
             key += 1
+            using_dict[label_action] += 1
     assert len(rew_list) == len(success) == args.max_episodes
     mean_reward = np.mean(rew_list)
     logger.info("Success rate: {}".format(np.mean(success)))

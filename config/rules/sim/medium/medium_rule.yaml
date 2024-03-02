@@ -68,8 +68,7 @@ Rules:
             ),
             And(
               Not(Stop(entity)), 
-              Not(IsReckless(entity)),
-              IsCar(entity), 
+              IsTiro(entity), 
               IsInInter(entity),
               IsAtInter(dummyEntityA)
             ),

@@ -49,6 +49,7 @@ class GymCityWrapper(gym.core.Env):
         self.action_mapping = env.rl_agent["action_mapping"]
         self.max_priority = env.rl_agent["max_priority"]
         self.action_cost = env.rl_agent["action_cost"]
+        self.reset_dist = env.rl_agent["reset_dist"] if "reset_dist" in env.rl_agent else None
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
         self.scale = [25, 7, 3.5, 8.3]
         self.mini_scale = [0, 0, -1, 0]
@@ -102,8 +103,9 @@ class GymCityWrapper(gym.core.Env):
         logger.info("***Reset RL Agent in Env***")
         self.t = 0
         self.agent.init(self.env.city_grid)
-        self.agent.reset_priority(self.max_priority)
+        self.agent.reset_concepts(self.max_priority, self.reset_dist)
         logger.info("Agent reset priority to {}/{}".format(self.agent.priority, self.max_priority))
+        logger.info("Agent reset concepts to {}".format(self.agent.concepts))
         self.horizon = max(self.max_horizon, len(self.agent.global_traj)*4)
         agent_code = self.type2label[self.agent_type]
         self.env.local_planner.reset()

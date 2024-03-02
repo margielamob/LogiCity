@@ -1,6 +1,7 @@
 from .basic import Agent
 import torch
-from numpy import random
+import numpy as np
+import random
 import torch.nn.functional as F
 from torch.distributions import Categorical
 from ..utils.gen import gen_occ
@@ -91,9 +92,22 @@ class Car(Agent):
         self.last_move_dir = None
         logger.info("{}_{} initialization done!".format(self.type, self.id))
 
-    def reset_priority(self, max_priority):
-        self.priority = random.randint(1, max_priority)
-        self.concepts["priority"] = self.priority
+    def reset_concepts(self, max_priority, concepts_dist=None):
+        self.priority = np.random.randint(1, max_priority)
+        if concepts_dist is not None:
+            self.concepts = {
+                "type": "Car"
+            }
+            sample = random.choices(concepts_dist['concepts'], weights=concepts_dist['prob'], k=1)[0]
+            self.concepts["priority"] = self.priority
+            if sample == "normal":
+                return
+            else:
+                self.concepts[sample] = 1.0
+                return
+        else:
+            self.concepts["priority"] = self.priority
+            return
 
     def get_start(self, world_state_matrix):
         # Define the labels for different entities
