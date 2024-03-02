@@ -134,3 +134,5 @@ websocket-client==1.6.3
 widgetsnbextension==4.0.9
 z3-solver==4.12.4.0
 pyyaml
+line_profiler
+transformers
