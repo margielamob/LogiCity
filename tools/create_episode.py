@@ -182,16 +182,25 @@ def main(args, logger):
         o, tem_episodes = eval_env.reset(True)
         # change cached_observation
         skip = False
+        normal = True
         cached_observation["Static Info"]["Agents"]["Car_3"]['concepts'] = tem_episodes['agents']['Car_1']['concepts']
         # check counter
         for concept in num_desired:
             if concept in tem_episodes['agents']['Car_1']['concepts']:
+                normal = False
                 for speed in num_desired[concept]:
-                    if num_counter[concept][speed] == num_desired[concept][speed]:
-                        logger.info("Skipping episode due to counter".format(key))
-                        skip = True
+                    if num_counter[concept][speed] < num_desired[concept][speed]:
                         break
+                    logger.info("Skipping episode due to counter")
+                    skip = True
                 break
+        if normal:
+            concept = 'normal'
+            for speed in num_desired[concept]:
+                if num_counter[concept][speed] < num_desired[concept][speed]:
+                    break
+                logger.info("Skipping episode due to counter")
+                skip = True
         using_dict = num_counter[concept]
         checking_dict = num_desired[concept]
         if skip:
