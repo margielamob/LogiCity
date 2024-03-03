@@ -190,6 +190,7 @@ def main(args, logger):
                 normal = False
                 for speed in num_desired[concept]:
                     if num_counter[concept][speed] < num_desired[concept][speed]:
+                        skip = False
                         break
                     logger.info("Skipping episode due to counter")
                     skip = True
@@ -198,6 +199,7 @@ def main(args, logger):
             concept = 'normal'
             for speed in num_desired[concept]:
                 if num_counter[concept][speed] < num_desired[concept][speed]:
+                    skip = False
                     break
                 logger.info("Skipping episode due to counter")
                 skip = True
