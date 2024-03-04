@@ -54,6 +54,7 @@ class EvalCheckpointCallback(CheckpointCallback):
             for ts in list(self.episode_data.keys()):  # Number of episodes for evaluation
                 logger.info("Evaluating episode {}...".format(ts))
                 episode_cache = self.episode_data[ts]
+                logger.info("Episode label: {}".format(episode_cache["label_info"]))
                 eval_env = make_env(self.simulation_config, episode_cache, False)
                 obs = eval_env.init()
                 episode_rewards = 0
@@ -68,10 +69,14 @@ class EvalCheckpointCallback(CheckpointCallback):
                     episode_rewards += reward
                     step += 1
                 if info["success"]:
+                    logger.info("Episode {} success.".format(ts))
                     success.append(1)
                 else:
+                    logger.info("Episode {} failed.".format(ts))
                     success.append(0)
                 rewards_list.append(episode_rewards)
+                logger.info("Episode {} achieved a score of {}".format(ts, episode_rewards))
+
 
             mean_reward = np.mean(rewards_list)
             sr = np.mean(success)

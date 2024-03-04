@@ -72,7 +72,8 @@ class Z3PlannerRL(Z3Planner):
 
             # Evaluate the modified formula string to create the Z3 expression
             self.rules["Task"][rule_name]["content"] = formula
-            self.rules["Task"][rule_name]["weight"] = rule_dict["weight"]
+            self.rules["Task"][rule_name]["reward"] = rule_dict["reward"]
+            self.rules["Task"][rule_name]["dead"] = rule_dict["dead"]
         
         logger.info("Rules created successfully")
         logger.info("Rules will be grounded later...")
@@ -137,10 +138,10 @@ class Z3PlannerRL(Z3Planner):
     def eval(self, rl_action):
         if self.last_rl_obs is None:
             return 0
-        result = eval_action(rl_action, self.rules['Task'], self.entity_types, self.predicates, self.z3_vars, self.fov_entities,
+        fail, reward = eval_action(rl_action, self.rules['Task'], self.entity_types, self.predicates, self.z3_vars, self.fov_entities,
                              self.last_rl_obs["last_obs_dict"], self.last_rl_obs["last_obs"])
         self.last_rl_obs = None
-        return result
+        return fail, reward
 
     def break_world_matrix(self, world_matrix, agents, intersect_matrix, layerid2listid, rl_agent):
         ego_agent = {}
@@ -271,7 +272,7 @@ def solve_sub_problem(ego_name,
     entity_sorts = {}
     for entity_type in entity_types:
         entity_sorts[entity_type] = DeclareSort(entity_type)
-    z3_vars = {var_name: Const(var_name, entity_sorts[var_name.replace('dummy', '')]) \
+    z3_vars = {var_name: Const(var_name, entity_sorts["Entity"]) \
                        for var_name in var_names}
     # 2. partial world to entities
     local_entities = world2entity(entity_sorts, partial_intersections, partial_agents, fov_entities, rl_flag)
@@ -324,7 +325,7 @@ def solve_sub_problem(ego_name,
 
         # **Important: Closed world quantifier rule, to ensure z3 do not add new entity to satisfy the rule and "dummy" is not part of the world**
         for var_name, z3_var in z3_vars.items():
-            entity_list = local_entities[var_name.replace('dummy', '')]
+            entity_list = local_entities["Entity"]
             constraint = Or([z3_var == entity for entity in entity_list])
             local_solver.add(ForAll([z3_var], constraint))
         
@@ -429,7 +430,7 @@ def eval_action(rl_action,
     entity_sorts = {}
     for entity_type in entity_types:
         entity_sorts[entity_type] = DeclareSort(entity_type)
-    z3_vars = {var_name: Const(var_name, entity_sorts[var_name.replace('dummy', '')]) \
+    z3_vars = {var_name: Const(var_name, entity_sorts["Entity"]) \
                        for var_name in var_names}
     # 2. entities
     entities = {}
@@ -500,7 +501,7 @@ def eval_action(rl_action,
 
     # **Important: Closed world quantifier rule, to ensure z3 do not add new entity to satisfy the rule and "dummy" is not part of the world**
     for var_name, z3_var in z3_vars.items():
-        entity_list = entities[var_name.replace('dummy', '')]
+        entity_list = entities['Entity']
         for rule_name, rule_template in rule_tem.items():
             constraint = Or([z3_var == entity for entity in entity_list])
             local_solvers[rule_name].add(ForAll([z3_var], constraint))
@@ -509,13 +510,16 @@ def eval_action(rl_action,
     obs = np.array(grounding, dtype=np.float32)
     assert np.all(obs == last_obs), print(obs, last_obs)
     fail = False
+    reward = 0
     for rule_name, rule_solver in local_solvers.items():
         if rule_solver.check() == sat:
-            continue
+                continue
         else:
-            fail = True
+            if rule_tem[rule_name]["dead"]:
+                fail = True
+            reward += local_rule_tem[rule_name]["reward"]
 
-    return fail
+    return fail, reward
 
 def get_action_name(rl_action):
     # see agents/car.py

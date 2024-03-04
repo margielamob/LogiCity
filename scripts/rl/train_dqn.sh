@@ -1,5 +1,5 @@
-CONFIG=config/tasks/Nav/easy/RL/dqn.yaml
+CONFIG=config/tasks/Nav/medium/algo/dqn.yaml
 python3 main.py --config $CONFIG \
-    --exp easy_dqn \
+    --exp medium_dqn \
     --log_dir log_rl \
     --use_gym

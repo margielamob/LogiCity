@@ -498,12 +498,11 @@ def eval_action(rl_action,
     reward = 0
     for rule_name, rule_solver in local_solvers.items():
         if rule_solver.check() == sat:
-            if local_rule_tem[rule_name]["reward"] > 0:
-                reward += local_rule_tem[rule_name]["reward"]
+                continue
         else:
-            if local_rule_tem[rule_name]["reward"] < 0:
+            if rule_tem[rule_name]["dead"]:
                 fail = True
-                reward += local_rule_tem[rule_name]["reward"]
+            reward += local_rule_tem[rule_name]["reward"]
 
     assert not fail, "Expert never obeys rules"
     return fail, reward

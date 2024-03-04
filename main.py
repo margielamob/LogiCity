@@ -132,7 +132,7 @@ def main_gym(args, logger):
     rl_config = config['stable_baselines']
     logger.info("RL config: {}".format(rl_config))
     # Dynamic import of the features extractor class
-    if "features_extractor_module" in rl_config:
+    if "features_extractor_module" in rl_config["policy_kwargs"]:
         features_extractor_class = dynamic_import(
             rl_config["policy_kwargs"]["features_extractor_module"],
             rl_config["policy_kwargs"]["features_extractor_class"]

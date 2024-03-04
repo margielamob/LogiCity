@@ -21,6 +21,7 @@ Rules:
   Task: # how the reward/score is calculated
     - name: Collision and Intersection
       description: should not collide.
+      dead: true
       reward: -5
       formula: |
         Implies(Exists(
