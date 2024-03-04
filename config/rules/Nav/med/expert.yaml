@@ -193,7 +193,8 @@ Rules:
                 IsYoung(dummyEntityB),
                 NextTo(dummyEntityA, dummyEntityB)
               )
-            )
+            ),
+          Slow(entity)
         )
     - name: Fast
       description: should fast.
@@ -217,7 +218,8 @@ Rules:
                 IsPolice(entity),
                 IsReckless(dummyEntityA)
               )
-            )
+            ),
+          Fast(entity)
         )
   Expert: # how the expert agents should move
     - name: Stop
