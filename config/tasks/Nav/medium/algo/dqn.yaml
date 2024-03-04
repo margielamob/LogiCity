@@ -10,7 +10,7 @@ simulation:
   use_multi: false
   agent_region: 100
   rl_agent: 
-    max_priority: 7
+    max_priority: 13
     use_expert: false
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
     max_horizon: 200                          # Maximum steps in each episode 
@@ -45,7 +45,7 @@ eval_checkpoint:
     use_multi: false
     agent_region: 100
     rl_agent: 
-      max_priority: 7
+      max_priority: 13
       use_expert: false
       agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
       max_horizon: 400                          # Maximum steps in each episode 
