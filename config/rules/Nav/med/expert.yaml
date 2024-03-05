@@ -90,15 +90,18 @@ Rules:
           Or(
             And(
               Not(Stop(entity)), 
+              Not(Slow(entity)),
               IsReckless(entity), 
               IsAtInter(dummyEntityA), 
             ),
             And(
               Not(Stop(entity)), 
+              Not(Slow(entity)),
               IsBus(entity),
             ),
             And(
               Not(Stop(entity)), 
+              Not(Slow(entity)),
               IsPolice(entity),
               IsReckless(dummyEntityA)
             )
@@ -207,15 +210,18 @@ Rules:
             Or(
               And(
                 Not(Stop(entity)), 
+                Not(Slow(entity)),
                 IsReckless(entity), 
                 IsAtInter(dummyEntityA), 
               ),
               And(
                 Not(Stop(entity)), 
+                Not(Slow(entity)),
                 IsBus(entity),
               ),
               And(
                 Not(Stop(entity)), 
+                Not(Slow(entity)),
                 IsPolice(entity),
                 IsReckless(dummyEntityA)
               )
@@ -315,15 +321,18 @@ Rules:
           Or(
             And(
               Not(Stop(entity)), 
+              Not(Slow(entity)), 
               IsReckless(entity), 
               IsAtInter(dummyEntityA), 
             ),
             And(
               Not(Stop(entity)), 
+              Not(Slow(entity)),
               IsBus(entity),
             ),
             And(
               Not(Stop(entity)), 
+              Not(Slow(entity)),
               IsPolice(entity),
               IsReckless(dummyEntityA)
             )

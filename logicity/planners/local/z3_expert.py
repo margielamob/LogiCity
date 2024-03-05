@@ -74,6 +74,7 @@ class Z3PlannerExpert(Z3PlannerRL):
             # Evaluate the modified formula string to create the Z3 expression
             self.rules["Task"][rule_name]["content"] = formula
             self.rules["Task"][rule_name]["reward"] = rule_dict["reward"]
+            self.rules["Task"][rule_name]["dead"] = rule_dict["dead"]
 
         for rule_dict in self.data["Rules"]["Expert"]:
             rule_name, formula = rule_dict["name"], rule_dict["formula"]

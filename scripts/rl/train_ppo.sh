@@ -1,5 +1,5 @@
-CONFIG=config/tasks/Nav/easy/RL/ppo.yaml
+CONFIG=config/tasks/Nav/medium/algo/ppo.yaml
 python3 main.py --config $CONFIG \
-    --exp easy_ppo4 \
+    --exp med_ppo \
     --log_dir log_rl \
     --use_gym
