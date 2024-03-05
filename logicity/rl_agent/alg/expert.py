@@ -33,6 +33,7 @@ class ExpertCollector:
             logger.info(f"Collecting data for episode {episode + 1}/{self.num_episodes}...")
             s = time.time()
             obs, expert_info = self.env.reset()
+            cached_observation["Static Info"]["Agents"]["Car_3"]['concepts'] = self.env.env.agents[0].concepts
             sg = expert_info["Next_sg"]
             grounding = expert_info["Next_grounding"]
             done = False
