@@ -50,6 +50,7 @@ class GymCityWrapper(gym.core.Env):
         self.max_priority = env.rl_agent["max_priority"]
         self.action_cost = env.rl_agent["action_cost"]
         self.reset_dist = env.rl_agent["reset_dist"] if "reset_dist" in env.rl_agent else None
+        self.overtime_cost = env.rl_agent["overtime_cost"] if "overtime_cost" in env.rl_agent else -3
         self.type2label = {v: k for k, v in LABEL_MAP.items()}
         self.scale = [25, 7, 3.5, 8.3]
         self.mini_scale = [0, 0, -1, 0]
@@ -177,7 +178,7 @@ class GymCityWrapper(gym.core.Env):
         
         if self.t >= self.horizon: 
             done = True
-            rew -= 3
+            rew += self.overtime_cost
             info["success"] = False
             info["overtime"] = True
             logger.info("Reset agent by overtime")
