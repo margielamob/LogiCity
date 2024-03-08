@@ -20,14 +20,20 @@ class HRI():
         self.threshold = threshold
         self.policy_class = policy
         self.policy_kwargs = policy_kwargs
-        self.predicates_labels = policy_kwargs['predicates_labels']
-        self.policy = build_policy[policy](env, **policy_kwargs)
         self.device = device
-        self.pred2ind = pred2ind
+        self.predicates_labels = {}
+        self.policy_dict = {}
+        self.pred2ind = {}
         self.if_un_pred = if_un_pred
+        for action in self.tgt_action:
+            action_policy_kwargs = policy_kwargs[action]
+            self.policy_dict[action] = build_policy[policy](env, **action_policy_kwargs)
+            self.predicates_labels[action] = action_policy_kwargs['predicates_labels']
+            self.pred2ind = pred2ind[action]
+            self.if_un_pred = if_un_pred[action]
+            self.policy_dict[action].to(self.device)
         self.pred_grounding_index = env.pred_grounding_index
         self.num_ents = env.env.rl_agent["fov_entities"]["Entity"]
-        self.policy.to(self.device)
 
     def obs2domainArray(self, observation):
         # TODO: Input is a 205 dim binary vector for all ontology, convert to domainData
@@ -84,21 +90,25 @@ class HRI():
         self,
         path
     ):
-        self.policy.load_state_dict(torch.load(path))
-        # soft model
-        unifs = self.get_unifs(temperature=0.01, gumbel_noise=0.)
-        self.unifs = unifs.view(self.policy.num_predicates, self.policy.num_body, self.policy.num_rules)
-        # symbolic model
-        full_rules_str=self.policy.rules_str
-        #--3-extract symbolic path
-        #TODO: More efficient unification with symbolic rule instead of this.
-        _, symbolic_formula, symbolic_unifs, _ = extract_symbolic_path(self.unifs, full_rules_str, predicates_labels=self.predicates_labels)
-        symbolic_unifs=symbolic_unifs.double() #1 where max value, else 0
-        assert list(symbolic_unifs.size())==[self.policy.num_predicates, self.policy.num_body, self.policy.num_rules]
-        self.symbolic_unifs = symbolic_unifs
-        logger.info(f"Symbolic model (Argmax backtracked path formulae): {symbolic_formula}")
+        self.unifs = {}
+        self.symbolic_unifs = {}
+        for action in self.tgt_action:
+            dict_path = path + f"/{action}.pth"
+            self.policy_dict[action].load_state_dict(torch.load(dict_path))
+            # soft model
+            unifs = self.get_unifs(action, temperature=0.01, gumbel_noise=0.)
+            self.unifs[action] = unifs.view(self.policy_dict[action].num_predicates, self.policy_dict[action].num_body, self.policy_dict[action].num_rules)
+            # symbolic model
+            full_rules_str=self.policy_dict[action].rules_str
+            #--3-extract symbolic path
+            #TODO: More efficient unification with symbolic rule instead of this.
+            _, symbolic_formula, symbolic_unifs, _ = extract_symbolic_path(self.unifs[action], full_rules_str, predicates_labels=self.predicates_labels[action])
+            symbolic_unifs=symbolic_unifs.double() #1 where max value, else 0
+            assert list(symbolic_unifs.size())==[self.policy_dict[action].num_predicates, self.policy_dict[action].num_body, self.policy_dict[action].num_rules]
+            self.symbolic_unifs[action] = symbolic_unifs
+            logger.info(f"Symbolic model (Argmax backtracked path formulae), {action}: {symbolic_formula}")
 
-    def get_unifs(self, temperature, gumbel_noise):
+    def get_unifs(self, action, temperature, gumbel_noise):
         """
         Compute unifications score of (soft) rules with embeddings (all:background+ symbolic+soft)
 
@@ -108,8 +118,8 @@ class HRI():
         Outputs:        
         """
         # -- 00---init
-        rules = self.policy.rules.clone()
-        embeddings = self.policy.embeddings.clone()
+        rules = self.policy_dict[action].rules.clone()
+        embeddings = self.policy_dict[action].embeddings.clone()
         num_rules, d= rules.shape
         num_predicates, num_feat= embeddings.shape
             
@@ -157,8 +167,8 @@ class HRI():
         # -2-- compute similarity score between predicates and rules body
         sim = F.cosine_similarity(embeddings_aux, rules_aux).view(num_predicates, num_body, num_rules)
 
-        self.policy.hierarchical_mask = self.policy.hierarchical_mask.double()
-        sim[self.policy.hierarchical_mask==0] = -10000
+        self.policy_dict[action].hierarchical_mask = self.policy_dict[action].hierarchical_mask.double()
+        sim[self.policy_dict[action].hierarchical_mask==0] = -10000
         cancel_out = -10000
         #-5-----tgt mask: other rule body not being matched to tgt
         sim[-1,:,:]= cancel_out*torch.ones(num_body, num_rules)
