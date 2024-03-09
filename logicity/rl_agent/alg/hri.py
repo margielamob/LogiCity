@@ -29,8 +29,8 @@ class HRI():
             action_policy_kwargs = policy_kwargs[action]
             self.policy_dict[action] = build_policy[policy](env, **action_policy_kwargs)
             self.predicates_labels[action] = action_policy_kwargs['predicates_labels']
-            self.pred2ind = pred2ind[action]
-            self.if_un_pred = if_un_pred[action]
+            self.pred2ind[action] = pred2ind[action]
+            self.if_un_pred[action] = if_un_pred[action]
             self.policy_dict[action].to(self.device)
         self.pred_grounding_index = env.pred_grounding_index
         self.num_ents = env.env.rl_agent["fov_entities"]["Entity"]
@@ -52,39 +52,41 @@ class HRI():
                 if np.sum(original) > 0:
                     bip_arr_ls.append(torch.tensor(original).reshape(self.num_ents, self.num_ents))
                     bip_name_ls.append(k)
-        unp_ind_ls = [self.pred2ind[pn] for pn in unp_name_ls]
-        bip_ind_ls = [self.pred2ind[pn] for pn in bip_name_ls]
-        valuation_init = [Variable(arr) for arr in unp_arr_ls] + [Variable(arr) for arr in bip_arr_ls]
-        pred_ind_ls = unp_ind_ls + bip_ind_ls
+        valuation_init = {}
+        pred_ind_ls = {}
+        for action in self.tgt_action:
+            unp_ind_ls = [self.pred2ind[action][pn] for pn in unp_name_ls]
+            bip_ind_ls = [self.pred2ind[action][pn] for pn in bip_name_ls]
+            valuation_init[action] = [Variable(arr) for arr in unp_arr_ls] + [Variable(arr) for arr in bip_arr_ls]
+            pred_ind_ls[action] = unp_ind_ls + bip_ind_ls
         return valuation_init, pred_ind_ls, self.num_ents
     
     def predict(self, observation, deterministic=False):
         valuation_eval_temp, bg_pred_ind_ls_noTF, num_constants = self.obs2domainArray(observation)
-        valuation_eval = [torch.zeros(num_constants).view(-1, 1) if tp else torch.zeros(
-            (num_constants, num_constants)) for tp in self.if_un_pred]
-        for idx, idp in enumerate(bg_pred_ind_ls_noTF):
-            assert valuation_eval[idp].shape == valuation_eval_temp[idx].shape
-            valuation_eval[idp] = valuation_eval_temp[idx]
-        assert max(bg_pred_ind_ls_noTF) < self.policy.num_background - 2
-        # ----2--add valuation other aux predicates
-        valuation_eval = init_aux_valuation(self.policy, valuation_eval, num_constants, steps=4)
-        # --3---inference steps
-        valuation_eval = valuation_eval.cuda()
-        
-        valuation_eval, valuation_tgt = self.policy.infer(
-            valuation_eval, num_constants, unifs=self.unifs, steps=4)
-        
-        action = self.get_action(valuation_tgt)
+        action_prob = {}
+        for action in self.tgt_action:
+            valuation_eval = [torch.zeros(num_constants).view(-1, 1) if tp else torch.zeros(
+                (num_constants, num_constants)) for tp in self.if_un_pred[action]]
+            for idx, idp in enumerate(bg_pred_ind_ls_noTF[action]):
+                assert valuation_eval[idp].shape == valuation_eval_temp[action][idx].shape
+                valuation_eval[idp] = valuation_eval_temp[action][idx]
+            assert max(bg_pred_ind_ls_noTF[action]) < self.policy_dict[action].num_background - 2
+            # ----2--add valuation other aux predicates
+            valuation_eval = init_aux_valuation(self.policy_dict[action], valuation_eval, num_constants, steps=4)
+            # --3---inference steps
+            valuation_eval = valuation_eval.cuda()
+            
+            valuation_eval, valuation_tgt = self.policy_dict[action].infer(
+                valuation_eval, num_constants, unifs=self.unifs[action], steps=4)
+            action_prob[action] = valuation_tgt[0].item() if valuation_tgt[0].item() > self.threshold else 0
+        action = self.get_action(action_prob)
         
         return action, None
     
-    def get_action(self, valuation_tgt):
-        prob = valuation_tgt[0]
-        if prob > self.threshold:
-            action_id = self.action2idx[self.tgt_action]
-        else:
-            action_id = self.action2idx[self.default_action]
-        return action_id
+    def get_action(self, action_prob):
+        action_prob[self.default_action] = self.threshold
+        max_action = max(action_prob, key=action_prob.get)
+        return self.action2idx[max_action]
 
     def load(
         self,
