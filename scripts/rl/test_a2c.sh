@@ -1,7 +1,7 @@
 # Description: Test RL agent
 # /bin/bash
-CONFIG=config/tasks/Nav/easy/RL/a2ctest.yaml
+CONFIG=config/tasks/Nav/medium/algo/a2c_test.yaml
 python3 main.py --config $CONFIG \
-    --exp easy_a2c \
+    --exp med_a2c_test \
     --log_dir log_rl \
     --use_gym

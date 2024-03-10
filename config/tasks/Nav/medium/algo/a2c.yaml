@@ -30,7 +30,7 @@ simulation:
     reset_dist:
       concepts: ['ambulance', 'bus', 'police', 'reckless', 'tiro', 'normal']
       prob: [0.18, 0.18, 0.18, 0.18, 0.18, 0.1]
-    overtime_cost: -10
+    overtime_cost: -5
 
 eval_checkpoint:
   eval_freq: 10000                        # This is the frequency of evaluation, will be multiplied by num_envs
@@ -64,26 +64,26 @@ eval_checkpoint:
         2: -2
         3: -3
   save_path: './checkpoints/'
-  name_prefix: 'med_ppo'
+  name_prefix: 'med_a2c'
   episode_data: "dataset/medium/val_40_episodes.pkl"
 
 # Stable Baselines specific settings
 stable_baselines:
-  algorithm: "PPO"
+  algorithm: "A2C"
   policy_network: "MlpPolicy"
   policy_kwargs:
+    optimizer_class: "RMSpropTFLike"
+    optimizer_kwargs:
+      epsilon: 1e-5
     features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
     features_extractor_class: "MLPFeatureExtractor"
     features_extractor_kwargs:
-      features_dim: 64
+      features_dim: 256
   hyperparameters:
-    learning_rate: 0.00003          # Learning rate
-    clip_range: 0.2              # Clip range for PPO
-    vf_coef: 0.8                  # Value function coefficient
-    batch_size: 256                # Batch size for training
-    n_steps: 256                 # Number of steps to run for each environment per update
-    n_epochs: 4                  # Number of epochs to run for each update
-    ent_coef: 0.01                 # Entropy coefficient
+    n_steps: 128
+    learning_rate: 0.00001          # Learning rate
+    ent_coef: 0.01
+    vf_coef: 0.8
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: true                   # Whether to train the model
