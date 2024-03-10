@@ -1,6 +1,6 @@
 source /opt/conda/etc/profile.d/conda.sh
 conda activate logicity
-for n in 10 20 50 100
+for n in 200 500 800 1000
 do
 CONFIG=config/tasks/Nav/medium/algo/bc_${n}_test.yaml
 python3 main.py --config $CONFIG \
