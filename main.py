@@ -197,6 +197,7 @@ def main_gym(args, logger):
                 continue
             logger.info("Evaluating episode {}...".format(ts))
             episode_cache = episode_data[ts]
+            logger.info("Episode label: {}".format(episode_cache["label_info"]))
             eval_env, cached_observation = make_env(simulation_config, episode_cache, True)
             if rl_config["algorithm"] == "ExpertCollector" or rl_config["algorithm"] == "Random":
                 # expert and random agent do not need a policy network
