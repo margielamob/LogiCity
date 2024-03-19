@@ -50,3 +50,4 @@ class NLM():
         path
     ):
         self.policy.load_state_dict(torch.load(path)['model'])
+        self.policy.eval()
