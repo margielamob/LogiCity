@@ -30,7 +30,7 @@ def parse_arguments():
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--config', default='config/tasks/Nav/medium/algo/hritest_50.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/nlm_900.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -197,12 +197,13 @@ def main_gym(args, logger):
                 continue
             logger.info("Evaluating episode {}...".format(ts))
             episode_cache = episode_data[ts]
-            logger.info("Episode label: {}".format(episode_cache["label_info"]))
+            if "label_info" in episode_cache:
+                logger.info("Episode label: {}".format(episode_cache["label_info"]))
             eval_env, cached_observation = make_env(simulation_config, episode_cache, True)
             if rl_config["algorithm"] == "ExpertCollector" or rl_config["algorithm"] == "Random":
                 # expert and random agent do not need a policy network
                 model = algorithm_class(eval_env)
-            elif rl_config["algorithm"] == "HRI":
+            elif rl_config["algorithm"] in ["HRI", "NLM"]:
                 model = algorithm_class(rl_config["policy_network"], \
                                         eval_env, \
                                         **hyperparameters, \

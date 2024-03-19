@@ -18,7 +18,7 @@
 import torch
 
 import torch.autograd as ag
-from jactorch.functional import meshgrid, meshgrid_exclude_self
+from .range import meshgrid, meshgrid_exclude_self
 
 __all__ = ['meshgrid', 'meshgrid_exclude_self', 'exclude_mask', 'mask_value']
 

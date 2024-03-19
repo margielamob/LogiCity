@@ -22,27 +22,33 @@ simulation:
       3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     fov_entities:
       Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
+    action_cost:
+      0: -2
+      1: -1
+      2: 0
+      3: -3
 
 # Stable Baselines specific settings
 stable_baselines:
   algorithm: "NLM"
   policy_network: "NLMPolicy"
   policy_kwargs:
-    input_dims: [0, 11, 6, 0]
-    nlm_attributes: 8
+    tgt_arity: 1
     nlm_args:
+      input_dims: [0, 11, 6, 0] # the same as input_dims
+      output_dims: 8 # the same as nlm_attributes
+      logic_hidden_dim: []
+      exclude_self: true
       depth: 4
       breadth: 3
-      output_dims: 1
-      residual: False
-      io_residual: False
-      recursion: False
-      residual: False
+      io_residual: false
+      residual: false
+      recursion: false
     target_dim: 2
   hyperparameters:
     index2action: {0: 'Fast', 1: 'Stop'}
     action2idx: {'Slow': 0, 'Normal': 1, 'Fast': 2, 'Stop': 3}
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/final_models/easy/easy_nlm900.pth"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/final_models/easy/checkpoint_1.pth"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   episode_data: "dataset/easy/test_100_episodes.pkl"

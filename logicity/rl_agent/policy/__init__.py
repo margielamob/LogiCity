@@ -1,6 +1,6 @@
 from .neural import CNNFeatureExtractor, MLPFeatureExtractor, MlpPolicy
 from .hri import HriPolicy
-from .nlm import NLMPolic
+from .nlm import NLMPolicy
 from .hri_helper import *
 from .nlm_helper import *
 

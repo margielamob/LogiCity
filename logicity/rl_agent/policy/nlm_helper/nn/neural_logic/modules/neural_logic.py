@@ -16,8 +16,7 @@
 """MLP-based implementation for logic and logits inference."""
 
 import torch.nn as nn
-
-from jactorch.quickstart.models import MLPModel
+from .layers import MLPModel
 
 __all__ = ['LogicInference', 'LogitsInference']
 
