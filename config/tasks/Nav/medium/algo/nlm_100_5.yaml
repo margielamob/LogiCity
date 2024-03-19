@@ -49,6 +49,6 @@ stable_baselines:
     index2action: {0: 'Slow', 1: 'Normal', 2: 'Fast', 3: 'Stop'}
     action2idx: {'Slow': 0, 'Normal': 1, 'Fast': 2, 'Stop': 3}
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/final_models/medium/med_nlm900.pth"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/final_models/medium/nlm_100/checkpoint_5.pth"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   episode_data: "dataset/medium/test_100_episodes.pkl"
