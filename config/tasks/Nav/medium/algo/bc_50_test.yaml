@@ -38,7 +38,7 @@ stable_baselines:
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
-    num_traj: 10
+    num_traj: 50
     expert_demonstrations: "dataset/medium/train_100traj.pkl"
     optimizer: 
       type: "Adam"             # Optimizer to use
