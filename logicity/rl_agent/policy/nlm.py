@@ -37,4 +37,4 @@ class NLMPolicy(nn.Module):
     pred = self.pred(feature)
     pred = pred[:, 0]
     pred = F.softmax(pred, dim=-1)
-    return dict(pred=pred)
+    return pred

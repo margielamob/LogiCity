@@ -216,6 +216,7 @@ def main_gym(args, logger):
             else:
                 model = algorithm_class.load(rl_config["checkpoint_path"], \
                                     eval_env)
+            logger.info("Loaded model from {}".format(rl_config["checkpoint_path"]))
             o = eval_env.init()
             rew = 0    
             step = 0   

@@ -41,7 +41,7 @@ class NLM():
         return action, None
     
     def get_action(self, action_prob):
-        max_idx = np.argmax(action_prob)
+        max_idx = np.argmax(action_prob.detach().cpu().numpy())
         max_action = self.index2action[max_idx]
         return self.action2idx[max_action]
 
