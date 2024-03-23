@@ -1,10 +1,10 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/medium/test.yaml" # Agents in the simulation
+  agent_yaml_file: "config/agents/hard/test.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
   rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/med/test.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/hard/test.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
@@ -39,7 +39,7 @@ stable_baselines:
       features_dim: 64
   hyperparameters:
     num_traj: 200
-    expert_demonstrations: "dataset/medium/train_1ktraj.pkl"
+    expert_demonstrations: "dataset/hard/train_1ktraj.pkl"
     optimizer: 
       type: "Adam"             # Optimizer to use
       args:
@@ -48,6 +48,6 @@ stable_baselines:
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
     log_interval: 20
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/final_models/medium/bc200.zip"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/final_models/hard/bc200.zip"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
-  episode_data: "dataset/medium/test_100_episodes.pkl"
+  episode_data: "dataset/hard/test_100_episodes.pkl"

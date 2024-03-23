@@ -1,10 +1,10 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/medium/test.yaml" # Agents in the simulation
+  agent_yaml_file: "config/agents/hard/test.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
   rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/med/test.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/hard/test.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
@@ -65,6 +65,6 @@ stable_baselines:
       Slow: [False, True, False, True, True, True, True, False, True, True, True, True, True, True, True, False, False, True, False, True, True, False]
       Stop: [False, True, False, True, True, True, True, False, True, True, True, True, True, True, True, False, False, True, False, True, True, False]
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/final_models/medium/hri"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/final_models/hard/hri"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
-  episode_data: "dataset/medium/test_100_episodes.pkl"
+  episode_data: "dataset/hard/test_100_episodes.pkl"

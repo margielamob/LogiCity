@@ -28,7 +28,7 @@ def parse_arguments():
     parser.add_argument('--seed', type=int, default=2)
     parser.add_argument('--max_episodes', type=int, default=100)
     # RL
-    parser.add_argument('--config', default='config/tasks/Nav/medium/experts/expert_episode_test.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/hardium/experts/expert_episode_test.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 

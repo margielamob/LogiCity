@@ -1,10 +1,10 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/medium/train.yaml" # Agents in the simulation
+  agent_yaml_file: "config/agents/hard/train.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
   rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/med/rl.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/hard/rl.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
@@ -37,10 +37,10 @@ eval_checkpoint:
   save_freq: 10000
   simulation_config:
     map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-    agent_yaml_file: "config/agents/medium/val.yaml" # Agents in the simulation
+    agent_yaml_file: "config/agents/hard/val.yaml" # Agents in the simulation
     ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
     rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-    rule_yaml_file: "config/rules/Nav/med/rl.yaml"                    # Whether to render the environment
+    rule_yaml_file: "config/rules/Nav/hard/rl.yaml"                    # Whether to render the environment
     rl: true
     debug: false
     use_multi: false
@@ -65,7 +65,7 @@ eval_checkpoint:
         3: -3
   save_path: './checkpoints/'
   name_prefix: 'med_a2c'
-  episode_data: "dataset/medium/val_40_episodes.pkl"
+  episode_data: "dataset/hard/val_40_episodes.pkl"
 
 # Stable Baselines specific settings
 stable_baselines:
