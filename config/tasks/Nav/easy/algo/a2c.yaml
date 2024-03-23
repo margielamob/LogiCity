@@ -22,6 +22,11 @@ simulation:
       3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     fov_entities:
       Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
+    action_cost:
+      0: -2
+      1: -1
+      2: 0
+      3: -3
 
 eval_checkpoint:
   eval_freq: 10000                        # This is the frequency of evaluation, will be multiplied by num_envs
@@ -49,6 +54,11 @@ eval_checkpoint:
         3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
       fov_entities:
         Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
+      action_cost:
+        0: -2
+        1: -1
+        2: 0
+        3: -3
   save_path: './checkpoints/'
   name_prefix: 'easy_a2c2'
   episode_data: "dataset/easy/expert_episode_val_40_episodes.pkl"
