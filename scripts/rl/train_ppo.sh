@@ -1,4 +1,4 @@
-CONFIG=config/tasks/Nav/medium/algo/ppo.yaml
+CONFIG=config/tasks/Nav/hardium/algo/ppo.yaml
 python3 main.py --config $CONFIG \
     --exp med_ppo \
     --log_dir log_rl \

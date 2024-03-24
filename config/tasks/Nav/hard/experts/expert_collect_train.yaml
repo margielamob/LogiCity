@@ -1,0 +1,37 @@
+# General simulation settings
+simulation:
+  map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
+  agent_yaml_file: "config/agents/hard/train.yaml" # Agents in the simulation
+  ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
+  rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
+  rule_yaml_file: "config/rules/Nav/hard/expert.yaml"                    # Whether to render the environment
+  rl: true
+  debug: false
+  use_multi: false
+  agent_region: 100
+  rl_agent: 
+    max_priority: 13
+    use_expert: true
+    agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
+    max_horizon: 200                          # Maximum steps in each episode 
+    action_space: 4                       # Number of discrete actions, 4 means slow/normal/fast/stop
+    action_mapping:                       # Mapping from policy action index to actual action space, see /agent folder
+      0: [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      1: [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0]
+      2: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0]
+      3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    fov_entities:
+      Entity: 5                        # Maximum number of agents in the FOV, include the RL agent
+    action_cost:
+      0: -2
+      1: -1
+      2: -2
+      3: -3
+    reset_dist:
+      concepts: ['ambulance', 'bus', 'police', 'reckless', 'tiro', 'normal']
+      prob: [0.18, 0.18, 0.18, 0.18, 0.18, 0.1]
+
+# Stable Baselines specific settings
+collecting_config:
+  num_episodes: 100    # Total number of episodes to collect data for.
+  return_full_world: false
