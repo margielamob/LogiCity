@@ -1,16 +1,16 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/hard/train.yaml" # Agents in the simulation
+  agent_yaml_file: "config/agents/easy_med/train.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
   rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/hard/rl.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/easy_med/rl.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
   agent_region: 100
   rl_agent: 
-    max_priority: 13
+    max_priority: 6
     use_expert: false
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
     max_horizon: 200                          # Maximum steps in each episode 
@@ -24,12 +24,12 @@ simulation:
       Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
     action_cost:
       0: -2
-      1: -1
+      1: 0
       2: -2
-      3: -3
+      3: -5
     reset_dist:
-      concepts: ['ambulance', 'bus', 'police', 'reckless', 'tiro', 'normal']
-      prob: [0.18, 0.18, 0.18, 0.18, 0.18, 0.1]
+      concepts: ['ambulance', 'bus', 'police', 'normal']
+      prob: [0.25, 0.25, 0.25, 0.25]
     overtime_cost: -10
 
 eval_checkpoint:
@@ -37,16 +37,16 @@ eval_checkpoint:
   save_freq: 10000
   simulation_config:
     map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-    agent_yaml_file: "config/agents/hard/val.yaml" # Agents in the simulation
+    agent_yaml_file: "config/agents/easy_med/val.yaml" # Agents in the simulation
     ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
     rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-    rule_yaml_file: "config/rules/Nav/hard/rl.yaml"                    # Whether to render the environment
+    rule_yaml_file: "config/rules/Nav/easy_med/rl.yaml"                    # Whether to render the environment
     rl: true
     debug: false
     use_multi: false
     agent_region: 100
     rl_agent: 
-      max_priority: 13
+      max_priority: 8
       use_expert: false
       agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
       max_horizon: 400                          # Maximum steps in each episode 
@@ -60,12 +60,12 @@ eval_checkpoint:
         Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
       action_cost:
         0: -2
-        1: -1
+        1: 0
         2: -2
-        3: -3
+        3: -5
   save_path: './checkpoints/'
-  name_prefix: 'hard_ppo'
-  episode_data: "dataset/hard/val_40_episodes.pkl"
+  name_prefix: 'easy_med_ppo'
+  episode_data: "dataset/easy_med/val_40_episodes.pkl"
 
 # Stable Baselines specific settings
 stable_baselines:
@@ -75,7 +75,7 @@ stable_baselines:
     features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
     features_extractor_class: "MLPFeatureExtractor"
     features_extractor_kwargs:
-      features_dim: 64
+      features_dim: 128
   hyperparameters:
     learning_rate: 0.00003          # Learning rate
     clip_range: 0.2              # Clip range for PPO
@@ -88,5 +88,5 @@ stable_baselines:
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: true                   # Whether to train the model
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
-  num_envs: 2                   # Number of environments to run in parallel
+  num_envs: 2                  # Number of environments to run in parallel
   total_timesteps: 1000000    # Total number of timesteps to run for all environments combined

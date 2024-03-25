@@ -8,7 +8,8 @@ from torch.nn import functional as F
 
 from stable_baselines3.common.buffers import RolloutBuffer
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
-from stable_baselines3.common.policies import ActorCriticNLMPolicy
+from logicity.rl_agent.policy import ActorCriticNLMPolicy
+from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 
@@ -22,7 +23,7 @@ class NLMRL(OnPolicyAlgorithm):
 
     def __init__(
         self,
-        policy: Union[str, Type[ActorCriticPolicy]],
+        policy: Union[str, Type[ActorCriticNLMPolicy]],
         env: Union[GymEnv, str],
         learning_rate: Union[float, Schedule] = 3e-4,
         n_steps: int = 2048,
