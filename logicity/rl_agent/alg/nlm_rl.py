@@ -8,7 +8,7 @@ from torch.nn import functional as F
 
 from stable_baselines3.common.buffers import RolloutBuffer
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
-from stable_baselines3.common.policies import ActorCriticCnnPolicy, ActorCriticPolicy, BasePolicy, MultiInputActorCriticPolicy
+from stable_baselines3.common.policies import ActorCriticNLMPolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 
@@ -17,9 +17,7 @@ SelfNLMRL = TypeVar("SelfNLMRL", bound="NLMRL")
 
 class NLMRL(OnPolicyAlgorithm):
     policy_aliases: ClassVar[Dict[str, Type[BasePolicy]]] = {
-        "MlpPolicy": ActorCriticPolicy,
-        "CnnPolicy": ActorCriticCnnPolicy,
-        "MultiInputPolicy": MultiInputActorCriticPolicy,
+        "NLMPolicy": ActorCriticNLMPolicy,
     }
 
     def __init__(
@@ -250,14 +248,14 @@ class NLMRL(OnPolicyAlgorithm):
 
 
     def learn(
-        self: SelfPPO,
+        self: SelfNLMRL,
         total_timesteps: int,
         callback: MaybeCallback = None,
         log_interval: int = 1,
         tb_log_name: str = "PPO",
         reset_num_timesteps: bool = True,
         progress_bar: bool = False,
-    ) -> SelfPPO:
+    ) -> SelfNLMRL:
         return super().learn(
             total_timesteps=total_timesteps,
             callback=callback,
