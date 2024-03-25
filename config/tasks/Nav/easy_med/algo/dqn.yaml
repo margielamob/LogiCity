@@ -32,8 +32,8 @@ simulation:
       prob: [0.25, 0.25, 0.25, 0.25]
 
 eval_checkpoint:
-  eval_freq: 100                        # This is the frequency of evaluation, will be multiplied by num_envs
-  save_freq: 100
+  eval_freq: 10000                        # This is the frequency of evaluation, will be multiplied by num_envs
+  save_freq: 10000
   simulation_config:
     map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
     agent_yaml_file: "config/agents/easy_med/val.yaml" # Agents in the simulation
