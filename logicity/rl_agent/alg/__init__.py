@@ -8,7 +8,7 @@ from .random import Random
 # NS RL
 # from .nudge import NUDGE
 # from .nsrl import NSRL
-# from .nlmrl import NLMRL
+from .nlm_rl import NLMRL
 # Expert data
 from .expert import ExpertCollector
 from .bc import BehavioralCloning
