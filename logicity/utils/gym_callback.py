@@ -54,7 +54,8 @@ class EvalCheckpointCallback(CheckpointCallback):
             for ts in list(self.episode_data.keys()):  # Number of episodes for evaluation
                 logger.info("Evaluating episode {}...".format(ts))
                 episode_cache = self.episode_data[ts]
-                logger.info("Episode label: {}".format(episode_cache["label_info"]))
+                if "label_info" in episode_cache:
+                    logger.info("Episode label: {}".format(episode_cache["label_info"]))
                 eval_env = make_env(self.simulation_config, episode_cache, False)
                 obs = eval_env.init()
                 episode_rewards = 0

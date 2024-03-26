@@ -9,6 +9,7 @@ import numpy as np
 import torch as th
 from gymnasium import spaces
 from torch import nn
+import torch.nn.functional as F
 
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import PyTorchObs, Schedule
@@ -29,6 +30,35 @@ from stable_baselines3.common.distributions import (
     StateDependentNoiseDistribution,
     make_proba_distribution,
 )
+
+from .nlm_helper.nn.neural_logic import LogicMachine, LogitsInference
+
+class NLM(nn.Module):
+  """The model for family tree or general graphs path tasks."""
+
+  def __init__(self, tgt_arity, nlm_args):
+    super().__init__()
+    # inputs
+    self.feature_axis = tgt_arity
+    self.nlm_args = nlm_args
+    self.features = LogicMachine(**nlm_args)
+    self.features_dim = self.features.output_dims[self.feature_axis]
+
+  def forward(self, feed_dict):
+    # import ipdb; ipdb.set_trace()
+
+    # relations
+    states = feed_dict['states']
+    relations = feed_dict['relations']
+    batch_size, nr = relations.size()[:2]
+
+    inp = [None for _ in range(self.nlm_args['breadth'] + 1)]
+    # import ipdb; ipdb.set_trace()
+    inp[1] = states
+    inp[2] = relations
+    depth = None
+    feature = self.features(inp, depth=depth)[self.feature_axis]
+    return feature
 
 class ActorCriticNLMPolicy(BasePolicy):
     """
@@ -121,6 +151,10 @@ class ActorCriticNLMPolicy(BasePolicy):
         self.ortho_init = ortho_init
 
         self.share_features_extractor = share_features_extractor
+        self.num_ents = features_extractor_kwargs['num_ents']
+        features_extractor_kwargs.pop('num_ents')
+        self.pred_grounding_index = features_extractor_kwargs['pred_grounding_index']
+        features_extractor_kwargs.pop('pred_grounding_index')
         self.features_extractor = self.make_features_extractor()
         self.features_dim = self.features_extractor.features_dim
         if self.share_features_extractor:
@@ -151,11 +185,30 @@ class ActorCriticNLMPolicy(BasePolicy):
 
         self._build(lr_schedule)
 
+    def obs2domainArray(self, observation):
+        # TODO: Input is a 205 dim binary vector for all ontology, convert to domainData
+        unp_arr_ls = []
+        bip_arr_ls = []
+        bs = observation.shape[0]
+        for k, v in self.pred_grounding_index.items():
+            original = observation[:, v[0]:v[1]]
+            if original.shape[1] == self.num_ents:
+                unp_arr_ls.append(original.unsqueeze(2))
+            elif original.shape[1] == self.num_ents**2:
+                bip_arr_ls.append(original.reshape(bs, self.num_ents, self.num_ents).unsqueeze(3))
+        # convert a to target
+        unp_arr_ls = th.cat(unp_arr_ls, dim=2)
+        bip_arr_ls = th.cat(bip_arr_ls, dim=3)
+        return dict(n=th.tensor([self.num_ents]*bs), states=unp_arr_ls, relations=bip_arr_ls)
+
+    def make_features_extractor(self):
+        # nlm does not need observation_space
+        return self.features_extractor_class(**self.features_extractor_kwargs)
+
     def _get_constructor_parameters(self) -> Dict[str, Any]:
         data = super()._get_constructor_parameters()
 
         default_none_kwargs = self.dist_kwargs or collections.defaultdict(lambda: None)  # type: ignore[arg-type, return-value]
-
         data.update(
             dict(
                 net_arch=self.net_arch,
@@ -267,6 +320,8 @@ class ActorCriticNLMPolicy(BasePolicy):
             latent_pi = self.mlp_extractor.forward_actor(pi_features)
             latent_vf = self.mlp_extractor.forward_critic(vf_features)
         # Evaluate the values for the given observations
+        latent_pi = latent_pi[:, 0]
+        latent_vf = latent_vf[:, 0]
         values = self.value_net(latent_vf)
         distribution = self._get_action_dist_from_latent(latent_pi)
         actions = distribution.get_actions(deterministic=deterministic)
@@ -285,8 +340,10 @@ class ActorCriticNLMPolicy(BasePolicy):
         :return: The extracted features. If features extractor is not shared, returns a tuple with the
             features for the actor and the features for the critic.
         """
+        feed_dict = self.obs2domainArray(obs)
         if self.share_features_extractor:
-            return super().extract_features(obs, self.features_extractor if features_extractor is None else features_extractor)
+            feature = self.features_extractor(feed_dict)
+            return feature
         else:
             if features_extractor is not None:
                 warnings.warn(
@@ -294,8 +351,8 @@ class ActorCriticNLMPolicy(BasePolicy):
                     UserWarning,
                 )
 
-            pi_features = super().extract_features(obs, self.pi_features_extractor)
-            vf_features = super().extract_features(obs, self.vf_features_extractor)
+            pi_features = self.pi_features_extractor(feed_dict)
+            vf_features = self.vf_features_extractor(feed_dict)
             return pi_features, vf_features
 
     def _get_action_dist_from_latent(self, latent_pi: th.Tensor) -> Distribution:
@@ -351,6 +408,8 @@ class ActorCriticNLMPolicy(BasePolicy):
             pi_features, vf_features = features
             latent_pi = self.mlp_extractor.forward_actor(pi_features)
             latent_vf = self.mlp_extractor.forward_critic(vf_features)
+        latent_pi = latent_pi[:, 0]
+        latent_vf = latent_vf[:, 0]
         distribution = self._get_action_dist_from_latent(latent_pi)
         log_prob = distribution.log_prob(actions)
         values = self.value_net(latent_vf)
@@ -364,8 +423,9 @@ class ActorCriticNLMPolicy(BasePolicy):
         :param obs:
         :return: the action distribution.
         """
-        features = super().extract_features(obs, self.pi_features_extractor)
+        features = self.extract_features(obs)
         latent_pi = self.mlp_extractor.forward_actor(features)
+        latent_pi = latent_pi[:, 0]
         return self._get_action_dist_from_latent(latent_pi)
 
     def predict_values(self, obs: PyTorchObs) -> th.Tensor:
@@ -375,6 +435,7 @@ class ActorCriticNLMPolicy(BasePolicy):
         :param obs: Observation
         :return: the estimated values.
         """
-        features = super().extract_features(obs, self.vf_features_extractor)
+        features = self.extract_features(obs)
         latent_vf = self.mlp_extractor.forward_critic(features)
+        latent_vf = latent_vf[:, 0]
         return self.value_net(latent_vf)

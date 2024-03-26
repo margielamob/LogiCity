@@ -13,12 +13,12 @@ from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 
-SelfNLMRL = TypeVar("SelfNLMRL", bound="NLMRL")
+SelfNLMPPO = TypeVar("SelfNLMPPO", bound="NLMPPO")
 
 
-class NLMRL(OnPolicyAlgorithm):
+class NLMPPO(OnPolicyAlgorithm):
     policy_aliases: ClassVar[Dict[str, Type[BasePolicy]]] = {
-        "NLMPolicy": ActorCriticNLMPolicy,
+        "NLMPolicy": ActorCriticNLMPolicy
     }
 
     def __init__(
@@ -249,14 +249,14 @@ class NLMRL(OnPolicyAlgorithm):
 
 
     def learn(
-        self: SelfNLMRL,
+        self: SelfNLMPPO,
         total_timesteps: int,
         callback: MaybeCallback = None,
         log_interval: int = 1,
         tb_log_name: str = "PPO",
         reset_num_timesteps: bool = True,
         progress_bar: bool = False,
-    ) -> SelfNLMRL:
+    ) -> SelfNLMPPO:
         return super().learn(
             total_timesteps=total_timesteps,
             callback=callback,

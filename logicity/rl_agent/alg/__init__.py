@@ -8,11 +8,11 @@ from .random import Random
 # NS RL
 # from .nudge import NUDGE
 # from .nsrl import NSRL
-from .nlm_rl import NLMRL
+from .nlmppo import NLMPPO
 # Expert data
 from .expert import ExpertCollector
 from .bc import BehavioralCloning
 from .hri import HRI
-from .nlm import NLM
+from .nlmbc import NLM
 # from .loa import LOA
 # from .ailp import aILP
