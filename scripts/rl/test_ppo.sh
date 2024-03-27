@@ -1,7 +1,7 @@
 # Description: Test RL agent
 # /bin/bash
-CONFIG=config/tasks/Nav/hardium/algo/ppo_test.yaml
+CONFIG=config/tasks/Nav/easy_med/algo/ppo_test.yaml
 python3 main.py --config $CONFIG \
-    --exp med_ppo \
+    --exp easymed_ppo \
     --log_dir log_rl \
     --use_gym
