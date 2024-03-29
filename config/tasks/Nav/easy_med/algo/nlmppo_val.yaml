@@ -1,19 +1,19 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/easy_med/test.yaml" # Agents in the simulation
+  agent_yaml_file: "config/agents/easy_med/val.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
   rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
   rule_yaml_file: "config/rules/Nav/easy_med/test.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
-  agent_region: 140
+  agent_region: 100
   rl_agent: 
-    max_priority: 13
+    max_priority: 8
     use_expert: false
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
-    max_horizon: 500                          # Maximum steps in each episode 
+    max_horizon: 400                          # Maximum steps in each episode 
     action_space: 4                       # Number of discrete actions, 4 means slow/normal/fast/stop
     action_mapping:                       # Mapping from policy action index to actual action space, see /agent folder
       0: [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -77,6 +77,6 @@ stable_baselines:
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/easy_med_pponlm_20000_steps.zip"           # Path to a checkpoint to restore the model from
+  checkpoint_path: ""           # Path to a checkpoint to restore the model from
   num_envs: 1                  # Number of environments to run in parallel
-  episode_data: "dataset/easy_med/test_100_episodes.pkl"
+  episode_data: "dataset/easy_med/val_40_episodes.pkl"

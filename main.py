@@ -1,5 +1,5 @@
 import os
-import sys
+import copy
 import time
 import yaml
 import torch
@@ -30,8 +30,8 @@ def parse_arguments():
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/nlmppo.yaml', help='Configure file for this RL exp.')
-    parser.add_argument('--checkpoint_path', default=None, help='Path to the trained model.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy_med/algo/nlmppo_test.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--checkpoint_path', default="checkpoints/easy_med_pponlm_20000_steps.zip", help='Path to the trained model.')
 
     return parser.parse_args()
 
@@ -208,14 +208,17 @@ def main_gym(args, logger):
                 # expert and random agent do not need a policy network
                 model = algorithm_class(eval_env)
             elif rl_config["algorithm"] in ["HRI", "NLM"]:
+                # HRI and NLM are trained w/ ext code, just load the network
                 model = algorithm_class(rl_config["policy_network"], \
                                         eval_env, \
                                         **hyperparameters, \
                                         policy_kwargs=policy_kwargs)
                 model.load(rl_config["checkpoint_path"])
             else:
+                # SB3-based agents
+                policy_kwargs_use = copy.deepcopy(policy_kwargs)
                 model = algorithm_class.load(rl_config["checkpoint_path"], \
-                                    eval_env)
+                                    eval_env, policy_kwargs=policy_kwargs_use)
             logger.info("Loaded model from {}".format(rl_config["checkpoint_path"]))
             o = eval_env.init()
             rew = 0    
