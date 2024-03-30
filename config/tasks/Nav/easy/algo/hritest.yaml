@@ -22,25 +22,33 @@ simulation:
       3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     fov_entities:
       Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
+    action_cost:
+      0: -2
+      1: -1
+      2: 0
+      3: -3
 
 # Stable Baselines specific settings
 stable_baselines:
   algorithm: "HRI"
   policy_network: "HriPolicy"
   policy_kwargs:
-    num_background: 13 
-    num_features: 34
-    max_depth: 3
-    tgt_arity: 1
-    predicates_labels: ['CollidingClose', 'Fast', 'HigherPri', 'IsAmbulance', 'IsAtInter', 'IsCar', 'IsClose', 'IsInInter', 'IsOld', 'IsPedestrian', 'IsTiro', 'Stop', 'ident']
+    Stop:
+      num_background: 14 
+      num_features: 34
+      max_depth: 3
+      tgt_arity: 1
+      predicates_labels: ['CollidingClose', 'Fast', 'HigherPri', 'IsAmbulance', 'IsAtInter', 'IsCar', 'IsClose', 'IsInInter', 'IsOld', 'IsPedestrian', 'IsTiro', 'Stop', 'ident', 'sees']
   hyperparameters:
-    tgt_action: 'Stop'
+    tgt_action: ['Stop']
     default_action: 'Fast'
     threshold: 0.5
     action2idx: {'Slow': 0, 'Normal': 1, 'Fast': 2, 'Stop': 3}
-    pred2ind: {'CollidingClose': 0, 'Fast': 1, 'HigherPri': 2, 'IsAmbulance': 3, 'IsAtInter': 4, 'IsCar': 5, 'IsClose': 6, 'IsInInter': 7, 'IsOld': 8, 'IsPedestrian': 9, 'IsTiro': 10, 'Stop': 11, 'ident': 12}
-    if_un_pred: [False, True, False, True, True, True, False, True, True, True, True, True, False]
+    pred2ind: 
+      Stop: {'CollidingClose': 0, 'Fast': 1, 'HigherPri': 2, 'IsAmbulance': 3, 'IsAtInter': 4, 'IsCar': 5, 'IsClose': 6, 'IsInInter': 7, 'IsOld': 8, 'IsPedestrian': 9, 'IsTiro': 10, 'Stop': 11, 'ident': 12, 'sees': 13}
+    if_un_pred: 
+      Stop: [False, True, False, True, True, True, False, True, True, True, True, True, False, False]
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/final_models/easy/easy_hri50.pth"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/final_models/easy/hri"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   episode_data: "dataset/easy/test_100_episodes.pkl"

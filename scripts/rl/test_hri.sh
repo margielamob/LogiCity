@@ -1,7 +1,11 @@
 # Description: Test RL agent
 # /bin/bash
-CONFIG=config/tasks/Nav/hardium/algo/hritest_50.yaml
-python3 main.py --config $CONFIG \
-    --exp med_hri \
+python3 main.py --config config/tasks/Nav/easy/algo/hritest.yaml \
+    --exp easy_hri \
+    --log_dir log_rl \
+    --use_gym
+
+python3 main.py --config config/tasks/Nav/easy_med/algo/hritest.yaml \
+    --exp easymed_hri \
     --log_dir log_rl \
     --use_gym

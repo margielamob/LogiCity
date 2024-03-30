@@ -52,12 +52,27 @@ class HRI():
                 if np.sum(original) > 0:
                     bip_arr_ls.append(torch.tensor(original).reshape(self.num_ents, self.num_ents))
                     bip_name_ls.append(k)
+        # adding a "sees" predicate
+        see_tensor = torch.zeros(self.num_ents, self.num_ents).to(torch.float32)
+        see_tensor[0, 1:] = 1.0
+        bip_arr_ls.append(see_tensor)
+        bip_name_ls.append("sees")
         valuation_init = {}
         pred_ind_ls = {}
         for action in self.tgt_action:
-            unp_ind_ls = [self.pred2ind[action][pn] for pn in unp_name_ls]
-            bip_ind_ls = [self.pred2ind[action][pn] for pn in bip_name_ls]
-            valuation_init[action] = [Variable(arr) for arr in unp_arr_ls] + [Variable(arr) for arr in bip_arr_ls]
+            unp_ind_ls = []
+            bip_ind_ls = []
+            arr_u = []
+            arr_b = []
+            for id, pn in enumerate(unp_name_ls):
+                if pn in self.pred2ind[action]:
+                    unp_ind_ls.append(self.pred2ind[action][pn])
+                    arr_u.append(Variable(unp_arr_ls[id]))
+            for id, pn in enumerate(bip_name_ls):
+                if pn in self.pred2ind[action]:
+                    bip_ind_ls.append(self.pred2ind[action][pn])
+                    arr_b.append(Variable(bip_arr_ls[id]))
+            valuation_init[action] = arr_u + arr_b
             pred_ind_ls[action] = unp_ind_ls + bip_ind_ls
         return valuation_init, pred_ind_ls, self.num_ents
     
