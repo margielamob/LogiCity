@@ -30,8 +30,8 @@ def parse_arguments():
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy_med/algo/nlmppo_test.yaml', help='Configure file for this RL exp.')
-    parser.add_argument('--checkpoint_path', default="checkpoints/easy_med_pponlm_20000_steps.zip", help='Path to the trained model.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/dqntest.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--checkpoint_path', default="", help='Path to the trained model.')
 
     return parser.parse_args()
 
@@ -190,6 +190,8 @@ def main_gym(args, logger):
         # Checkpoint evaluation
         rew_list = []
         success = []
+        decision_step = 0
+        succ_decision = 0
         vis_id = [] if "vis_id" not in rl_config else rl_config["vis_id"]
         worlds = {ts: None for ts in vis_id}
         # over write the checkpoint path if not none
