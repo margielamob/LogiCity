@@ -1,5 +1,5 @@
 import os
-import sys
+import copy
 import time
 import yaml
 import torch
@@ -22,7 +22,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="debug_nlmppo")
+    parser.add_argument('--exp', type=str, default="easymed_expert_test")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
     parser.add_argument('--seed', type=int, default=0)
@@ -30,7 +30,7 @@ def parse_arguments():
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/nlmppo.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy_med/experts/expert_test.yaml', help='Configure file for this RL exp.')
     parser.add_argument('--checkpoint_path', default=None, help='Path to the trained model.')
 
     return parser.parse_args()
@@ -208,14 +208,17 @@ def main_gym(args, logger):
                 # expert and random agent do not need a policy network
                 model = algorithm_class(eval_env)
             elif rl_config["algorithm"] in ["HRI", "NLM"]:
+                # HRI and NLM are trained w/ ext code, just load the network
                 model = algorithm_class(rl_config["policy_network"], \
                                         eval_env, \
                                         **hyperparameters, \
                                         policy_kwargs=policy_kwargs)
                 model.load(rl_config["checkpoint_path"])
             else:
+                # SB3-based agents
+                policy_kwargs_use = copy.deepcopy(policy_kwargs)
                 model = algorithm_class.load(rl_config["checkpoint_path"], \
-                                    eval_env)
+                                    eval_env, policy_kwargs=policy_kwargs_use)
             logger.info("Loaded model from {}".format(rl_config["checkpoint_path"]))
             o = eval_env.init()
             rew = 0    
