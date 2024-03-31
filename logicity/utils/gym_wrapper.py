@@ -29,8 +29,7 @@ class GymCityWrapper(gym.core.Env):
         self.observation_space = Box(low=0.0, high=1.0, shape=(self.logic_grounding_shape, ), dtype=np.float32)
         self.last_dist = -1
         self.agent_name = env.rl_agent["agent_name"]
-        self.max_horizon = env.rl_agent["max_horizon"]
-        self.horizon = self.max_horizon
+        self.horizon = env.rl_agent["max_horizon"]
         self.agent_type = self.agent_name.split("_")[0]
         agent_id = self.agent_name.split("_")[1] # this is agent id in the yaml file
         self.use_expert = env.rl_agent["use_expert"]
@@ -76,10 +75,11 @@ class GymCityWrapper(gym.core.Env):
         :return: the reward
         '''
         if obs_dict["Fail"][0]:
+            # failing step do not normailze the reward
             return obs_dict["Reward"][0]
         else:
             moving_cost = self.action2cost(obs_dict["Agent_actions"][0])
-            return (moving_cost + obs_dict["Reward"][0])/self.horizon
+            return (moving_cost + obs_dict["Reward"][0])/self.path_length
     
     def action2cost(self, action):
         ''' Convert the action to cost.
@@ -107,7 +107,7 @@ class GymCityWrapper(gym.core.Env):
         self.agent.reset_concepts(self.max_priority, self.reset_dist)
         logger.info("Agent reset priority to {}/{}".format(self.agent.priority, self.max_priority))
         logger.info("Agent reset concepts to {}".format(self.agent.concepts))
-        self.horizon = max(self.max_horizon, len(self.agent.global_traj)*4)
+        self.path_length = len(self.agent.global_traj)*4
         agent_code = self.type2label[self.agent_type]
         self.env.local_planner.reset()
         # draw agent
@@ -140,7 +140,7 @@ class GymCityWrapper(gym.core.Env):
         # init does not reset the agent
         logger.info("***Init RL Agent in Env***")
         self.t = 0
-        self.horizon = max(self.max_horizon, len(self.agent.global_traj)*4)
+        self.path_length = len(self.agent.global_traj)*4
         self.env.local_planner.reset()
         ob_dict = self.env.update(self.agent_layer_id)
         if self.use_expert:

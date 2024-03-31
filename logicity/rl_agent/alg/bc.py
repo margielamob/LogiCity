@@ -233,7 +233,6 @@ class BehavioralCloning(ABC):
         model = cls(
             policy=data["policy_class"],
             env=env,
-            policy_kwargs=data["policy_kwargs"],
             num_traj=data["num_traj"],
             expert_demonstrations=data["expert_demonstrations"],
             optimizer=data["optimizer_config"],
