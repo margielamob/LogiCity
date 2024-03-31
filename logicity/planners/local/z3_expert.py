@@ -505,5 +505,6 @@ def eval_action(rl_action,
                 fail = True
             reward += local_rule_tem[rule_name]["reward"]
 
-    assert not fail, "Expert never obeys rules"
+    # When really use the expert policy, enable this checking
+    # assert not fail, "Expert never obeys rules"
     return fail, reward

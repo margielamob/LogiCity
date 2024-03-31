@@ -22,7 +22,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="debug_nlmppo_20000")
+    parser.add_argument('--exp', type=str, default="debug_new_metric")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
     parser.add_argument('--seed', type=int, default=0)
@@ -30,8 +30,8 @@ def parse_arguments():
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/dqntest.yaml', help='Configure file for this RL exp.')
-    parser.add_argument('--checkpoint_path', default="", help='Path to the trained model.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy_med/algo/dqn_test.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--checkpoint_path', default=None, help='Path to the trained model.')
 
     return parser.parse_args()
 
@@ -183,6 +183,8 @@ def main_gym(args, logger):
     else:
         assert os.path.isfile(rl_config["episode_data"])
         logger.info("Testing the trained model on episode data {}".format(rl_config["episode_data"]))
+        assert "eval_actions" in rl_config
+        logger.info("Evaluating the model with actions/id: {}".format(rl_config["eval_actions"]))
         # RL testing mode
         with open(rl_config["episode_data"], "rb") as f:
             episode_data = pkl.load(f)
@@ -190,8 +192,11 @@ def main_gym(args, logger):
         # Checkpoint evaluation
         rew_list = []
         success = []
-        decision_step = 0
-        succ_decision = 0
+        decision_step = {}
+        succ_decision = {}
+        for action, id in rl_config["eval_actions"].items():
+            decision_step[id] = 0
+            succ_decision[id] = 0
         vis_id = [] if "vis_id" not in rl_config else rl_config["vis_id"]
         worlds = {ts: None for ts in vis_id}
         # over write the checkpoint path if not none
@@ -225,10 +230,21 @@ def main_gym(args, logger):
             o = eval_env.init()
             rew = 0    
             step = 0   
+            local_decision_step = {}
+            local_succ_decision = {}
+            for acc, id in rl_config["eval_actions"].items():
+                local_decision_step[id] = 0
+                local_succ_decision[id] = 0
             d = False
             while not d:
                 step += 1
+                oracle_action = eval_env.expert_action
                 action, _ = model.predict(o, deterministic=True)
+                # save step_wise decision succ
+                if oracle_action in local_decision_step.keys():
+                    local_decision_step[oracle_action] += 1
+                    if int(action) == oracle_action:
+                        local_succ_decision[oracle_action] += 1
                 o, r, d, i = eval_env.step(int(action))
                 if ts in vis_id:
                     cached_observation["Time_Obs"][step] = i
@@ -240,19 +256,39 @@ def main_gym(args, logger):
                 success.append(1)
             else:
                 success.append(0)
+            for acc, id in rl_config["eval_actions"].items():
+                decision_step[id] += local_decision_step[id]
+                succ_decision[id] += local_succ_decision[id]
             rew_list.append(rew)
             logger.info("Episode {} achieved a score of {}".format(ts, rew))
             logger.info("Episode {} Success: {}".format(ts, success[-1]))
+            logger.info("Episode {} Decision Step: {}".format(ts, local_decision_step))
+            logger.info("Episode {} Success Decision: {}".format(ts, local_succ_decision))
             if ts in worlds.keys():
                 worlds[ts] = cached_observation
         mean_reward = np.mean(rew_list)
         sr = np.mean(success)
+        mSuccD, aSuccD, SuccDAct = cal_step_metric(decision_step, succ_decision)
         logger.info("Mean Score achieved: {}".format(mean_reward))
         logger.info("Success Rate: {}".format(sr))
+        logger.info("Mean Decision Succ: {}".format(mSuccD))
+        logger.info("Average Decision Succ: {}".format(aSuccD))
+        logger.info("Decision Succ for each action: {}".format(SuccDAct))
         for ts in worlds.keys():
             if worlds[ts] is not None:
                 with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
                     pkl.dump(worlds[ts], f)
+
+
+def cal_step_metric(decision_step, succ_decision):
+    mean_decision_succ = {}
+    total_decision = sum(decision_step.values())
+    total_succ = sum(succ_decision.values())
+    for action, num in decision_step.items():
+        mean_decision_succ[action] = succ_decision[action]/num
+    average_decision_succ = sum(mean_decision_succ.values())/len(mean_decision_succ)
+    # mean decision succ (over all steps), average decision succ (over all actions), decision succ for each action
+    return total_succ/total_decision, average_decision_succ, mean_decision_succ
 
 if __name__ == '__main__':
     args = parse_arguments()
