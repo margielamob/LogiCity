@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class HRI():
     def __init__(self, policy, env, tgt_action, default_action, \
                  threshold, action2idx, pred2ind, if_un_pred, \
-                 policy_kwargs, device="cuda:0"):
+                 policy_kwargs, device="cuda:0", symbolic_eval=False):
         self.tgt_action = tgt_action
         self.default_action = default_action
         self.action2idx = action2idx
@@ -21,6 +21,7 @@ class HRI():
         self.policy_class = policy
         self.policy_kwargs = policy_kwargs
         self.device = device
+        self.symbolic_eval = symbolic_eval
         self.predicates_labels = {}
         self.policy_dict = {}
         self.pred2ind = {}

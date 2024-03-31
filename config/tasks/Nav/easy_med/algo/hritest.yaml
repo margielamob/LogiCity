@@ -34,20 +34,21 @@ stable_baselines:
   policy_network: "HriPolicy"
   policy_kwargs:
     Stop:
-      num_background: 18
+      num_background: 17
       num_features: 34
-      max_depth: 6
+      max_depth: 4
       tgt_arity: 1
-      predicates_labels: ['CollidingClose', 'HigherPri', 'IsAmbulance', 'IsAtInter', 'IsBus', 'IsCar', 'IsClose', 'IsInInter', 'IsOld', 'IsPedestrian', 'IsPolice', 'LeftOf', 'NextTo', 'Normal', 'RightOf', 'Stop', 'ident', 'sees']
+      predicates_labels: ['CollidingClose', 'HigherPri', 'IsAmbulance', 'IsAtInter', 'IsBus', 'IsCar', 'IsClose', 'IsInInter', 'IsOld', 'IsPedestrian', 'IsPolice', 'LeftOf', 'NextTo', 'Normal', 'RightOf', 'Stop', 'ident']
   hyperparameters:
+    symbolic_eval: true # Whether to use symbolic evaluation, determined by the eva acc
     tgt_action: ['Stop']
     default_action: 'Normal'
     threshold: 0.5
     action2idx: {'Slow': 0, 'Normal': 1, 'Fast': 2, 'Stop': 3}
     pred2ind: 
-      Stop: {'CollidingClose': 0, 'HigherPri': 1, 'IsAmbulance': 2, 'IsAtInter': 3, 'IsBus': 4, 'IsCar': 5, 'IsClose': 6, 'IsInInter': 7, 'IsOld': 8, 'IsPedestrian': 9, 'IsPolice': 10, 'LeftOf': 11, 'NextTo': 12, 'Normal': 13, 'RightOf': 14, 'Stop': 15, 'ident': 16, 'sees': 17}
+      Stop: {'CollidingClose': 0, 'HigherPri': 1, 'IsAmbulance': 2, 'IsAtInter': 3, 'IsBus': 4, 'IsCar': 5, 'IsClose': 6, 'IsInInter': 7, 'IsOld': 8, 'IsPedestrian': 9, 'IsPolice': 10, 'LeftOf': 11, 'NextTo': 12, 'Normal': 13, 'RightOf': 14, 'Stop': 15, 'ident': 16}
     if_un_pred: 
-      Stop: [False, False, True, True, True, True, False, True, True, True, True, False, False, True, False, True, False, False]
+      Stop: [False, False, True, True, True, True, False, True, True, True, True, False, False, True, False, True, False]
   train: false                   # Whether to train the model
   checkpoint_path: "checkpoints/final_models/easy_med/hri"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel

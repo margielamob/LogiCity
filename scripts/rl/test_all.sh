@@ -1,38 +1,43 @@
-for n in 100
+MODE=easy_med
+
+python3 main.py --config config/tasks/Nav/easy_med/algo/random_test.yaml \
+    --exp random_${MODE} \
+    --log_dir log_rl \
+    --use_gym
+
+python3 main.py --config config/tasks/Nav/easy_med/experts/expert_test.yaml \
+    --exp oracle_${MODE} \
+    --log_dir log_rl \
+    --use_gym
+
+for n in 50 100
 do
-CONFIG=config/tasks/Nav/hardium/algo/bc_${n}_test.yaml
-python3 main.py --config $CONFIG \
-    --exp bc_${n}_test2 \
+python3 main.py --config config/tasks/Nav/${MODE}/algo/bc_test.yaml \
+    --exp bc_${n}_${MODE} \
+    --checkpoint_path checkpoints/final_models/easy_med/bc${n}.zip \
     --log_dir log_rl \
     --use_gym
 done
 
-# python3 main.py --config config/tasks/Nav/hardium/algo/dqn_test.yaml \
-#     --exp dqn_test \
-#     --log_dir log_rl \
-#     --use_gym
+python3 main.py --config config/tasks/Nav/${MODE}/algo/dqn_test.yaml \
+    --exp dqn_${MODE} \
+    --checkpoint_path checkpoints/final_models/easy_med/dqn_140k.zip \
+    --log_dir log_rl \
+    --use_gym
 
-# python3 main.py --config config/tasks/Nav/hardium/algo/ppo_test.yaml \
-#     --exp ppo_test \
-#     --log_dir log_rl \
-#     --use_gym
+python3 main.py --config config/tasks/Nav/${MODE}/algo/a2c_test.yaml \
+    --exp a2c_${MODE} \
+    --checkpoint_path checkpoints/final_models/easy_med/a2c_140k.zip \
+    --log_dir log_rl \
+    --use_gym
 
-# python3 main.py --config config/tasks/Nav/hardium/algo/a2c_test.yaml \
-#     --exp a2c_test \
-#     --log_dir log_rl \
-#     --use_gym
+python3 main.py --config config/tasks/Nav/${MODE}/algo/ppo_test.yaml \
+    --exp ppo_${MODE} \
+    --checkpoint_path checkpoints/final_models/easy_med/ppo_60k.zip \
+    --log_dir log_rl \
+    --use_gym
 
-# python3 main.py --config config/tasks/Nav/hardium/algo/hritest_50.yaml \
-#     --exp hri_test \
-#     --log_dir log_rl \
-#     --use_gym
-
-# python3 main.py --config config/tasks/Nav/hardium/algo/random_test.yaml \
-#     --exp random_test \
-#     --log_dir log_rl \
-#     --use_gym
-
-# python3 main.py --config config/tasks/Nav/hardium/experts/expert_test.yaml \
-#     --exp oracle_test \
-#     --log_dir log_rl \
-#     --use_gym
+python3 main.py --config config/tasks/Nav/${MODE}/algo/hritest.yaml \
+    --exp hri_${MODE} \
+    --log_dir log_rl \
+    --use_gym
