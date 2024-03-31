@@ -55,9 +55,19 @@ class HRI():
         valuation_init = {}
         pred_ind_ls = {}
         for action in self.tgt_action:
-            unp_ind_ls = [self.pred2ind[action][pn] for pn in unp_name_ls]
-            bip_ind_ls = [self.pred2ind[action][pn] for pn in bip_name_ls]
-            valuation_init[action] = [Variable(arr) for arr in unp_arr_ls] + [Variable(arr) for arr in bip_arr_ls]
+            unp_ind_ls = []
+            bip_ind_ls = []
+            var_unp_arr_ls = []
+            var_bip_arr_ls = []
+            for idx, pn in enumerate(unp_name_ls):
+                if pn in self.pred2ind[action]:
+                    unp_ind_ls.append(self.pred2ind[action][pn])
+                    var_unp_arr_ls.append(Variable(unp_arr_ls[idx]))
+            for idx, pn in enumerate(bip_name_ls):
+                if pn in self.pred2ind[action]:
+                    bip_ind_ls.append(self.pred2ind[action][pn])
+                    var_bip_arr_ls.append(Variable(bip_arr_ls[idx]))
+            valuation_init[action] = var_unp_arr_ls + var_bip_arr_ls
             pred_ind_ls[action] = unp_ind_ls + bip_ind_ls
         return valuation_init, pred_ind_ls, self.num_ents
     
