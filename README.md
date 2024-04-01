@@ -96,9 +96,9 @@ Easy: Only stop is constrained, few predicates matter
 
 Med-easy: Only stop is constrained, more predicates matter
 
-Med-hard: both stop and slow is constrained, few predicates matter
+Med-expert: both stop and slow is constrained, few predicates matter
 
-hard: both stop and slow is constrained, more predicates matter
+expert: both stop and slow is constrained, more predicates matter
 
 - Navigation steps:
 

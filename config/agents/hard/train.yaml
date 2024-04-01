@@ -7,7 +7,6 @@ agents:
   concepts:
     type: Car
     priority: 1
-    ambulance: 1.0
     
 - class: Pedestrian
   id: 1
@@ -16,7 +15,6 @@ agents:
   concepts:
     type: Pedestrian
     priority: 0
-    young: 1.0
 
 - class: Pedestrian
   id: 2
@@ -25,19 +23,10 @@ agents:
   concepts:
     type: Pedestrian
     priority: 0
-    young: 1.0
-
-- class: Pedestrian
-  id: 3
-  size: 1
-  gplanner: A*
-  concepts:
-    type: Pedestrian
-    priority: 0
     old: 1.0
 
 - class: Pedestrian
-  id: 4
+  id: 3
   size: 1
   gplanner: A*
   concepts:
@@ -67,8 +56,8 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
-    reckless: 1.0
-    priority: 4
+    police: 1.0
+    priority: 6
 
 - class: Private_car
   id: 5
@@ -76,8 +65,8 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
-    tiro: 1.0
-    priority: 5
+    priority: 1
+    ambulance: 1.0
 
 - class: Private_car
   id: 6
@@ -85,8 +74,8 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
-    police: 1.0
-    priority: 6
+    priority: 1
+    ambulance: 1.0
 
 - class: Private_car
   id: 7
@@ -94,5 +83,5 @@ agents:
   gplanner: A*vg
   concepts:
     type: Car
-    priority: 1
-    ambulance: 1.0
+    police: 1.0
+    priority: 6

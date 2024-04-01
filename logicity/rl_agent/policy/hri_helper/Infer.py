@@ -240,7 +240,7 @@ def infer_one_step_vectorise(model, valuation, num_constants, unifs, unifs_duo, 
         if model.args.with_permutation:
             permute_masks = [p.cuda() for p in permute_masks]
 
-    # NOTE: these masks may be hard or soft (if learn permutation in progressive models)
+    # NOTE: these masks may be expert or soft (if learn permutation in progressive models)
     if model.args.with_permutation:
         # mask: if permute (or not) first body in rule
         mask_permute_1 = permute_masks[0].unsqueeze(1).unsqueeze(1).unsqueeze(

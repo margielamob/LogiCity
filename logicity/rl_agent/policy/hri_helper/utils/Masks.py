@@ -58,7 +58,7 @@ def update_permutation_masks(model, num_rules_no_tgt=0):
     #         #rules for which will need permute second body:
     #         model.mask_rule_permute_body2 = nn.Sigmoid()(model.permutation_parameters.squeeze()[:-1]) * torch.tensor([(model.rules_str[r] in ["B+"]) for r in range(num_rules_no_tgt)]).float()
     #     elif model.args.with_permutation:#here do not learn the coefficients model.permutation_parameters but still exist
-    #         #NOTE: Here HARD MASK
+    #         #NOTE: Here expert MASK
     #         #Or with torch.round?
     #         permutation_mask=(model.permutation_parameters.squeeze()[:-1]>=0)
     #         model.mask_rule_permute_body1 = permutation_mask.float() * torch.tensor([(model.rules_str[r] in ["A+"]) for r in range(num_rules_no_tgt)]).float()

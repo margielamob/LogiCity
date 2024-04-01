@@ -22,7 +22,7 @@ Rules:
     - name: Collision and Intersection
       description: should not collide.
       dead: true
-      reward: -5
+      reward: -10
       formula: |
         Implies(Exists(
           [dummyEntity], 
@@ -64,11 +64,11 @@ Rules:
       description: Never take slow action.
       formula: |
         Not(Slow(entity))
-    - name: Normal
-      description: Never take Normal action.
-      formula: |
-        Not(Normal(entity))
     - name: Fast
-      description: If not stop, then fast.
+      description: Never take Fast action.
       formula: |
-        Fast(entity) == Not(Stop(entity))
+        Not(Fast(entity))
+    - name: Normal
+      description: If not stop, then normal.
+      formula: |
+        Normal(entity) == Not(Stop(entity))

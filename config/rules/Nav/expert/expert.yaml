@@ -1,0 +1,350 @@
+Rules:
+  Sim: # how the determinist agents move
+    - name: Stop
+      formula: |
+        Stop(entity) == Exists(
+          [dummyEntityA, dummyEntityB], 
+          Or(
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              IsAtInter(entity), 
+              IsInInter(dummyEntityA), 
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              IsAtInter(entity), 
+              IsAtInter(dummyEntityA), 
+              HigherPri(dummyEntityA, entity),
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              IsInInter(entity), 
+              IsInInter(dummyEntityA), 
+              IsAmbulance(dummyEntityA)
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsPolice(entity)), 
+              IsCar(entity),
+              Not(IsInInter(entity)),
+              Not(IsAtInter(entity)),
+              LeftOf(dummyEntityA, entity), 
+              IsClose(dummyEntityA, entity),
+              IsPolice(dummyEntityA)
+            ),
+            And(
+              IsBus(entity),
+              Not(IsInInter(entity)),
+              Not(IsAtInter(entity)),
+              RightOf(dummyEntityA, entity), 
+              NextTo(dummyEntityA, entity),
+              IsPedestrian(dummyEntityA)
+            ),
+            And(
+              IsAmbulance(entity), 
+              RightOf(dummyEntityA, entity), 
+              IsOld(dummyEntityA)
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              CollidingClose(entity, dummyEntityA)
+            )
+          )
+        )
+      description: Medium stop rule.
+    - name: Slow
+      formula: |
+        Slow(entity) == Exists(
+          [dummyEntityA, dummyEntityB], 
+          Or(
+            And(
+              Not(Stop(entity)), 
+              IsTiro(entity), 
+              IsPedestrian(dummyEntityA), 
+              IsClose(entity, dummyEntityA)
+            ),
+            And(
+              Not(Stop(entity)), 
+              IsTiro(entity), 
+              IsInInter(entity),
+              IsAtInter(dummyEntityA)
+            ),
+            And(
+              Not(Stop(entity)), 
+              IsPolice(entity),
+              IsYoung(dummyEntityA),
+              IsYoung(dummyEntityB),
+              NextTo(dummyEntityA, dummyEntityB)
+            )
+          )
+        )
+      description: Combined Or version of the Slow rules for vehicles.
+    - name: Fast
+      formula: |
+        Fast(entity) == Exists(
+          [dummyEntityA, dummyEntityB], 
+          Or(
+            And(
+              Not(Stop(entity)), 
+              Not(Slow(entity)),
+              IsReckless(entity), 
+              IsAtInter(dummyEntityA), 
+            ),
+            And(
+              Not(Stop(entity)), 
+              Not(Slow(entity)),
+              IsBus(entity),
+            ),
+            And(
+              Not(Stop(entity)), 
+              Not(Slow(entity)),
+              IsPolice(entity),
+              IsReckless(dummyEntityA)
+            )
+          )
+        )
+      description: Combined Or version of the Fast rules for vehicles.
+  Task: # how the reward/score is calculated
+    - name: Stop
+      description: should stop.
+      reward: -5 # reward for violating the rule, dead game over
+      dead: true
+      formula: |
+        Implies(Exists(
+          [dummyEntityA, dummyEntityB], 
+            Or(
+              And(
+                Not(IsAmbulance(entity)), 
+                Not(IsOld(entity)),
+                IsAtInter(entity), 
+                IsInInter(dummyEntityA), 
+              ),
+              And(
+                Not(IsAmbulance(entity)), 
+                Not(IsOld(entity)),
+                IsAtInter(entity), 
+                IsAtInter(dummyEntityA), 
+                HigherPri(dummyEntityA, entity),
+              ),
+              And(
+                Not(IsAmbulance(entity)), 
+                Not(IsOld(entity)),
+                IsInInter(entity), 
+                IsInInter(dummyEntityA), 
+                IsAmbulance(dummyEntityA)
+              ),
+              And(
+                Not(IsAmbulance(entity)), 
+                Not(IsPolice(entity)), 
+                IsCar(entity),
+                Not(IsInInter(entity)),
+                Not(IsAtInter(entity)),
+                LeftOf(dummyEntityA, entity), 
+                IsClose(dummyEntityA, entity),
+                IsPolice(dummyEntityA)
+              ),
+              And(
+                IsBus(entity),
+                Not(IsInInter(entity)),
+                Not(IsAtInter(entity)),
+                RightOf(dummyEntityA, entity), 
+                NextTo(dummyEntityA, entity),
+                IsPedestrian(dummyEntityA)
+              ),
+              And(
+                IsAmbulance(entity), 
+                RightOf(dummyEntityA, entity), 
+                IsOld(dummyEntityA)
+              ),
+              And(
+                Not(IsAmbulance(entity)), 
+                Not(IsOld(entity)),
+                CollidingClose(entity, dummyEntityA)
+              )
+            )
+          ),
+          Stop(entity)
+        )
+    - name: Slow
+      description: should slow.
+      reward: -5 # reward for following the rule, dead game over
+      dead: true
+      formula: |
+        Implies(Exists(
+          [dummyEntityA, dummyEntityB], 
+            Or(
+              And(
+                Not(Stop(entity)), 
+                IsTiro(entity), 
+                IsPedestrian(dummyEntityA), 
+                IsClose(entity, dummyEntityA)
+              ),
+              And(
+                Not(Stop(entity)), 
+                IsTiro(entity), 
+                IsInInter(entity),
+                IsAtInter(dummyEntityA)
+              ),
+              And(
+                Not(Stop(entity)), 
+                IsPolice(entity),
+                IsYoung(dummyEntityA),
+                IsYoung(dummyEntityB),
+                NextTo(dummyEntityA, dummyEntityB)
+              )
+            )
+          ),
+          Slow(entity)
+        )
+    - name: Fast
+      description: should fast.
+      reward: -5 # reward for violate the rule, dead game over
+      dead: true
+      formula: |
+        Implies(Exists(
+          [dummyEntityA, dummyEntityB], 
+            Or(
+              And(
+                Not(Stop(entity)), 
+                Not(Slow(entity)),
+                IsReckless(entity), 
+                IsAtInter(dummyEntityA), 
+              ),
+              And(
+                Not(Stop(entity)), 
+                Not(Slow(entity)),
+                IsBus(entity),
+              ),
+              And(
+                Not(Stop(entity)), 
+                Not(Slow(entity)),
+                IsPolice(entity),
+                IsReckless(dummyEntityA)
+              )
+            )
+          ),
+          Fast(entity)
+        )
+  Expert: # how the expert agents should move
+    - name: Stop
+      description: Medium stop rule.
+      formula: |
+        Stop(entity) == Exists(
+          [dummyEntityA, dummyEntityB], 
+          Or(
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              IsAtInter(entity), 
+              IsInInter(dummyEntityA), 
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              IsAtInter(entity), 
+              IsAtInter(dummyEntityA), 
+              HigherPri(dummyEntityA, entity),
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              IsInInter(entity), 
+              IsInInter(dummyEntityA), 
+              IsAmbulance(dummyEntityA)
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsPolice(entity)), 
+              IsCar(entity),
+              Not(IsInInter(entity)),
+              Not(IsAtInter(entity)),
+              LeftOf(dummyEntityA, entity), 
+              IsClose(dummyEntityA, entity),
+              IsPolice(dummyEntityA)
+            ),
+            And(
+              IsBus(entity),
+              Not(IsInInter(entity)),
+              Not(IsAtInter(entity)),
+              RightOf(dummyEntityA, entity), 
+              NextTo(dummyEntityA, entity),
+              IsPedestrian(dummyEntityA)
+            ),
+            And(
+              IsAmbulance(entity), 
+              RightOf(dummyEntityA, entity), 
+              IsOld(dummyEntityA)
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              CollidingClose(entity, dummyEntityA)
+            )
+          )
+        )
+    - name: Slow
+      description: Combined Or version of the Slow rules for vehicles.
+      formula: |
+        Slow(entity) == Exists(
+          [dummyEntityA, dummyEntityB], 
+          Or(
+            And(
+              Not(Stop(entity)), 
+              IsTiro(entity), 
+              IsPedestrian(dummyEntityA), 
+              IsClose(entity, dummyEntityA)
+            ),
+            And(
+              Not(Stop(entity)), 
+              IsTiro(entity), 
+              IsInInter(entity),
+              IsAtInter(dummyEntityA)
+            ),
+            And(
+              Not(Stop(entity)), 
+              IsPolice(entity),
+              IsYoung(dummyEntityA),
+              IsYoung(dummyEntityB),
+              NextTo(dummyEntityA, dummyEntityB)
+            )
+          )
+        )
+    - name: Fast
+      description: Combined Or version of the Fast rules for vehicles.
+      formula: |
+        Fast(entity) == Exists(
+          [dummyEntityA, dummyEntityB], 
+          Or(
+            And(
+              Not(Stop(entity)), 
+              Not(Slow(entity)), 
+              IsReckless(entity), 
+              IsAtInter(dummyEntityA), 
+            ),
+            And(
+              Not(Stop(entity)), 
+              Not(Slow(entity)),
+              IsBus(entity),
+            ),
+            And(
+              Not(Stop(entity)), 
+              Not(Slow(entity)),
+              IsPolice(entity),
+              IsReckless(dummyEntityA)
+            )
+          )
+        )
+    - name: Normal
+      description: Normal action is set as default.
+      formula: |
+        Normal(entity) == Not(
+          Or(
+          Slow(entity),
+          Fast(entity),
+          Stop(entity)
+          )
+        )

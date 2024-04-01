@@ -17,16 +17,16 @@ Predicates:
       method: IsAmb(Entity)
       function: logicity.utils.pred_converter.z3.IsAmb
       description: Checks if the agent has concept "ambulance".
-  - IsPolice:
-      arity: 1
-      method: IsPolice(Entity)
-      function: logicity.utils.pred_converter.z3.IsPolice
-      description: Checks if the agent has concept "police".
   - IsOld:
       arity: 1
       method: IsOld(Entity)
       function: logicity.utils.pred_converter.z3.IsOld
       description: Checks if the agent has concept "old".
+  - IsTiro:
+      arity: 1
+      method: IsTiro(Entity)
+      function: logicity.utils.pred_converter.z3.IsTiro
+      description: Checks if the agent has concept "tiro".
   - IsAtInter:
       arity: 1
       method: IsAtInter(Entity)

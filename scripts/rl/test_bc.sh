@@ -9,7 +9,7 @@ python3 main.py --config $CONFIG \
     --use_gym
 done
 
-# python3 main.py --config config/tasks/Nav/hardium/experts/expert_test.yaml \
+# python3 main.py --config config/tasks/Nav/expertium/experts/expert_test.yaml \
 #     --exp test_expert2 \
 #     --log_dir log_rl \
 #     --use_gym
