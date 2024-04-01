@@ -19,6 +19,15 @@ python3 main.py --config config/tasks/Nav/${MODE}/algo/bc_test.yaml \
     --use_gym
 done
 
+for n in 50 100
+do
+python3 main.py --config config/tasks/Nav/${MODE}/algo/nlm.yaml \
+    --exp nlmbc_${n}_${MODE} \
+    --checkpoint_path checkpoints/final_models/easy_med/nlmbc_${n}.pth \
+    --log_dir log_rl \
+    --use_gym
+done
+
 python3 main.py --config config/tasks/Nav/${MODE}/algo/dqn_test.yaml \
     --exp dqn_${MODE} \
     --checkpoint_path checkpoints/final_models/hard/dqn_140k.zip \
@@ -37,7 +46,7 @@ python3 main.py --config config/tasks/Nav/${MODE}/algo/ppo_test.yaml \
     --log_dir log_rl \
     --use_gym
 
-python3 main.py --config config/tasks/Nav/${MODE}/algo/hritest.yaml \
-    --exp hri_${MODE} \
-    --log_dir log_rl \
-    --use_gym
+# python3 main.py --config config/tasks/Nav/${MODE}/algo/hritest.yaml \
+#     --exp hri_${MODE} \
+#     --log_dir log_rl \
+#     --use_gym
