@@ -21,9 +21,9 @@ done
 
 for n in 50 100
 do
-python3 main.py --config config/tasks/Nav/${MODE}/algo/nlm.yaml \
+python3 main.py --config config/tasks/Nav/${MODE}/algo/nlm_test.yaml \
     --exp nlmbc_${n}_${MODE} \
-    --checkpoint_path checkpoints/final_models/easy_med/nlmbc_${n}.pth \
+    --checkpoint_path checkpoints/final_models/hard/nlmbc_${n}.pth \
     --log_dir log_rl \
     --use_gym
 done
@@ -46,7 +46,7 @@ python3 main.py --config config/tasks/Nav/${MODE}/algo/ppo_test.yaml \
     --log_dir log_rl \
     --use_gym
 
-# python3 main.py --config config/tasks/Nav/${MODE}/algo/hritest.yaml \
-#     --exp hri_${MODE} \
-#     --log_dir log_rl \
-#     --use_gym
+python3 main.py --config config/tasks/Nav/${MODE}/algo/hri_test.yaml \
+    --exp hri_${MODE} \
+    --log_dir log_rl \
+    --use_gym
