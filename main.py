@@ -234,17 +234,17 @@ def main_gym(args, logger):
             local_succ_decision = {}
             for acc, id in rl_config["eval_actions"].items():
                 local_decision_step[id] = 0
-                local_succ_decision[id] = 0
+                local_succ_decision[id] = 1
             d = False
             while not d:
                 step += 1
                 oracle_action = eval_env.expert_action
                 action, _ = model.predict(o, deterministic=True)
-                # save step_wise decision succ
+                # save step_wise decision succ per trajectory
                 if oracle_action in local_decision_step.keys():
-                    local_decision_step[oracle_action] += 1
-                    if int(action) == oracle_action:
-                        local_succ_decision[oracle_action] += 1
+                    local_decision_step[oracle_action] = 1
+                    if int(action) != oracle_action:
+                        local_succ_decision[oracle_action] = 0
                 o, r, d, i = eval_env.step(int(action))
                 if ts in vis_id:
                     cached_observation["Time_Obs"][step] = i
@@ -257,6 +257,8 @@ def main_gym(args, logger):
             else:
                 success.append(0)
             for acc, id in rl_config["eval_actions"].items():
+                if local_decision_step[id] == 0:
+                    local_succ_decision[id] = 0
                 decision_step[id] += local_decision_step[id]
                 succ_decision[id] += local_succ_decision[id]
             rew_list.append(rew)

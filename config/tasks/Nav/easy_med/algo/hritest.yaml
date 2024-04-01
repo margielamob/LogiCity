@@ -36,7 +36,7 @@ stable_baselines:
     Stop:
       num_background: 17
       num_features: 34
-      max_depth: 4
+      max_depth: 3
       tgt_arity: 1
       predicates_labels: ['CollidingClose', 'HigherPri', 'IsAmbulance', 'IsAtInter', 'IsBus', 'IsCar', 'IsClose', 'IsInInter', 'IsOld', 'IsPedestrian', 'IsPolice', 'LeftOf', 'NextTo', 'Normal', 'RightOf', 'Stop', 'ident']
   hyperparameters:
