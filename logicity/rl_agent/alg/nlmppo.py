@@ -20,7 +20,7 @@ SelfNLMPPO = TypeVar("SelfNLMPPO", bound="NLMPPO")
 
 class NLMPPO(OnPolicyAlgorithm):
     policy_aliases: ClassVar[Dict[str, Type[BasePolicy]]] = {
-        "NLMPolicy": ActorCriticNLMPolicy
+        "ActorCriticNLMPolicy": ActorCriticNLMPolicy
     }
 
     def __init__(

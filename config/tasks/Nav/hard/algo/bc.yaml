@@ -1,10 +1,10 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/easy_med/train.yaml" # Agents in the simulation
+  agent_yaml_file: "config/agents/hard/train.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
   rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/easy_med/test.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/hard/test.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
@@ -36,10 +36,10 @@ eval_checkpoint:
   save_freq: 800
   simulation_config:
     map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-    agent_yaml_file: "config/agents/easy_med/val.yaml" # Agents in the simulation
+    agent_yaml_file: "config/agents/hard/val.yaml" # Agents in the simulation
     ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
     rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-    rule_yaml_file: "config/rules/Nav/easy_med/test.yaml"                    # Whether to render the environment
+    rule_yaml_file: "config/rules/Nav/hard/test.yaml"                    # Whether to render the environment
     rl: true
     debug: false
     use_multi: false
@@ -63,8 +63,8 @@ eval_checkpoint:
         2: -2
         3: -5
   save_path: './checkpoints/'
-  name_prefix: 'easy_med_bc1000'
-  episode_data: "dataset/easy_med/val_40_episodes.pkl"
+  name_prefix: 'hard_bc1000'
+  episode_data: "dataset/hard/val_40_episodes.pkl"
 
 # Stable Baselines specific settings
 stable_baselines:
@@ -77,7 +77,7 @@ stable_baselines:
       features_dim: 128
   hyperparameters:
     num_traj: 1000
-    expert_demonstrations: "dataset/easy_med/train_1ktraj.pkl"
+    expert_demonstrations: "dataset/hard/train_1ktraj.pkl"
     optimizer: 
       type: "Adam"             # Optimizer to use
       args:

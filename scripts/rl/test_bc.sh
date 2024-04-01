@@ -2,7 +2,7 @@
 # conda activate logicity
 for n in 50 100 200 500 800 1000
 do
-CONFIG=config/tasks/Nav/easy_med/algo/bc${n}_test.yaml
+CONFIG=config/tasks/Nav/hard/algo/bc${n}_test.yaml
 python3 main.py --config $CONFIG \
     --exp test_bc_${n} \
     --log_dir log_rl \

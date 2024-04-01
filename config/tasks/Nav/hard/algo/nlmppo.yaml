@@ -1,10 +1,10 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/easy_med/train.yaml" # Agents in the simulation
-  ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
+  agent_yaml_file: "config/agents/hard/train.yaml" # Agents in the simulation
+  ontology_yaml_file: "config/rules/ontology_full.yaml" # Ontology of the simulation
   rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/easy_med/ppo.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/hard/ppo.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
@@ -37,10 +37,10 @@ eval_checkpoint:
   save_freq: 2000
   simulation_config:
     map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-    agent_yaml_file: "config/agents/easy_med/val.yaml" # Agents in the simulation
+    agent_yaml_file: "config/agents/hard/val.yaml" # Agents in the simulation
     ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
     rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-    rule_yaml_file: "config/rules/Nav/easy_med/test.yaml"                    # Whether to render the environment
+    rule_yaml_file: "config/rules/Nav/hard/test.yaml"                    # Whether to render the environment
     rl: true
     debug: false
     use_multi: false
@@ -64,15 +64,15 @@ eval_checkpoint:
         2: -2
         3: -5
   save_path: './checkpoints/'
-  name_prefix: 'easy_med_pponlm'
-  episode_data: "dataset/easy_med/val_40_episodes.pkl"
+  name_prefix: 'hard_pponlm'
+  episode_data: "dataset/hard/val_40_episodes.pkl"
 
 # Stable Baselines specific settings
 stable_baselines:
   algorithm: "NLMPPO"
-  policy_network: "NLMPolicy"
+  policy_network: "ActorCriticNLMPolicy"
   policy_kwargs:
-    features_extractor_module: "logicity.rl_agent.policy.nlm_rl" # Module path
+    features_extractor_module: "logicity.rl_agent.policy.nlm_ac" # Module path
     features_extractor_class: "NLM"
     features_extractor_kwargs:
       tgt_arity: 1 # determines the feature axis

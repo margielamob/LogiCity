@@ -3,7 +3,7 @@
 
 for k in 50 100 200 500 800 1000
 do
-python3 main.py --config config/tasks/Nav/easy_med/algo/bc_${k}.yaml \
+python3 main.py --config config/tasks/Nav/hard/algo/bc_${k}.yaml \
     --exp easymed_bc_${k} \
     --log_dir log_rl \
     --use_gym

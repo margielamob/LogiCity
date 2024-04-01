@@ -8,8 +8,9 @@ from .nlm_helper import *
 build_policy = {
     "MlpPolicy": MlpPolicy,
     "HriPolicy": HriPolicy,
-    "NLMPolicy": NLMPolicy
+    "NLMPolicy": ActorCriticNLMPolicy
 }
 
 # Reinforcement learning
-from .nlm_rl import ActorCriticNLMPolicy
+from .nlm_ac import ActorCriticNLMPolicy
+from .nlm_dqn import DQNNLMPolicy, QNetwork

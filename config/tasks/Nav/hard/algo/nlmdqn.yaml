@@ -2,7 +2,7 @@
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
   agent_yaml_file: "config/agents/hard/train.yaml" # Agents in the simulation
-  ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
+  ontology_yaml_file: "config/rules/ontology_full.yaml" # Ontology of the simulation
   rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
   rule_yaml_file: "config/rules/Nav/hard/rl.yaml"                    # Whether to render the environment
   rl: true
@@ -63,12 +63,12 @@ eval_checkpoint:
         2: -2
         3: -5
   save_path: './checkpoints/'
-  name_prefix: 'hard_dqn'
+  name_prefix: 'hard_nlmdqn'
   episode_data: "dataset/hard/val_40_episodes.pkl"
 
 # Stable Baselines specific settings
 stable_baselines:
-  algorithm: "DQN"
+  algorithm: "NLMDQN"
   policy_network: "MlpPolicy"
   policy_kwargs:
     features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
