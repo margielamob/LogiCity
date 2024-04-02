@@ -62,6 +62,7 @@ class EvalCheckpointCallback(CheckpointCallback):
                 episode_cache = self.episode_data[ts]
                 if "label_info" in episode_cache:
                     logger.info("Episode label: {}".format(episode_cache["label_info"]))
+                max_steps = episode_cache["label_info"]["oracle_step"] * 2
                 eval_env = make_env(self.simulation_config, episode_cache, False)
                 obs = eval_env.init()
                 episode_rewards = 0
@@ -72,7 +73,7 @@ class EvalCheckpointCallback(CheckpointCallback):
                     local_decision_step[id] = 0
                     local_succ_decision[id] = 1
                 done = False
-                while not done:
+                while (not done) and (step < max_steps):
                     oracle_action = eval_env.expert_action
                     action, _states = self.model.predict(obs, deterministic=True)
                     if oracle_action in local_decision_step.keys():
@@ -91,6 +92,8 @@ class EvalCheckpointCallback(CheckpointCallback):
                 else:
                     logger.info("Episode {} failed.".format(ts))
                     success.append(0)
+                if step >= max_steps:
+                    episode_rewards -= 3
                 for acc, id in self.eval_actions.items():
                     if local_decision_step[id] == 0:
                         local_succ_decision[id] = 0

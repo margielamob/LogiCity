@@ -48,7 +48,7 @@ eval_checkpoint:
       max_priority: 8
       use_expert: true
       agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
-      max_horizon: 1000                          # Maximum steps in each episode 
+      max_horizon: 10000                          # Maximum steps in each episode 
       action_space: 4                       # Number of discrete actions, 4 means slow/normal/fast/stop
       action_mapping:                       # Mapping from policy action index to actual action space, see /agent folder
         0: [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]

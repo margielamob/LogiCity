@@ -22,7 +22,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="debug")
+    parser.add_argument('--exp', type=str, default="easy_bc_train")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
     parser.add_argument('--seed', type=int, default=2)
@@ -31,7 +31,7 @@ def parse_arguments():
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--save_steps', action='store_true', help='Save step-wise decision for each trajectory.')
-    parser.add_argument('--config', default='config/tasks/Nav/hard/experts/expert_test.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/bc.yaml', help='Configure file for this RL exp.')
     parser.add_argument('--checkpoint_path', default=None, help='Path to the trained model.')
 
     return parser.parse_args()
@@ -266,6 +266,8 @@ def main_gym(args, logger):
                     local_succ_decision[id] = 0
                 decision_step[id] += local_decision_step[id]
                 succ_decision[id] += local_succ_decision[id]
+            if step >= max_steps:
+                rew -= 3
             rew_list.append(rew)
             if args.save_steps:
                 episode_cache["label_info"]['oracle_step'] = step
