@@ -13,7 +13,7 @@ simulation:
     max_priority: 10
     use_expert: true
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
-    max_horizon: 1000                          # Maximum steps in each episode 
+    max_horizon: 2000                          # Maximum steps in each episode 
     action_space: 4                       # Number of discrete actions, 4 means slow/normal/fast/stop
     action_mapping:                       # Mapping from policy action index to actual action space, see /agent folder
       0: [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -46,4 +46,6 @@ stable_baselines:
   train: false                   # Whether to train the model
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
-  episode_data: "dataset/easy/test_100_episodes.pkl"
+  episode_data: "dataset/easy/oracle_easy_test_steps.pkl"
+  eval_actions: {"Stop": 3}
+  vis_id: [4, 30, 32, 84]

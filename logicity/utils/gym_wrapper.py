@@ -170,6 +170,7 @@ class GymCityWrapper(gym.core.Env):
         
         # offset the index by 3 layers 0,1,2 are static in world matrix
         done = self.agent.reach_goal
+        info["success"] = False
 
         if done:
             info["success"] = True
@@ -179,14 +180,12 @@ class GymCityWrapper(gym.core.Env):
         if self.t >= self.horizon: 
             done = True
             rew += self.overtime_cost
-            info["success"] = False
             info["overtime"] = True
             logger.info("Reset agent by overtime")
             self.reset()
             
         if info["Fail"][0]: 
             done = True
-            info["success"] = False
             logger.info("Reset agent by failing")
             self.reset()
 
