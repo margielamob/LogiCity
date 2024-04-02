@@ -46,7 +46,7 @@ agents:
     young: 1.0
 
 - class: Pedestrian
-  id: 7
+  id: 5
   size: 1
   gplanner: A*
   concepts:
@@ -55,7 +55,7 @@ agents:
     old: 1.0
 
 - class: Pedestrian
-  id: 8
+  id: 6
   size: 1
   gplanner: A*
   concepts:

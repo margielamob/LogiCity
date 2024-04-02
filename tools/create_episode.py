@@ -22,13 +22,13 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="easy_oracle_test")
+    parser.add_argument('--exp', type=str, default="expert_episode_test")
     parser.add_argument('--replace_key', type=list, default=[])
     # seed
     parser.add_argument('--seed', type=int, default=2)
     parser.add_argument('--max_episodes', type=int, default=100)
     # RL
-    parser.add_argument('--config', default='config/tasks/Nav/easy/experts/expert_episode_test.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/expert/experts/expert_episode_test.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -89,58 +89,87 @@ def main(args, logger):
     vis_id = [0, 1, 2, 3, 4]
     # 0: Slow, 1: Normal, 2: Fast, 3: Stop
     # Test
+    # num_desired = {
+    #     'ambulance':{
+    #         3: 8
+    #     },
+    #     'bus':{
+    #         3: 8
+    #     },
+    #     'police':{
+    #         3: 8
+    #     },
+    #     'normal':{
+    #         3: 16
+    #     }
+    # }
+    # num_counter = {
+    #     'bus':{
+    #         3: 0
+    #     },
+    #     'ambulance':{
+    #         3: 0
+    #     },
+    #     'normal':{
+    #         3: 0
+    #     },
+    #     'police':{
+    #         3: 0
+    #     }
+    # }
+    # val
     num_desired = {
-        'ambulance':{
-            3: 25
-        },
-        'tiro':{
-            3: 25
-        },
         'police':{
-            3: 25
+            0: 10,
+            2: 10,
+            3: 5
+        },
+        'ambulance':{
+            0: 5,
+            3: 10
+        },
+        'reckless':{
+            2: 5,
+            3: 10
+        },
+        'bus':{
+            2: 5,
+            3: 10
+        },
+        'tiro': {
+            0: 10,
+            3: 10
         },
         'normal':{
-            3: 50
+            3: 10
         }
     }
     num_counter = {
-        'tiro':{
+        'police':{
+            0: 0,
+            2: 0,
             3: 0
         },
         'ambulance':{
+            0: 0,
+            3: 0
+        },
+        'reckless':{
+            2: 0,
+            3: 0
+        },
+        'bus':{
+            2: 0,
+            3: 0
+        },
+        'tiro': {
+            0: 0,
             3: 0
         },
         'normal':{
             3: 0
         }
     }
-    # val
-    # num_desired = {
-    #     'police':{
-    #         0: 5,
-    #         2: 5,
-    #         3: 2
-    #     },
-    #     'ambulance':{
-    #         0: 3,
-    #         3: 5
-    #     },
-    #     'reckless':{
-    #         2: 3,
-    #         3: 2
-    #     },
-    #     'bus':{
-    #         2: 2,
-    #         3: 3
-    #     },
-    #     'tiro': {
-    #         0: 4,
-    #         3: 1
-    #     },
-    #     'normal':{
-    #         3: 5
-    #     }
-    # }
     while key < args.max_episodes: 
         # print current counter and desired in a table
         logger.info("Current counter and desired in a table:")

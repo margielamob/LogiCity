@@ -52,7 +52,7 @@ agents:
   concepts:
     type: Pedestrian
     priority: 0
-    young: 1.0
+    old: 1.0
 
 - class: Pedestrian
   id: 6
@@ -78,24 +78,6 @@ agents:
   concepts:
     type: Pedestrian
     priority: 0
-
-- class: Pedestrian
-  id: 9
-  size: 1
-  gplanner: A*
-  concepts:
-    type: Pedestrian
-    priority: 0
-
-- class: Pedestrian
-  id: 10
-  size: 1
-  gplanner: A*
-  concepts:
-    type: Pedestrian
-    priority: 0
-    young: 1.0
-
 
 - class: Private_car
   id: 2
@@ -176,21 +158,3 @@ agents:
     type: Car
     reckless: 1.0
     priority: 10
-
-- class: Private_car
-  id: 11
-  size: 1
-  gplanner: A*vg
-  concepts:
-    type: Car
-    reckless: 1.0
-    priority: 11
-
-- class: Private_car
-  id: 12
-  size: 1
-  gplanner: A*vg
-  concepts:
-    type: Car
-    priority: 12
-    reckless: 1.0
