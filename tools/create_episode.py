@@ -168,6 +168,9 @@ def main(args, logger):
         },
         'normal':{
             3: 0
+        },
+        'bus':{
+            3: 0
         }
     }
     while key < args.max_episodes: 

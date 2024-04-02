@@ -17,7 +17,7 @@ def make_env(simulation_config, episode_cache=None, return_cache=False):
         return env
 
 class EvalCheckpointCallback(CheckpointCallback):
-    def __init__(self, exp_name, simulation_config, episode_data, eval_freq=50000, *args, **kwargs):
+    def __init__(self, exp_name, simulation_config, episode_data, eval_actions, eval_freq=50000, *args, **kwargs):
         super(EvalCheckpointCallback, self).__init__(*args, **kwargs)
         self.eval_freq = eval_freq
         self.exp_name = exp_name
@@ -25,6 +25,7 @@ class EvalCheckpointCallback(CheckpointCallback):
         self.simulation_config = simulation_config
         with open(episode_data, "rb") as f:
             self.episode_data = pkl.load(f)
+        self.eval_actions = eval_actions
 
     def _on_step(self) -> bool:
         if self.n_calls % self.save_freq == 0:
@@ -51,6 +52,11 @@ class EvalCheckpointCallback(CheckpointCallback):
         if self.n_calls % self.eval_freq == 0:
             rewards_list = []
             success = []
+            decision_step = {}
+            succ_decision = {}
+            for action, id in self.eval_actions.items():
+                decision_step[id] = 0
+                succ_decision[id] = 0
             for ts in list(self.episode_data.keys()):  # Number of episodes for evaluation
                 logger.info("Evaluating episode {}...".format(ts))
                 episode_cache = self.episode_data[ts]
@@ -60,9 +66,19 @@ class EvalCheckpointCallback(CheckpointCallback):
                 obs = eval_env.init()
                 episode_rewards = 0
                 step = 0
+                local_decision_step = {}
+                local_succ_decision = {}
+                for acc, id in self.eval_actions.items():
+                    local_decision_step[id] = 0
+                    local_succ_decision[id] = 1
                 done = False
                 while not done:
+                    oracle_action = eval_env.expert_action
                     action, _states = self.model.predict(obs, deterministic=True)
+                    if oracle_action in local_decision_step.keys():
+                        local_decision_step[oracle_action] = 1
+                        if int(action) != oracle_action:
+                            local_succ_decision[oracle_action] = 0
                     obs, reward, done, info = eval_env.step(int(action))
                     if info["Fail"][0]:
                         episode_rewards += reward
@@ -75,17 +91,32 @@ class EvalCheckpointCallback(CheckpointCallback):
                 else:
                     logger.info("Episode {} failed.".format(ts))
                     success.append(0)
+                for acc, id in self.eval_actions.items():
+                    if local_decision_step[id] == 0:
+                        local_succ_decision[id] = 0
+                    decision_step[id] += local_decision_step[id]
+                    succ_decision[id] += local_succ_decision[id]
                 rewards_list.append(episode_rewards)
                 logger.info("Episode {} achieved a score of {}".format(ts, episode_rewards))
+                logger.info("Episode {} Success: {}".format(ts, success[-1]))
+                logger.info("Episode {} Decision Step: {}".format(ts, local_decision_step))
+                logger.info("Episode {} Success Decision: {}".format(ts, local_succ_decision))
 
 
             mean_reward = np.mean(rewards_list)
             sr = np.mean(success)
+            mSuccD, aSuccD, SuccDAct = cal_step_metric(decision_step, succ_decision)
             logger.info(f"Step: {self.n_calls} - Success Rate: {sr} - Mean Reward: {mean_reward} \n")
+            logger.info("Mean Decision Succ: {}".format(mSuccD))
+            logger.info("Average Decision Succ: {}".format(aSuccD))
+            logger.info("Decision Succ for each action: {}".format(SuccDAct))
 
             # Log the mean reward
             with open(os.path.join(self.save_path, "{}_eval_rewards.txt".format(self.exp_name)), "a") as file:
                 file.write(f"Step: {self.n_calls} - Success Rate: {sr} - Mean Reward: {mean_reward} \n")
+                file.write("Mean Decision Succ: {}\n".format(mSuccD))
+                file.write("Average Decision Succ: {}\n".format(aSuccD))
+                file.write("Decision Succ for each action: {}\n".format(SuccDAct))
 
             # Update the best model if current mean reward is better
             if mean_reward > self.best_mean_reward:
@@ -93,3 +124,13 @@ class EvalCheckpointCallback(CheckpointCallback):
                 self.model.save("{}/best_model.zip".format(self.save_path))
 
         return True
+
+def cal_step_metric(decision_step, succ_decision):
+    mean_decision_succ = {}
+    total_decision = sum(decision_step.values())
+    total_succ = sum(succ_decision.values())
+    for action, num in decision_step.items():
+        mean_decision_succ[action] = succ_decision[action]/num
+    average_decision_succ = sum(mean_decision_succ.values())/len(mean_decision_succ)
+    # mean decision succ (over all steps), average decision succ (over all actions), decision succ for each action
+    return total_succ/total_decision, average_decision_succ, mean_decision_succ

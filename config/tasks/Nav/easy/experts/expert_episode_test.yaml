@@ -8,9 +8,9 @@ simulation:
   rl: true
   debug: false
   use_multi: false
-  agent_region: 140
+  agent_region: 120
   rl_agent: 
-    max_priority: 11
+    max_priority: 10
     use_expert: true
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
     max_horizon: 1000                          # Maximum steps in each episode 
