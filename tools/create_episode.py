@@ -133,8 +133,7 @@ def main(args, logger):
             3: 10
         },
         'bus':{
-            2: 5,
-            3: 10
+            3: 15
         },
         'tiro': {
             0: 10,
@@ -155,10 +154,6 @@ def main(args, logger):
             3: 0
         },
         'reckless':{
-            2: 0,
-            3: 0
-        },
-        'bus':{
             2: 0,
             3: 0
         },
@@ -235,6 +230,7 @@ def main(args, logger):
             rew += r
         if save and i["success"]:
             logger.info("Episode {} took {} steps.".format(key, step))
+            label_info['oracle_step'] = step
             logger.info("Episode {} took {} seconds.".format(key, time.time()-s))
             tem_episodes['label_info'] = label_info
             all_episodes[key] = tem_episodes

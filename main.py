@@ -25,7 +25,7 @@ def parse_arguments():
     parser.add_argument('--exp', type=str, default="debug")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
-    parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--seed', type=int, default=2)
     parser.add_argument('--max-steps', type=int, default=300)
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
