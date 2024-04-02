@@ -2,18 +2,18 @@
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
   agent_yaml_file: "config/agents/easy/test.yaml" # Agents in the simulation
-  ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
-  rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/easy/rl.yaml"                    # Whether to render the environment
+  ontology_yaml_file: "config/rules/ontology_easy.yaml" # Ontology of the simulation
+  rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
+  rule_yaml_file: "config/rules/Nav/easy/expert.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
-  agent_region: 140
+  agent_region: 120
   rl_agent: 
-    max_priority: 7
-    use_expert: false
+    max_priority: 10
+    use_expert: true
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
-    max_horizon: 500                          # Maximum steps in each episode 
+    max_horizon: 1000                          # Maximum steps in each episode 
     action_space: 4                       # Number of discrete actions, 4 means slow/normal/fast/stop
     action_mapping:                       # Mapping from policy action index to actual action space, see /agent folder
       0: [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -21,12 +21,15 @@ simulation:
       2: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0]
       3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     fov_entities:
-      Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
+      Entity: 5                        # Maximum number of agents in the FOV, include the RL agent
     action_cost:
       0: -2
-      1: -1
-      2: 0
-      3: -3
+      1: 0
+      2: -2
+      3: -5                        # Maximum number of agents in the FOV, include the RL agent
+    reset_dist:
+      concepts: ['ambulance', 'tiro', 'normal']
+      prob: [0.25, 0.25, 0.5]
 
 # Stable Baselines specific settings
 stable_baselines:
@@ -43,3 +46,4 @@ stable_baselines:
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   episode_data: "dataset/easy/test_100_episodes.pkl"
+  eval_actions: {"Stop": 3}

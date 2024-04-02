@@ -127,12 +127,3 @@ agents:
     type: Car
     tiro: 1.0
     priority: 4
-
-- class: Private_car
-  id: 10
-  size: 2
-  gplanner: A*vg
-  concepts:
-    type: Car
-    ambulance: 1.0
-    priority: 6

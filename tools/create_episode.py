@@ -22,13 +22,13 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="easy_oracle_test")
+    parser.add_argument('--exp', type=str, default="medium_oracle_test")
     parser.add_argument('--replace_key', type=list, default=[])
     # seed
     parser.add_argument('--seed', type=int, default=2)
     parser.add_argument('--max_episodes', type=int, default=100)
     # RL
-    parser.add_argument('--config', default='config/tasks/Nav/easy/experts/expert_episode_test.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/medium/experts/expert_episode_test.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -96,12 +96,12 @@ def main(args, logger):
         'tiro':{
             3: 25
         },
-        'police':{
+        'normal':{
             3: 25
         },
-        'normal':{
-            3: 50
-        }
+        'bus':{
+            3: 25
+        },
     }
     num_counter = {
         'tiro':{
@@ -111,6 +111,9 @@ def main(args, logger):
             3: 0
         },
         'normal':{
+            3: 0
+        },
+        'bus':{
             3: 0
         }
     }
