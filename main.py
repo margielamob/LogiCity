@@ -25,7 +25,7 @@ def parse_arguments():
     parser.add_argument('--exp', type=str, default="debug")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
-    parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--seed', type=int, default=2)
     parser.add_argument('--max-steps', type=int, default=300)
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
@@ -209,8 +209,12 @@ def main_gym(args, logger):
                 continue
             logger.info("Evaluating episode {}...".format(ts))
             episode_cache = episode_data[ts]
+            max_steps = 10000
             if "label_info" in episode_cache:
                 logger.info("Episode label: {}".format(episode_cache["label_info"]))
+            if not args.save_steps:
+                assert "oracle_step" in episode_cache["label_info"], "Need oracle step for evaluation."
+                max_steps = episode_cache["label_info"]["oracle_step"] * 2
             eval_env, cached_observation = make_env(simulation_config, episode_cache, True)
             if rl_config["algorithm"] == "ExpertCollector" or rl_config["algorithm"] == "Random":
                 # expert and random agent do not need a policy network
@@ -237,7 +241,7 @@ def main_gym(args, logger):
                 local_decision_step[id] = 0
                 local_succ_decision[id] = 1
             d = False
-            while not d:
+            while (not d) and (step < max_steps):
                 step += 1
                 oracle_action = eval_env.expert_action
                 action, _ = model.predict(o, deterministic=True)
