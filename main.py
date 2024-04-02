@@ -22,7 +22,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="easy_bc_train")
+    parser.add_argument('--exp', type=str, default="debug")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
     parser.add_argument('--seed', type=int, default=0)
@@ -30,7 +30,8 @@ def parse_arguments():
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/bc.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--save_steps', action='store_true', help='Save step-wise decision for each trajectory.')
+    parser.add_argument('--config', default='config/tasks/Nav/hard/experts/expert_test.yaml', help='Configure file for this RL exp.')
     parser.add_argument('--checkpoint_path', default=None, help='Path to the trained model.')
 
     return parser.parse_args()
@@ -262,6 +263,9 @@ def main_gym(args, logger):
                 decision_step[id] += local_decision_step[id]
                 succ_decision[id] += local_succ_decision[id]
             rew_list.append(rew)
+            if args.save_steps:
+                episode_cache["label_info"]['oracle_step'] = step
+            logger.info("Episode {} took {} steps.".format(ts, step))
             logger.info("Episode {} achieved a score of {}".format(ts, rew))
             logger.info("Episode {} Success: {}".format(ts, success[-1]))
             logger.info("Episode {} Decision Step: {}".format(ts, local_decision_step))
@@ -276,6 +280,9 @@ def main_gym(args, logger):
         logger.info("Mean Decision Succ: {}".format(mSuccD))
         logger.info("Average Decision Succ: {}".format(aSuccD))
         logger.info("Decision Succ for each action: {}".format(SuccDAct))
+        if args.save_steps:
+            with open(os.path.join(args.log_dir, "{}_steps.pkl".format(args.exp)), "wb") as f:
+                pkl.dump(episode_data, f)
         for ts in worlds.keys():
             if worlds[ts] is not None:
                 with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
