@@ -24,16 +24,16 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
   conda create -n logicity python=3.9
   conda activate logicity
   git clone https://github.com/Jaraxxus-Me/LogiCity.git
-  git submodule init
-  git submodule update
   # requirements for logicity
   # torch
   pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu116
   # others
   pip install -r requirements.txt
-  # pyastar
+  # pyastar, in the LogiCity folder
+  mkdir src
   cd src
   git clone https://github.com/Jaraxxus-Me/pyastar2d.git
+  cd pyastar2d
   pip install -e .
   # install logicity-lib
   cd ..
@@ -57,8 +57,8 @@ Only running the simulation for data collection, the cached data will be saved t
 ```shell
 # easy mode
 bash scripts/sim/run_sim_easy.sh
-# medium mode
-bash scripts/sim/run_sim_med.sh
+# expert mode
+bash scripts/sim/run_sim_expert.sh
 ```
 
 You may make any modifications in the agent configuration.
@@ -92,31 +92,25 @@ Some important arguments:
 
 LogiCity now supports logic based navigation task: the controlled agent is a car, it has 4 action spaces, "Slow" "Fast" "Normal" and "Stop". We require a policy to navigate the ego agent to its goal fast and safe. The are 4 modes:
 
-Easy: Only stop is constrained, few predicates matter
+Easy: Only stop is constrained, few predicates matter (`config/rules/ontology_easy.yaml`)
 
-Med-easy: Only stop is constrained, more predicates matter
+Medium: Only stop is constrained, more predicates matter (`config/rules/ontology_medium.yaml`)
 
-Med-expert: both stop and slow is constrained, few predicates matter
+Hard:  Only stop is constrained, more predicates matter (`config/rules/ontology_full.yaml`)
 
-expert: both stop and slow is constrained, more predicates matter
+Expert: Stop, Slow, and Fast are all constrained, more predicates matter (`config/rules/ontology_full.yaml`)
 
-- Navigation steps:
-
-- Rule violation:
-
-
-$$
-S_{0}=0\\
-        S_{i+1}=S_{i}-1-\sum_{k}^{K}w_k\psi^i_k\\
-        \psi^i_k = 0 (\mathrm{Rule}_k\ \mathrm{holds \ at\ step\ }i) \\
-        \psi^i_k = 1 (\mathrm{Rule}_k\ \mathrm{violated \ at\ step\ }i)
-$$
-
-To run an RL task:
+To run an RL task (Using DQN), the other available algorithms Configures are in `config/tasks/Nav/${MODE}/algo`.
 
 ```
-bash scripts/rl/train_rl.sh
+bash scripts/rl/train_dqn.sh
 ```
+
+The metrics for this taks are:
+- Traj Succ: If the agent gets to goal within 2x oracle steps without violating any rules
+- Decision Succ: Count only the traj w/ rule constraints
+- Reward: Action Cost * weight + Rule Violation
+
 
 ## Branches
 

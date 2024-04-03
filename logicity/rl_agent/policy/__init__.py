@@ -11,5 +11,6 @@ from .nlm_dqn import DQNNLMPolicy, QNetwork
 build_policy = {
     "MlpPolicy": MlpPolicy,
     "HriPolicy": HriPolicy,
+    "NLMPolicy": NLMPolicy,
     "ActorCriticNLMPolicy": ActorCriticNLMPolicy
 }

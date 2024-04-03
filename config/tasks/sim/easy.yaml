@@ -2,8 +2,8 @@
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
   agent_yaml_file: "config/agents/easy/train.yaml" # Agents in the simulation
-  ontology_yaml_file: "config/rules/ontology.yaml" # Ontology of the simulation
-  rule_type: "Z3"               # z3 
+  ontology_yaml_file: "config/rules/ontology_easy.yaml" # Ontology of the simulation
+  rule_type: "Z3"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
   rule_yaml_file: "config/rules/sim/easy/easy_rule.yaml"                 # Whether to render the environment
   rl: false
   debug: false
