@@ -50,7 +50,7 @@ Rules:
     - name: Medium Stop
       description: should not collide.
       dead: true
-      reward: -5
+      reward: -10
       formula: |
         Implies(Exists(
           [dummyEntityA, dummyEntityB], 
