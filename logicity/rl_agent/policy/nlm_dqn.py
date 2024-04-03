@@ -69,6 +69,8 @@ class QNetwork(BasePolicy):
         action_space: spaces.Discrete,
         features_extractor: BaseFeaturesExtractor,
         features_dim: int,
+        num_ents: int,
+        pred_grounding_index: Dict[str, Tuple[int, int]],
         net_arch: Optional[List[int]] = None,
         activation_fn: Type[nn.Module] = nn.ReLU,
         normalize_images: bool = True,
@@ -83,6 +85,8 @@ class QNetwork(BasePolicy):
         if net_arch is None:
             net_arch = [64, 64]
 
+        self.num_ents = num_ents
+        self.pred_grounding_index = pred_grounding_index
         self.net_arch = net_arch
         self.activation_fn = activation_fn
         self.features_dim = features_dim
@@ -97,7 +101,10 @@ class QNetwork(BasePolicy):
         :param obs: Observation
         :return: The estimated Q-Value for each action.
         """
-        return self.q_net(self.extract_features(obs, self.features_extractor))
+        feed_dict = self.obs2domainArray(obs)
+        features = self.features_extractor(feed_dict)
+        features = features[:, 0, :]
+        return self.q_net(features)
 
     def _predict(self, observation: PyTorchObs, deterministic: bool = True) -> th.Tensor:
         q_values = self(observation)
@@ -117,6 +124,22 @@ class QNetwork(BasePolicy):
             )
         )
         return data
+    
+    def obs2domainArray(self, observation):
+        # TODO: Input is a 205 dim binary vector for all ontology, convert to domainData
+        unp_arr_ls = []
+        bip_arr_ls = []
+        bs = observation.shape[0]
+        for k, v in self.pred_grounding_index.items():
+            original = observation[:, v[0]:v[1]]
+            if original.shape[1] == self.num_ents:
+                unp_arr_ls.append(original.unsqueeze(2))
+            elif original.shape[1] == self.num_ents**2:
+                bip_arr_ls.append(original.reshape(bs, self.num_ents, self.num_ents).unsqueeze(3))
+        # convert a to target
+        unp_arr_ls = th.cat(unp_arr_ls, dim=2)
+        bip_arr_ls = th.cat(bip_arr_ls, dim=3)
+        return dict(n=th.tensor([self.num_ents]*bs), states=unp_arr_ls, relations=bip_arr_ls)
 
 
 class DQNNLMPolicy(BasePolicy):
@@ -173,6 +196,10 @@ class DQNNLMPolicy(BasePolicy):
 
         self.net_arch = net_arch
         self.activation_fn = activation_fn
+        self.num_ents = features_extractor_kwargs['num_ents']
+        features_extractor_kwargs.pop('num_ents')
+        self.pred_grounding_index = features_extractor_kwargs['pred_grounding_index']
+        features_extractor_kwargs.pop('pred_grounding_index')
 
         self.net_args = {
             "observation_space": self.observation_space,
@@ -183,7 +210,7 @@ class DQNNLMPolicy(BasePolicy):
         }
 
         self._build(lr_schedule)
-
+    
     def _build(self, lr_schedule: Schedule) -> None:
         """
         Create the network and the optimizer.
@@ -243,3 +270,32 @@ class DQNNLMPolicy(BasePolicy):
         """
         self.q_net.set_training_mode(mode)
         self.training = mode
+
+    def make_features_extractor(self) -> BaseFeaturesExtractor:
+        """Helper method to create a features extractor."""
+        return self.features_extractor_class(**self.features_extractor_kwargs)
+
+    def _update_features_extractor(
+        self,
+        net_kwargs: Dict[str, Any],
+        features_extractor: Optional[BaseFeaturesExtractor] = None,
+    ) -> Dict[str, Any]:
+        """
+        Update the network keyword arguments and create a new features extractor object if needed.
+        If a ``features_extractor`` object is passed, then it will be shared.
+
+        :param net_kwargs: the base network keyword arguments, without the ones
+            related to features extractor
+        :param features_extractor: a features extractor object.
+            If None, a new object will be created.
+        :return: The updated keyword arguments
+        """
+        net_kwargs = net_kwargs.copy()
+        if features_extractor is None:
+            # The features extractor is not shared, create a new one
+            features_extractor = self.make_features_extractor()
+        net_kwargs.update(dict(features_extractor=features_extractor, \
+                               num_ents=self.num_ents, \
+                               pred_grounding_index=self.pred_grounding_index, \
+                               features_dim=features_extractor.features_dim))
+        return net_kwargs
