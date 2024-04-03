@@ -1,19 +1,19 @@
-MODE=medium
+MODE=expert
 
 # python3 main.py --config config/tasks/Nav/hard/algo/random_test.yaml \
 #     --exp random_${MODE} \
 #     --log_dir log_rl \
 #     --use_gym
 
-python3 main.py --config config/tasks/Nav/${MODE}/experts/expert_test.yaml \
-    --exp oracle_${MODE}_test \
-    --log_dir log_rl \
-    --use_gym --save_steps
-
-# python3 main.py --config config/tasks/Nav/${MODE}/experts/expert_val.yaml \
-#     --exp oracle_${MODE}_val \
+# python3 main.py --config config/tasks/Nav/${MODE}/experts/expert_test.yaml \
+#     --exp oracle_${MODE}_test2 \
 #     --log_dir log_rl \
 #     --use_gym --save_steps
+
+python3 main.py --config config/tasks/Nav/${MODE}/experts/expert_val.yaml \
+    --exp oracle_${MODE}_val \
+    --log_dir log_rl \
+    --use_gym --save_steps
 
 # for n in 50 100
 # do
