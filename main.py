@@ -144,6 +144,9 @@ def main_gym(args, logger):
             "features_extractor_class": features_extractor_class,
             "features_extractor_kwargs": rl_config["policy_kwargs"]["features_extractor_kwargs"]
         }
+        for k, v in rl_config["policy_kwargs"].items():
+            if k not in ["features_extractor_module", "features_extractor_class", "features_extractor_kwargs"]:
+                policy_kwargs[k] = v
     else:
         policy_kwargs = rl_config["policy_kwargs"]
     # Dynamic import of the RL algorithm
@@ -229,7 +232,11 @@ def main_gym(args, logger):
             else:
                 # SB3-based agents
                 policy_kwargs_use = copy.deepcopy(policy_kwargs)
-                model = algorithm_class.load(rl_config["checkpoint_path"], \
+                if "optimizer_class" in rl_config["policy_kwargs"]:
+                    model = algorithm_class.load(rl_config["checkpoint_path"], \
+                                    eval_env, **hyperparameters)
+                else:
+                    model = algorithm_class.load(rl_config["checkpoint_path"], \
                                     eval_env, **hyperparameters, policy_kwargs=policy_kwargs_use)
             logger.info("Loaded model from {}".format(rl_config["checkpoint_path"]))
             o = eval_env.init()

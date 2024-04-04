@@ -33,9 +33,11 @@ stable_baselines:
   algorithm: "A2C"
   policy_network: "MlpPolicy"
   policy_kwargs:
-    optimizer_class: "RMSpropTFLike"
+    optimizer_class: "RMSprop"
     optimizer_kwargs:
       epsilon: 1e-5
+      alpha: 0.99
+      weight_decay: 0.0
     features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
     features_extractor_class: "MLPFeatureExtractor"
     features_extractor_kwargs:

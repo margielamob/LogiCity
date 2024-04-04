@@ -15,29 +15,29 @@ MODE=expert
 #     --log_dir log_rl \
 #     --use_gym --save_steps
 
-for n in 100
-do
-python3 main.py --config config/tasks/Nav/${MODE}/algo/bctest.yaml \
-    --exp bc_${n}_${MODE} \
-    --checkpoint_path checkpoints/final_models/${MODE}/bc${n}.zip \
-    --log_dir log_rl \
-    --use_gym
-done
+# for n in 100
+# do
+# python3 main.py --config config/tasks/Nav/${MODE}/algo/bctest.yaml \
+#     --exp bc_${n}_${MODE} \
+#     --checkpoint_path checkpoints/final_models/${MODE}/bc${n}.zip \
+#     --log_dir log_rl \
+#     --use_gym
+# done
 
-for n in 100
-do
-python3 main.py --config config/tasks/Nav/${MODE}/algo/nlm_test.yaml \
-    --exp nlmbc_${n}_${MODE} \
-    --checkpoint_path checkpoints/final_models/${MODE}/nlmbc_${n}.pth \
-    --log_dir log_rl \
-    --use_gym
-done
+# for n in 100
+# do
+# python3 main.py --config config/tasks/Nav/${MODE}/algo/nlm_test.yaml \
+#     --exp nlmbc_${n}_${MODE} \
+#     --checkpoint_path checkpoints/final_models/${MODE}/nlmbc_${n}.pth \
+#     --log_dir log_rl \
+#     --use_gym
+# done
 
-python3 main.py --config config/tasks/Nav/${MODE}/algo/dqn_test.yaml \
-    --exp dqn_${MODE} \
-    --checkpoint_path checkpoints/final_models/${MODE}/dqn.zip \
-    --log_dir log_rl \
-    --use_gym
+# python3 main.py --config config/tasks/Nav/${MODE}/algo/dqn_test.yaml \
+#     --exp dqn_${MODE} \
+#     --checkpoint_path checkpoints/final_models/${MODE}/dqn.zip \
+#     --log_dir log_rl \
+#     --use_gym
 
 python3 main.py --config config/tasks/Nav/${MODE}/algo/a2c_test.yaml \
     --exp a2c_${MODE} \
@@ -47,7 +47,7 @@ python3 main.py --config config/tasks/Nav/${MODE}/algo/a2c_test.yaml \
 
 python3 main.py --config config/tasks/Nav/${MODE}/algo/ppo_test.yaml \
     --exp ppo_${MODE} \
-    --checkpoint_path checkpoints/final_models/${MODE}/ppo_60k.zip \
+    --checkpoint_path checkpoints/final_models/${MODE}/ppo.zip \
     --log_dir log_rl \
     --use_gym
 
