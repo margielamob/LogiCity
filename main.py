@@ -22,7 +22,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="medium_bc_test")
+    parser.add_argument('--exp', type=str, default="easy_dqn_test")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
     parser.add_argument('--seed', type=int, default=2)
@@ -31,7 +31,7 @@ def parse_arguments():
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--save_steps', action='store_true', help='Save step-wise decision for each trajectory.')
-    parser.add_argument('--config', default='config/tasks/Nav/medium/algo/bctest.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/dqntest.yaml', help='Configure file for this RL exp.')
     parser.add_argument('--checkpoint_path', default=None, help='Path to the trained model.')
 
     return parser.parse_args()
@@ -305,8 +305,10 @@ def main_gym(args, logger):
 def cal_step_metric(decision_step, succ_decision):
     mean_decision_succ = {}
     total_decision = sum(decision_step.values())
+    total_decision = max(total_decision, 1)
     total_succ = sum(succ_decision.values())
     for action, num in decision_step.items():
+        num = max(num, 1)
         mean_decision_succ[action] = succ_decision[action]/num
     average_decision_succ = sum(mean_decision_succ.values())/len(mean_decision_succ)
     # mean decision succ (over all steps), average decision succ (over all actions), decision succ for each action

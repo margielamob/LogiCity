@@ -131,8 +131,10 @@ class EvalCheckpointCallback(CheckpointCallback):
 def cal_step_metric(decision_step, succ_decision):
     mean_decision_succ = {}
     total_decision = sum(decision_step.values())
+    total_decision = max(total_decision, 1)
     total_succ = sum(succ_decision.values())
     for action, num in decision_step.items():
+        num = max(num, 1)
         mean_decision_succ[action] = succ_decision[action]/num
     average_decision_succ = sum(mean_decision_succ.values())/len(mean_decision_succ)
     # mean decision succ (over all steps), average decision succ (over all actions), decision succ for each action

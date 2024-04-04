@@ -9,6 +9,7 @@ from .random import Random
 # from .nudge import NUDGE
 # from .nsrl import NSRL
 from .nlmppo import NLMPPO
+from .nlmdqn import NLMDQN
 # Expert data
 from .expert import ExpertCollector
 from .bc import BehavioralCloning
