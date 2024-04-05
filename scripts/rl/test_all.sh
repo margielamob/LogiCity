@@ -24,23 +24,17 @@ MODE=easy
 #     --use_gym
 # done
 
-for c in 1 2 3 4 5
-do
-python3 main.py --config config/tasks/Nav/${MODE}/algo/nlmval.yaml \
-    --exp nlmbc_${c}_${MODE}_val \
-    --checkpoint_path checkpoints/logicity_easy100/checkpoints/checkpoint_${c}.pth \
+python3 main.py --config config/tasks/Nav/${MODE}/algo/nlmtest.yaml \
+    --exp nlmbc_${MODE}_test \
+    --checkpoint_path checkpoints/final_models/easy/nlm100.pth \
     --log_dir log_rl \
     --use_gym
-done
 
-for c in 1 2 3 4 5
-do
-python3 main.py --config config/tasks/Nav/medium/algo/nlmval.yaml \
-    --exp nlmbc_${c}_medium_val \
-    --checkpoint_path checkpoints/logicity_medium100/checkpoints/checkpoint_${c}.pth \
+python3 main.py --config config/tasks/Nav/expert/algo/nlmtest.yaml \
+    --exp nlmbc_expert_test \
+    --checkpoint_path checkpoints/final_models/expert/nlm100.pth \
     --log_dir log_rl \
     --use_gym
-done
 
 # python3 main.py --config config/tasks/Nav/${MODE}/algo/dqn_test.yaml \
 #     --exp dqn_${MODE} \
