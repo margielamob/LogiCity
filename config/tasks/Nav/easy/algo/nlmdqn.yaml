@@ -98,7 +98,7 @@ stable_baselines:
         HigherPri': [35, 60]
         CollidingClose: [60, 85]
   hyperparameters:
-    learning_rate: 0.00001          # Learning rate
+    learning_rate: 0.0001          # Learning rate
     buffer_size: 1000            # Size of the replay buffer
     learning_starts: 1000
     target_update_interval: 500
