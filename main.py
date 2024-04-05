@@ -144,9 +144,6 @@ def main_gym(args, logger):
             "features_extractor_class": features_extractor_class,
             "features_extractor_kwargs": rl_config["policy_kwargs"]["features_extractor_kwargs"]
         }
-        for k, v in rl_config["policy_kwargs"].items():
-            if k not in ["features_extractor_module", "features_extractor_class", "features_extractor_kwargs"]:
-                policy_kwargs[k] = v
     else:
         policy_kwargs = rl_config["policy_kwargs"]
     # Dynamic import of the RL algorithm
