@@ -34,22 +34,22 @@ stable_baselines:
   policy_network: "HriPolicy"
   policy_kwargs:
     Stop:
-      num_background: 12 
+      num_background: 15
       num_features: 34
       max_depth: 3
       tgt_arity: 1
-      predicates_labels: ['CollidingClose', 'HigherPri', 'IsAmbulance', 'IsAtInter', 'IsCar', 'IsInInter', 'IsOld', 'IsPedestrian', 'IsTiro', 'Normal', 'Stop', 'ident']
+      predicates_labels: ['CollidingClose', 'HigherPri', 'IsAmbulance', 'IsAtInter', 'IsBus', 'IsCar', 'IsInInter', 'IsOld', 'IsPedestrian', 'IsTiro', 'NextTo', 'Normal', 'RightOf', 'Stop', 'ident']
   hyperparameters:
     tgt_action: ['Stop']
     default_action: 'Normal'
     threshold: 0.5
     action2idx: {'Slow': 0, 'Normal': 1, 'Fast': 2, 'Stop': 3}
     pred2ind: 
-      Stop: {'CollidingClose': 0, 'HigherPri': 1, 'IsAmbulance': 2, 'IsAtInter': 3, 'IsCar': 4, 'IsInInter': 5, 'IsOld': 6, 'IsPedestrian': 7, 'IsTiro': 8, 'Normal': 9, 'Stop': 10, 'ident': 11}
+      Stop: {'CollidingClose': 0, 'HigherPri': 1, 'IsAmbulance': 2, 'IsAtInter': 3, 'IsBus': 4, 'IsCar': 5, 'IsInInter': 6, 'IsOld': 7, 'IsPedestrian': 8, 'IsTiro': 9, 'NextTo': 10, 'Normal': 11, 'RightOf': 12, 'Stop': 13, 'ident': 14}
     if_un_pred: 
-      Stop: [False, False, True, True, True, True, True, True, True, True, True, False]
+      Stop: [False, False, True, True, True, True, True, True, True, True, False, True, False, True, False]
   train: false                   # Whether to train the model
   checkpoint_path: "checkpoints/final_models/easy/hri"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
-  episode_data: "dataset/easy/test_100_episodes.pkl"
+  episode_data: "dataset/medium/test_100_episodes.pkl"
   eval_actions: {"Stop": 3}
