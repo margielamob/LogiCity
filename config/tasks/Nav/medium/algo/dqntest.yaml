@@ -26,11 +26,11 @@ simulation:
       0: -2
       1: 0
       2: -2
-      3: -5                           # Maximum number of entities in the FOV, include the RL agent
+      3: -5   
 
 # Stable Baselines specific settings
 stable_baselines:
-  algorithm: "PPO"
+  algorithm: "DQN"
   policy_network: "MlpPolicy"
   policy_kwargs:
     features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
@@ -39,16 +39,18 @@ stable_baselines:
       features_dim: 64
   hyperparameters:
     learning_rate: 0.00003          # Learning rate
-    clip_range: 0.2              # Clip range for PPO
-    vf_coef: 0.5                  # Value function coefficient
-    batch_size: 256                # Batch size for training
-    n_steps: 128                 # Number of steps to run for each environment per update
-    n_epochs: 4                  # Number of epochs to run for each update
-    ent_coef: 0.01                 # Entropy coefficient
+    buffer_size: 1000            # Size of the replay buffer
+    learning_starts: 1000
+    target_update_interval: 500
+    train_freq: 4
+    gradient_steps: 1
+    exploration_fraction: 0.1
+    exploration_final_eps: 0.01
+    batch_size: 128               # Number of samples in each batch
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/easy_ppo_60000_steps.zip"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/easy_dqn_40000_steps.zip"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   episode_data: "dataset/easy/test_100_episodes.pkl"
   eval_actions: {"Stop": 3}
