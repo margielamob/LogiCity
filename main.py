@@ -229,7 +229,7 @@ def main_gym(args, logger):
             else:
                 # SB3-based agents
                 policy_kwargs_use = copy.deepcopy(policy_kwargs)
-                if "optimizer_class" in rl_config["policy_kwargs"]:
+                if rl_config["algorithm"] == 'A2C':
                     model = algorithm_class.load(rl_config["checkpoint_path"], \
                                     eval_env, **hyperparameters)
                 else:
