@@ -24,17 +24,17 @@ MODE=easy
 #     --use_gym
 # done
 
-python3 main.py --config config/tasks/Nav/${MODE}/algo/nlmtest.yaml \
-    --exp nlmbc_${MODE}_test \
-    --checkpoint_path checkpoints/final_models/easy/nlm100.pth \
-    --log_dir log_rl \
-    --use_gym
+# python3 main.py --config config/tasks/Nav/${MODE}/algo/nlmtest.yaml \
+#     --exp nlmbc_${MODE}_test \
+#     --checkpoint_path checkpoints/final_models/easy/nlm100.pth \
+#     --log_dir log_rl \
+#     --use_gym
 
-python3 main.py --config config/tasks/Nav/expert/algo/nlmtest.yaml \
-    --exp nlmbc_expert_test \
-    --checkpoint_path checkpoints/final_models/expert/nlm100.pth \
-    --log_dir log_rl \
-    --use_gym
+# python3 main.py --config config/tasks/Nav/expert/algo/nlmtest.yaml \
+#     --exp nlmbc_expert_test \
+#     --checkpoint_path checkpoints/final_models/expert/nlm100.pth \
+#     --log_dir log_rl \
+#     --use_gym
 
 # python3 main.py --config config/tasks/Nav/${MODE}/algo/dqn_test.yaml \
 #     --exp dqn_${MODE} \
@@ -67,3 +67,9 @@ python3 main.py --config config/tasks/Nav/expert/algo/nlmtest.yaml \
 #     --log_dir log_rl \
 #     --use_gym
 # done
+
+for iter in 2000 3000
+do
+python3 main.py --use_gym --config config/tasks/Nav/easy/algo/hritest.yaml --exp easy_hri_test_${iter} \
+    --checkpoint_path checkpoints/final_models/easy/hri_${iter}
+done
