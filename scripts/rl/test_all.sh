@@ -74,8 +74,8 @@ MODE=easy
 #     --checkpoint_path checkpoints/easy_a2c_${iter}_steps.zip
 # done
 
-for iter in 1 2 3 4 5
+for iter in 40000 80000 260000
 do
-python3 main.py --use_gym --config config/tasks/Nav/hard/algo/hri_test.yaml --exp hard_hri_test_${iter} \
-    --checkpoint_path checkpoints/final_models/hard/hri_${iter}
+python3 main.py --use_gym --config config/tasks/Nav/medium/algo/a2ctest.yaml --exp medium_a2c_test_${iter} \
+    --checkpoint_path checkpoints/medium_a2c_${iter}_steps.zip
 done
