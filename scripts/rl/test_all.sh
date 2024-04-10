@@ -68,8 +68,8 @@ MODE=easy
 #     --use_gym
 # done
 
-for iter in 2000 3000
+for iter in 120000 140000 160000 170000 180000 250000 290000
 do
-python3 main.py --use_gym --config config/tasks/Nav/easy/algo/hritest.yaml --exp easy_hri_test_${iter} \
-    --checkpoint_path checkpoints/final_models/easy/hri_${iter}
+python3 main.py --use_gym --config config/tasks/Nav/medium/algo/nlmdqntest.yaml --exp medium_nlmdqn_test_${iter} \
+    --checkpoint_path checkpoints/medium_nlmdqn_${iter}_steps.zip
 done
