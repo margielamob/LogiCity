@@ -30,6 +30,7 @@ simulation:
     reset_dist:
       concepts: ['ambulance', 'bus', 'police', 'normal']
       prob: [0.25, 0.25, 0.25, 0.25]
+    overtime_cost: -5
 
 eval_checkpoint:
   eval_freq: 10000                        # This is the frequency of evaluation, will be multiplied by num_envs
