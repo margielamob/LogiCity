@@ -38,6 +38,8 @@ class FFModel(BasePolicy):
         )
         if net_arch is None:
             net_arch = [64, 64]
+        self.net_arch = net_arch
+        self.activation_fn = activation_fn
         self.features_dim = features_dim
         action_dim = int(self.action_space.n)  # number of actions
         delta_network = create_mlp(self.features_dim, action_dim, self.net_arch, self.activation_fn)
@@ -49,15 +51,18 @@ class FFModel(BasePolicy):
         self.delta_mean = None
         self.delta_std = None
 
-    def get_prediction(self, obs, acs, data_statistics):
-        if len(obs.shape) == 1 or len(acs.shape) == 1:
-            obs = np.squeeze(obs)[None]
-            acs = np.squeeze(acs)[None]
+    def _predict(self, obs, acs, data_statistics):
+        """
+        Predict the q-values.
 
+        :param obs: Observation
+        :return: The estimated Q-Value for each action.
+        """
         norm_obs = normalize(obs, data_statistics['obs_mean'], data_statistics['obs_std'])
         norm_acs = normalize(acs, data_statistics['acs_mean'], data_statistics['acs_std'])
 
         norm_input = ptu.from_numpy(np.concatenate((norm_obs, norm_acs), axis = 1))
+        features = self.features_extractor(norm_input)
         norm_delta = ptu.to_numpy(self.delta_network(norm_input))
 
         delta = unnormalize(norm_delta, data_statistics['delta_mean'], data_statistics['delta_std'])
@@ -77,22 +82,37 @@ class FFModel(BasePolicy):
     
 class MPCPolicy(BasePolicy):
 
-    def __init__(self,
-                 env,
-                 horizon,
-                 n_sequences,
-                 ensemble_size: int = 5,
-                 dyn_model_n_layers: int = 2,
-                 dyn_model_size: int = 64,
-                 sample_strategy='random',
-                 cem_iterations=4,
-                 cem_num_elites=5,
-                 cem_alpha=1,
-                 **kwargs
-                 ):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        env,
+        observation_space: spaces.Space,
+        action_space: spaces.Discrete,
+        lr_schedule: Schedule,
+        dyn_model_kwargs: Dict[str, Any],
+        horizon: int,
+        n_sequences: int,
+        sample_strategy: str,
+        cem_iterations: int = 4,
+        cem_num_elites: int = 10,
+        cem_alpha: float = 1.0,
+        features_extractor_class: Type[BaseFeaturesExtractor] = FlattenExtractor,
+        features_extractor_kwargs: Optional[Dict[str, Any]] = None,
+        normalize_images: bool = True,
+        optimizer_class: Type[th.optim.Optimizer] = th.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(
+            observation_space,
+            action_space,
+            features_extractor_class,
+            features_extractor_kwargs,
+            optimizer_class=optimizer_class,
+            optimizer_kwargs=optimizer_kwargs,
+            normalize_images=normalize_images,
+        )
 
         # init vars
+        # MPC policy needs env.get_reward for planning
         self.env = env
         self.horizon = horizon
         self.N = n_sequences
@@ -103,23 +123,13 @@ class MPCPolicy(BasePolicy):
         # action space
         self.ac_space = self.env.action_space
         self.ac_dim = self.ac_space.n
-        self.low = self.ac_space.low
-        self.high = self.ac_space.high
 
         # dynamics model
         self.dyn_models = []
-        self.ensemble_size = ensemble_size
-        for i in range(self.ensemble_size):
-            model = FFModel(
-                observation_space=self.env.observation_space,
-                action_space=self.env.action_space,
-                features_extractor=FlattenExtractor(self.env.observation_space),
-                features_dim=self.ob_dim + self.ac_dim,
-                net_arch=[dyn_model_size] * dyn_model_n_layers,
-                activation_fn=nn.ReLU,
-                normalize_images=False
-            )
-            self.dyn_models.append(model)
+        self.ensemble_size = dyn_model_kwargs['ensemble_size']
+        self.dyn_model_size = dyn_model_kwargs['dyn_model_size']
+        self.dyn_model_n_layers = dyn_model_kwargs['dyn_model_n_layers']
+        self._build(lr_schedule)
         # Sampling strategy
         allowed_sampling = ('random', 'cem')
         assert sample_strategy in allowed_sampling, f"sample_strategy must be one of the following: {allowed_sampling}"
@@ -133,6 +143,34 @@ class MPCPolicy(BasePolicy):
             print(f"CEM params: alpha={self.cem_alpha}, "
                 + f"num_elites={self.cem_num_elites}, iterations={self.cem_iterations}")
 
+    def _build(self, lr_schedule: Schedule) -> None:
+        """
+        Create the network and the optimizer.
+
+        Put the target network into evaluation mode.
+
+        :param lr_schedule: Learning rate schedule
+            lr_schedule(1) is the initial learning rate
+        """
+        features_extractor = self.make_features_extractor()
+        self.dyn_models = []
+        for _ in range(self.ensemble_size):
+            model = FFModel(
+                observation_space=self.observation_space,
+                action_space=self.action_space,
+                features_extractor=features_extractor,
+                features_dim=features_extractor.features_dim,
+                net_arch=[self.dyn_model_size] * self.dyn_model_n_layers,
+            )
+            model.to(device)
+            self.dyn_models.append(model)
+
+        # Setup optimizer with initial learning rate
+        self.optimizer = self.optimizer_class(  # type: ignore[call-arg]
+            self.parameters(),
+            lr=lr_schedule(1),
+            **self.optimizer_kwargs,
+        )
 
     def sample_action_sequences(self, num_sequences, horizon, obs=None):
         if self.sample_strategy == 'random' or (self.sample_strategy == 'cem' and obs is None):
@@ -163,7 +201,7 @@ class MPCPolicy(BasePolicy):
         else:
             raise Exception(f"Invalid sample_strategy: {self.sample_strategy}")
 
-    def get_action(self, obs):
+    def _predict(self, obs, deterministic: bool = True):
         if self.data_statistics is None:
             return self.sample_action_sequences(num_sequences = 1, horizon = 1)[0, 0]
 

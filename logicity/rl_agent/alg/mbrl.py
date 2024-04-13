@@ -9,6 +9,7 @@ from torch import optim
 from torch import nn
 
 from stable_baselines3.common.buffers import ReplayBuffer
+from stable_baselines3.her.her_replay_buffer import HerReplayBuffer
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from logicity.rl_agent.policy import MPCPolicy
 from stable_baselines3.common.policies import BasePolicy
@@ -28,6 +29,7 @@ class MBRL(OffPolicyAlgorithm):
         self,
         policy: Union[str, Type[MPCPolicy]],
         env: Union[GymEnv, str],
+        mpc_kwargs: Dict[str, Any],
         learning_rate: Union[float, Schedule] = 1e-4,
         buffer_size: int = 1_000_000,  # 1e6
         learning_starts: int = 100,
@@ -76,12 +78,47 @@ class MBRL(OffPolicyAlgorithm):
         # For updating the target network with multiple envs:
         self._n_calls = 0
         self.max_grad_norm = max_grad_norm
+        self.mpc_kwargs = mpc_kwargs
         if _init_setup_model:
             self._setup_model()
 
-    def _setup_model(self):
-        super()._setup_model()
+    def _setup_model(self) -> None:
+        self._setup_lr_schedule()
+        self.set_random_seed(self.seed)
 
+        if self.replay_buffer_class is None:
+            self.replay_buffer_class = ReplayBuffer
+
+        if self.replay_buffer is None:
+            # Make a local copy as we should not pickle
+            # the environment when using HerReplayBuffer
+            replay_buffer_kwargs = self.replay_buffer_kwargs.copy()
+            if issubclass(self.replay_buffer_class, HerReplayBuffer):
+                assert self.env is not None, "You must pass an environment when using `HerReplayBuffer`"
+                replay_buffer_kwargs["env"] = self.env
+            self.replay_buffer = self.replay_buffer_class(
+                self.buffer_size,
+                self.observation_space,
+                self.action_space,
+                device=self.device,
+                n_envs=self.n_envs,
+                optimize_memory_usage=self.optimize_memory_usage,
+                **replay_buffer_kwargs,
+            )
+
+        self.policy = self.policy_class(
+            self.env,
+            self.observation_space,
+            self.action_space,
+            self.lr_schedule,
+            **self.mpc_kwargs,
+            **self.policy_kwargs,
+        )
+        self.policy = self.policy.to(self.device)
+
+        # Convert train freq parameter to TrainFreq object
+        self._convert_train_freq()
+    
     def train(self, gradient_steps: int, batch_size: int = 100) -> None:
         # Implementation of your training logic
         # For example, use self.buffer to train your model
@@ -102,7 +139,7 @@ class MBRL(OffPolicyAlgorithm):
             num_data = ob_no.shape[0]
             num_data_per_ens = int(num_data / self.ensemble_size)
 
-            for i in range(self.ensemble_size):
+            for i in range(self.policy.ensemble_size):
                 # select which datapoints to use for this model of the ensemble
                 start_idx = i * num_data_per_ens
                 end_idx = (i + 1) * num_data_per_ens if i < self.ensemble_size - 1 else num_data
@@ -112,7 +149,7 @@ class MBRL(OffPolicyAlgorithm):
                 next_observations = next_ob_no[start_idx:end_idx]
 
                 # use datapoints to update one of the dyn_models
-                model = self.dyn_models[i]
+                model = self.policy.dyn_models[i]
                 loss = model.update(observations, actions, next_observations, self.data_statistics)
                 loss = log['Training Loss']
                 train_losses.append(loss)

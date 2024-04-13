@@ -72,16 +72,22 @@ stable_baselines:
   algorithm: "MBRL"
   policy_network: "MPCPolicy"
   policy_kwargs:
-    horizon: 10
-    n_sequences: 100
-    sample_strategy: "random"
+    features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
+    features_extractor_class: "MLPFeatureExtractor"
+    features_extractor_kwargs:
+      features_dim: 64
   hyperparameters:
+    mpc_kwargs:
+      dyn_model_kwargs:
+        ensemble_size: 50
+        dyn_model_size: 64
+        dyn_model_n_layers: 2
+      horizon: 10
+      n_sequences: 100
+      sample_strategy: "random"
     learning_rate: 0.00003          # Learning rate
     buffer_size: 1000            # Size of the replay buffer
     learning_starts: 1000
-    ensemble_size: 50
-    dyn_model_n_layers: 2
-    dyn_model_size: 64
     train_freq: 4
     gradient_steps: 1
     batch_size: 128               # Number of samples in each batch
