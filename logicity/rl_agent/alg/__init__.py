@@ -10,6 +10,7 @@ from .random import Random
 # from .nsrl import NSRL
 from .nlmppo import NLMPPO
 from .nlmdqn import NLMDQN
+from .mbrl import MBRL
 # Expert data
 from .expert import ExpertCollector
 from .bc import BehavioralCloning

@@ -6,11 +6,14 @@ from .nlm_helper import *
 # Reinforcement learning
 from .nlm_ac import ActorCriticNLMPolicy
 from .nlm_dqn import DQNNLMPolicy, QNetwork
+from .mpc import MPCPolicy
 
 # Supervised learning
 build_policy = {
     "MlpPolicy": MlpPolicy,
     "HriPolicy": HriPolicy,
     "NLMPolicy": NLMPolicy,
-    "ActorCriticNLMPolicy": ActorCriticNLMPolicy
+    "ActorCriticNLMPolicy": ActorCriticNLMPolicy,
+    "DQNNLMPolicy": DQNNLMPolicy,
+    "MPCPolicy": MPCPolicy
 }
