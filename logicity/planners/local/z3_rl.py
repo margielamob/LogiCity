@@ -206,6 +206,7 @@ class Z3PlannerRL(Z3Planner):
     def logic_grounding_shape(self, fov_entities):
         self.fov_entities = fov_entities
         self.rl_input_shape, pred_grounding_ind = logic_grounding_shape(self.entity_types, self.predicates, self.z3_vars, fov_entities)
+        self.pred_grounding_index = pred_grounding_ind
         return self.rl_input_shape, pred_grounding_ind
 
 def logic_grounding_shape(

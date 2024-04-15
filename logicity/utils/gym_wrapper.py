@@ -81,6 +81,19 @@ class GymCityWrapper(gym.core.Env):
             moving_cost = self.action2cost(obs_dict["Agent_actions"][0])
             return (moving_cost + obs_dict["Reward"][0])/self.path_length
     
+    def get_reward(self, obs_array, action):
+        ''' Get the reward for the current step.
+        :param np.array obs_array: the observation array
+        :param int action: the action index
+        :return: the reward
+        '''
+        # get the SAT reward/fail
+        fail, sat_reward = self.env.local_planner.eval_state_action(obs_array, action)
+        if fail:
+            return sat_reward
+        moving_cost = self.action2cost(action)
+        return (moving_cost + sat_reward)/self.path_length
+
     def action2cost(self, action):
         ''' Convert the action to cost.
         :param list action: the action list

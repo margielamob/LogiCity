@@ -164,6 +164,32 @@ class Z3PlannerExpert(Z3PlannerRL):
                              self.last_rl_obs["last_obs_dict"], self.last_rl_obs["last_obs"])
         self.last_rl_obs = None
         return fail, reward
+    
+    def eval_state_action(self, state, action):
+        """
+        Evaluate the state-action pair
+        state: the current grounding of the world, the same shape and type as: self.last_rl_obs["last_obs"]
+        action: the action to be taken
+        """
+        # 1. conver the state to the last_rl_obs dict format
+        last_obs_dict = self.grounding2dict(state)
+        # 2. evaluate the action similar to the eval method
+        fail, reward = eval_action(action, self.rules['Task'], self.entity_types, self.predicates, self.z3_vars, self.fov_entities,
+                                last_obs_dict, state)
+        del last_obs_dict
+        return fail, reward
+
+    def grounding2dict(self, grounding):
+        """
+        Convert the grounding to the last_rl_obs dict format
+        """
+        last_obs_dict = {}
+        for keys, value in self.pred_grounding_index.items():
+            s, e = value[0], value[1]
+            for i in range(0, e-s):
+                name = keys + "_{}".format(i)
+                last_obs_dict[name] = grounding[s+i]
+        return last_obs_dict
 
 def solve_sub_problem(ego_name, 
                       ego_action_mapping,
