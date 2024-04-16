@@ -67,7 +67,7 @@ class FFModel(nn.Module):
 
         return obs + predicted_changes
     
-    def train(self, obs, acs, next_obs, data_statistics):
+    def learn(self, obs, acs, next_obs, data_statistics):
         """
         Train the model.
         """
@@ -116,7 +116,7 @@ class RWModel(nn.Module):
         normed_rew = unnormed_rew * data_statistics['rew_std'] + data_statistics['rew_mean']
         return normed_rew
     
-    def train(self, obs, acs, rewards, data_statistics):
+    def learn(self, obs, acs, rewards, data_statistics):
         """
         Train the model.
         """
@@ -266,9 +266,6 @@ class MPCPolicy(BasePolicy):
         if self.sample_strategy == 'random':
             # A list you can use for storing the predicted reward for each candidate sequence
             predicted_rewards_per_ens = []
-
-            # Convert numpy arrays to torch tensors
-            obs = torch.tensor(obs, dtype=torch.float32).to(self.device)
 
             for model in self.dyn_models:
                 sim_obs = obs.repeat(self.N, 1)

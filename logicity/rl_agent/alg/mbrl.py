@@ -156,8 +156,8 @@ class MBRL(OffPolicyAlgorithm):
 
                 # use datapoints to update one of the dyn_models
                 model = self.policy.dyn_models[i]
-                loss_dyn = model.train(observations, actions, next_observations, self.data_statistics)
-                loss_rew = self.policy.reward_model.train(observations, actions, rewards, self.data_statistics)
+                loss_dyn = model.learn(observations, actions, next_observations, self.data_statistics)
+                loss_rew = self.policy.rew_model.learn(observations, actions, rewards, self.data_statistics)
                 train_losses_dyn.append(loss_dyn)
                 train_losses_rew.append(loss_rew)
 
@@ -168,8 +168,8 @@ class MBRL(OffPolicyAlgorithm):
             # Clip gradient norm
             th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
             self.policy.optimizer.step()
-            losses["dyn"].append(sum(train_losses_dyn)/self.policy.ensemble_size)
-            losses["rew"].append(sum(train_losses_rew)/self.policy.ensemble_size)
+            losses["dyn"].append(sum(train_losses_dyn).detach().cpu().numpy()/self.policy.ensemble_size)
+            losses["rew"].append(sum(train_losses_rew).detach().cpu().numpy()/self.policy.ensemble_size)
 
         # Increase update counter
         self._n_updates += gradient_steps
