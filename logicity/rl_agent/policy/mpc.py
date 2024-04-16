@@ -256,46 +256,47 @@ class MPCPolicy(BasePolicy):
         else:
             raise Exception(f"Invalid sample_strategy: {self.sample_strategy}")
 
-    def _predict(self, obs: PyTorchObs, deterministic: bool = True) -> torch.Tensor:
+    def _predict(self, obs: torch.Tensor, deterministic: bool = True) -> torch.Tensor:
         if self.data_statistics is None:
-            return self.sample_action_sequences(num_sequences = 1, horizon = 1)[0, 0]
+            return self.sample_action_sequences(num_sequences=1, horizon=1).squeeze()
 
-        #sample random actions (Nxhorizon)
-        candidate_action_sequences = self.sample_action_sequences(num_sequences=self.N, horizon=self.horizon, obs=obs)
+        # Sample random actions for all observations in the batch (batch_size x N x horizon)
+        candidate_action_sequences = self.sample_action_sequences(num_sequences=obs.size(0) * self.N, horizon=self.horizon, obs=obs)
 
-        if self.sample_strategy == 'random':
-            # A list you can use for storing the predicted reward for each candidate sequence
-            predicted_rewards_per_ens = []
+        # Reshape to (batch_size, N, horizon) for processing
+        candidate_action_sequences = candidate_action_sequences.view(obs.size(0), self.N, self.horizon)
 
-            for model in self.dyn_models:
-                sim_obs = obs.repeat(self.N, 1)
-                model_rewards = torch.zeros(self.N, device=self.device)
+        predicted_rewards_per_ens = []
 
-                for t in range(self.horizon):
-                    # Predict rewards using a neural network reward prediction model
-                    rew = self.rew_model(sim_obs, candidate_action_sequences[:, t:t+1], self.data_statistics)
-                    model_rewards += rew.squeeze(1)
-                    sim_obs = model.predict(sim_obs, candidate_action_sequences[:, t:t+1], self.data_statistics)
-                    sim_obs = torch.clamp(sim_obs, 0, 1)
-                    if deterministic:
-                        sim_obs = sim_obs.round()
-                    else:
-                        sim_obs = torch.bernoulli(sim_obs)
+        for model in self.dyn_models:
+            # Expand observations to match the number of sequences (batch_size, N, obs_dim)
+            sim_obs = obs.unsqueeze(1).repeat(1, self.N, 1).view(-1, obs.size(1))
+            model_rewards = torch.zeros(obs.size(0) * self.N, device=self.device)
 
-                predicted_rewards_per_ens.append(model_rewards)
+            for t in range(self.horizon):
+                # Flatten candidate_action_sequences for batch processing in model
+                actions = candidate_action_sequences[:, :, t].view(-1)
+                rew = self.rew_model(sim_obs, actions, self.data_statistics).view(-1)
+                model_rewards += rew
+                sim_obs = model.predict(sim_obs, actions, self.data_statistics)
+                sim_obs = torch.clamp(sim_obs, 0, 1)
+                if deterministic:
+                    sim_obs = sim_obs.round()
+                else:
+                    sim_obs = torch.bernoulli(sim_obs)
 
-            # Calculate mean across ensembles (predicted rewards)
-            predicted_rewards = torch.stack(predicted_rewards_per_ens).mean(dim=0)
+            # Reshape rewards back to (batch_size, N) and append
+            model_rewards = model_rewards.view(obs.size(0), self.N)
+            predicted_rewards_per_ens.append(model_rewards)
 
-            # Pick the action sequence and return the 1st element of that sequence
-            best_index = torch.argmax(predicted_rewards).item()
-            best_action_sequence = candidate_action_sequences[best_index]
-            action_to_take = best_action_sequence[0]
-        else:
-            # If not using random sampling, just take the first action sequence
-            action_to_take = candidate_action_sequences[0]
+        # Calculate mean across ensembles (predicted rewards)
+        predicted_rewards = torch.stack(predicted_rewards_per_ens).mean(dim=0)
 
-        return action_to_take  # Assuming you need the action in NumPy format outside this function
+        # Find best actions for each batch
+        best_indices = torch.argmax(predicted_rewards, dim=1)  # Best index for each batch
+        actions_to_take = torch.gather(candidate_action_sequences[:, :, 0], 1, best_indices.unsqueeze(1)).squeeze(1)
+
+        return actions_to_take
 
 
     def evaluate_candidate_sequences(self, action_sequences, initial_obs):
