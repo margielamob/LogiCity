@@ -50,7 +50,12 @@ class FFModel(nn.Module):
         acs = acs.squeeze(1)
         input = torch.cat((obs, acs), dim = 1)
         delta = self.delta_network(input)
-        return delta.view(bs, -1, 3)
+        delta = delta.view(bs, -1, 3)
+        # check the last dim of obs, if it is 0/1
+        if obs[0, -1].round() != obs[0, -1]:
+            # the last dim is not binary, we don't need to predict it
+            delta[:, -1, :] *= 0
+        return delta
     
     def predict(self, obs, acs, data_statistics):
         """
@@ -61,9 +66,15 @@ class FFModel(nn.Module):
         """
 
         delta = self(obs, acs, data_statistics)
+        predicted_changes = torch.zeros_like(obs)
         probabilities = F.softmax(delta, dim=2)
         _, predicted_classes = torch.max(probabilities, dim=2)
-        predicted_changes = predicted_classes - 1
+
+        if obs[0, -1].round() != obs[0, -1]:
+            # the last dim is not binary, we don't need to predict it
+            predicted_changes[:, :-1] = predicted_classes[:, :-1] - 1
+        else:
+            predicted_changes = predicted_classes - 1
 
         return obs + predicted_changes
     
@@ -74,8 +85,12 @@ class FFModel(nn.Module):
         delta_pred = self(obs, acs, data_statistics)
         delta = next_obs - obs
         target_indices = (delta + 1).long()
+        if obs[0, -1].round() != obs[0, -1]:
+            # the last dim is not binary, we don't need to predict it
+            delta_pred = delta_pred[:, :-1, :]
+            target_indices = target_indices[:, :-1]
 
-        loss = F.cross_entropy(delta_pred.view(-1, 3), target_indices.view(-1), reduction='mean')
+        loss = F.cross_entropy(delta_pred.reshape(-1, 3), target_indices.reshape(-1), reduction='mean')
         return loss
 
 class RWModel(nn.Module):
@@ -271,6 +286,7 @@ class MPCPolicy(BasePolicy):
         for model in self.dyn_models:
             # Expand observations to match the number of sequences (batch_size, N, obs_dim)
             sim_obs = obs.unsqueeze(1).repeat(1, self.N, 1).view(-1, obs.size(1))
+
             model_rewards = torch.zeros(obs.size(0) * self.N, device=self.device)
 
             for t in range(self.horizon):

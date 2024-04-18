@@ -162,7 +162,7 @@ class MBRL(OffPolicyAlgorithm):
                 train_losses_rew.append(loss_rew)
 
             # Optimize the policy
-            total_loss = sum(train_losses_dyn)/self.policy.ensemble_size + sum(train_losses_rew)/self.policy.ensemble_size
+            total_loss = sum(train_losses_dyn)/self.policy.ensemble_size + 5 * sum(train_losses_rew)/self.policy.ensemble_size
             self.policy.optimizer.zero_grad()
             total_loss.backward()
             # Clip gradient norm

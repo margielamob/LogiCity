@@ -11,6 +11,7 @@ simulation:
   agent_region: 100
   rl_agent: 
     max_priority: 7
+    cat_length: true
     use_expert: false
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
     max_horizon: 400                          # Maximum steps in each episode 
@@ -32,8 +33,8 @@ simulation:
       prob: [0.25, 0.25, 0.5]
 
 eval_checkpoint:
-  eval_freq: 5000                        # This is the frequency of evaluation, will be multiplied by num_envs
-  save_freq: 5000
+  eval_freq: 100                        # This is the frequency of evaluation, will be multiplied by num_envs
+  save_freq: 100
   simulation_config:
     map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
     agent_yaml_file: "config/agents/easy/val.yaml" # Agents in the simulation
@@ -46,6 +47,7 @@ eval_checkpoint:
     agent_region: 120
     rl_agent: 
       max_priority: 8
+      cat_length: true
       use_expert: true
       agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
       max_horizon: 10000                          # Maximum steps in each episode 
@@ -86,14 +88,14 @@ stable_baselines:
       n_sequences: 100
       sample_strategy: "random"
     learning_rate: 0.00003          # Learning rate
-    buffer_size: 1000            # Size of the replay buffer
-    learning_starts: 1000
+    buffer_size: 50            # Size of the replay buffer
+    learning_starts: 50
     train_freq: 4
-    gradient_steps: 1
+    gradient_steps: 4
     batch_size: 128               # Number of samples in each batch
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: true                   # Whether to train the model
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
-  num_envs: 2                   # Number of environments to run in parallel
+  num_envs: 1                   # Number of environments to run in parallel
   total_timesteps: 1000000    # Total number of timesteps to run for all environments combined

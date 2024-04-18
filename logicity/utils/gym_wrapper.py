@@ -26,7 +26,11 @@ class GymCityWrapper(gym.core.Env):
         #     "map": Box(low=-1.0, high=1.0, shape=(3, self.fov, self.fov), dtype=np.float32),  # Adjust the shape as needed
         #     "position": Box(low=0.0, high=1.0, shape=(6,), dtype=np.float32)
         # })
-        self.observation_space = Box(low=0.0, high=1.0, shape=(self.logic_grounding_shape, ), dtype=np.float32)
+        self.cat_length = env.rl_agent["cat_length"] if "cat_length" in env.rl_agent else False
+        if self.cat_length:
+            self.observation_space = Box(low=0.0, high=1.0, shape=(self.logic_grounding_shape + 1, ), dtype=np.float32)
+        else:
+            self.observation_space = Box(low=0.0, high=1.0, shape=(self.logic_grounding_shape, ), dtype=np.float32)
         self.last_dist = -1
         self.agent_name = env.rl_agent["agent_name"]
         self.horizon = env.rl_agent["max_horizon"]
@@ -67,8 +71,11 @@ class GymCityWrapper(gym.core.Env):
             return 3
     
     def _flatten_obs(self, obs_dict):
-        return obs_dict["World_state"][0]
-        
+        if self.cat_length:
+            return np.concatenate([obs_dict["World_state"][0], [self.normed_path_length]], axis=0, dtype=np.float32)
+        else:
+            return obs_dict["World_state"][0]
+                
     def _get_reward(self, obs_dict):
         ''' Get the reward for the current step.
         :param dict obs_dict: the observation dictionary
@@ -121,6 +128,7 @@ class GymCityWrapper(gym.core.Env):
         logger.info("Agent reset priority to {}/{}".format(self.agent.priority, self.max_priority))
         logger.info("Agent reset concepts to {}".format(self.agent.concepts))
         self.path_length = len(self.agent.global_traj)*4
+        self.normed_path_length = len(self.agent.global_traj)/(2*self.agent.region)
         agent_code = self.type2label[self.agent_type]
         self.env.local_planner.reset()
         # draw agent
@@ -154,6 +162,7 @@ class GymCityWrapper(gym.core.Env):
         logger.info("***Init RL Agent in Env***")
         self.t = 0
         self.path_length = len(self.agent.global_traj)*4
+        self.normed_path_length = len(self.agent.global_traj)/(2*self.agent.region)
         self.env.local_planner.reset()
         ob_dict = self.env.update(self.agent_layer_id)
         if self.use_expert:
