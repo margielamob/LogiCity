@@ -21,14 +21,11 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
 - From scratch
 
   ```shell
-  conda create -n logicity python=3.9
-  conda activate logicity
   git clone https://github.com/Jaraxxus-Me/LogiCity.git
   # requirements for logicity
-  # torch
-  pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu116
-  # others
-  pip install -r requirements.txt
+  # using conda env
+  conda env create -f environment.yml
+  conda activate logicity
   # pyastar, in the LogiCity folder
   mkdir src
   cd src
@@ -43,9 +40,12 @@ This research project and code repo are **ongoing**, please **DO NOT** share wit
 - Using docker
 
   ```shell
-  docker pull bowenli1024/logicity:v3
-  docker run bowenli1024/logicity:v3
-  pip install -r requirements.txt
+  docker pull bowenli1024/logicity:latest
+  docker run bowenli1024/logicity:latest
+  # inside the docker container
+  conda activate logicity
+  cd path/to/LogiCity
+  pip install -v -e .
   ```
 
 ## LogiCity Simulation
