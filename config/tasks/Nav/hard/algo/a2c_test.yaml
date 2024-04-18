@@ -48,7 +48,7 @@ stable_baselines:
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/hard_a2c_140000_steps.zip"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/a2c_crr_best.zip"           # Path to a checkpoint to restore the model from
   num_envs: 1                  # Number of environments to run in parallel
   episode_data: "dataset/hard/test_100_episodes.pkl"
   eval_actions: {"Stop": 3}
