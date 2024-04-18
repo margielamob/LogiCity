@@ -126,62 +126,81 @@ class MBRL(OffPolicyAlgorithm):
         # Update learning rate according to schedule
         self._update_learning_rate(self.policy.optimizer)
 
-        losses = []
+        losses = {
+            "dyn": [],
+            "rew": []
+        }
         for _ in range(gradient_steps):
             # Sample replay buffer
-            replay_data = self.replay_buffer.sample(batch_size * self.ensemble_size, env=self._vec_normalize_env)  # type: ignore[union-attr]
+            replay_data = self.replay_buffer.sample(batch_size * self.policy.ensemble_size, env=self._vec_normalize_env)  # type: ignore[union-attr]
 
-            train_losses = []
+            train_losses_dyn = []
+            train_losses_rew = []
             ob_no = replay_data.observations
             ac_na = replay_data.actions
+            rew = replay_data.rewards
             next_ob_no = replay_data.next_observations
 
             num_data = ob_no.shape[0]
-            num_data_per_ens = int(num_data / self.ensemble_size)
+            num_data_per_ens = int(num_data / self.policy.ensemble_size)
 
             for i in range(self.policy.ensemble_size):
                 # select which datapoints to use for this model of the ensemble
                 start_idx = i * num_data_per_ens
-                end_idx = (i + 1) * num_data_per_ens if i < self.ensemble_size - 1 else num_data
+                end_idx = (i + 1) * num_data_per_ens if i < self.policy.ensemble_size - 1 else num_data
 
                 observations = ob_no[start_idx:end_idx]
                 actions = ac_na[start_idx:end_idx]
                 next_observations = next_ob_no[start_idx:end_idx]
+                rewards = rew[start_idx:end_idx]
 
                 # use datapoints to update one of the dyn_models
                 model = self.policy.dyn_models[i]
-                loss = model.update(observations, actions, next_observations, self.data_statistics)
-                loss = log['Training Loss']
-                train_losses.append(loss)
+                loss_dyn = model.learn(observations, actions, next_observations, self.data_statistics)
+                loss_rew = self.policy.rew_model.learn(observations, actions, rewards, self.data_statistics)
+                train_losses_dyn.append(loss_dyn)
+                train_losses_rew.append(loss_rew)
 
             # Optimize the policy
+            total_loss = sum(train_losses_dyn)/self.policy.ensemble_size + 5 * sum(train_losses_rew)/self.policy.ensemble_size
             self.policy.optimizer.zero_grad()
-            loss.backward()
+            total_loss.backward()
             # Clip gradient norm
             th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
             self.policy.optimizer.step()
+            losses["dyn"].append(sum(train_losses_dyn).detach().cpu().numpy()/self.policy.ensemble_size)
+            losses["rew"].append(sum(train_losses_rew).detach().cpu().numpy()/self.policy.ensemble_size)
 
         # Increase update counter
         self._n_updates += gradient_steps
 
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
-        self.logger.record("train/loss", np.mean(losses))
+        self.logger.record("train/loss_dyn", np.mean(losses["dyn"]))
+        self.logger.record("train/loss_rew", np.mean(losses["rew"]))
 
     def _on_step(self) -> None:
         """
-        get updated mean/std of the data in our replay buffer
+        Get updated mean/std of the data in our replay buffer
         """
         self._n_calls += 1
+        observations = th.tensor(self.replay_buffer.observations, device=self.device)
+        actions = th.tensor(self.replay_buffer.actions, device=self.device)
+        next_observations = th.tensor(self.replay_buffer.next_observations, device=self.device)
+        rewards = th.tensor(self.replay_buffer.rewards, device=self.device)
+
+        deltas = next_observations - observations
+
         self.data_statistics = {
-            'obs_mean': np.mean(self.replay_buffer.observations, axis=0),
-            'obs_std': np.std(self.replay_buffer.observations, axis=0),
-            'acs_mean': np.mean(self.replay_buffer.actions, axis=0),
-            'acs_std': np.std(self.replay_buffer.actions, axis=0),
-            'delta_mean': np.mean(self.replay_buffer.next_observations - self.replay_buffer.observations, axis=0),
-            'delta_std': np.std(self.replay_buffer.next_observations - self.replay_buffer.observations, axis=0)
+            # 'obs_mean': observations.mean(dim=0),
+            # 'obs_std': observations.std(dim=0),
+            # 'acs_mean': actions.mean(dim=0),
+            # 'acs_std': actions.std(dim=0),
+            # 'delta_mean': deltas.mean(dim=0),
+            # 'delta_std': deltas.std(dim=0),
+            'rew_mean': rewards.mean(),
+            'rew_std': rewards.std(),
         }
         self.policy.data_statistics = self.data_statistics
-        self.logger.record("rollout/exploration_rate", self.exploration_rate)
 
     def learn(
         self: SelfMBRL,
@@ -202,5 +221,6 @@ class MBRL(OffPolicyAlgorithm):
         )
 
     def predict(self, observation, state=None, episode_start=None, deterministic=False):
-        # Your prediction logic, possibly using a learned model
-        return self.env.action_space.sample()  # Random action as placeholder
+        # use on-policy data here
+        action, state = self.policy.predict(observation, state, episode_start, deterministic)
+        return action, state

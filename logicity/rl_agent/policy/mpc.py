@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import PyTorchObs, Schedule
 from stable_baselines3.common.torch_layers import (
@@ -12,74 +13,132 @@ from logicity.rl_agent.alg.infra.utils import *
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import numpy as np
-import torch as th
 from gymnasium import spaces
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-class FFModel(BasePolicy):
+class FFModel(nn.Module):
 
     action_space: spaces.Discrete
     def __init__(
         self,
         observation_space: spaces.Space,
         action_space: spaces.Discrete,
-        features_extractor: BaseFeaturesExtractor,
-        features_dim: int,
         net_arch: Optional[List[int]] = None,
         activation_fn: Type[nn.Module] = nn.ReLU,
-        normalize_images: bool = True,
     ) -> None:
-        super().__init__(
-            observation_space,
-            action_space,
-            features_extractor=features_extractor,
-            normalize_images=normalize_images,
-        )
+        super(FFModel, self).__init__()
         if net_arch is None:
             net_arch = [64, 64]
         self.net_arch = net_arch
         self.activation_fn = activation_fn
-        self.features_dim = features_dim
-        action_dim = int(self.action_space.n)  # number of actions
-        delta_network = create_mlp(self.features_dim, action_dim, self.net_arch, self.activation_fn)
+        self.action_space = action_space
+        self.observation_space = observation_space
+        self.action_dim = int(self.action_space.n)  # number of actions
+        delta_network = create_mlp(observation_space.shape[0]+self.action_dim, observation_space.shape[0]*3, self.net_arch, self.activation_fn)
         self.delta_network = nn.Sequential(*delta_network)
-        self.obs_mean = None
-        self.obs_std = None
-        self.acs_mean = None
-        self.acs_std = None
-        self.delta_mean = None
-        self.delta_std = None
 
-    def _predict(self, obs, acs, data_statistics):
+    def forward(self, obs, acs, data_statistics):
         """
         Predict the q-values.
 
         :param obs: Observation
         :return: The estimated Q-Value for each action.
         """
-        norm_obs = normalize(obs, data_statistics['obs_mean'], data_statistics['obs_std'])
-        norm_acs = normalize(acs, data_statistics['acs_mean'], data_statistics['acs_std'])
-
-        norm_input = ptu.from_numpy(np.concatenate((norm_obs, norm_acs), axis = 1))
-        features = self.features_extractor(norm_input)
-        norm_delta = ptu.to_numpy(self.delta_network(norm_input))
-
-        delta = unnormalize(norm_delta, data_statistics['delta_mean'], data_statistics['delta_std'])
-        return obs + delta
-
-    def update(self, observations, actions, next_observations, data_statistics):
-
-        norm_obs = normalize(np.squeeze(observations), data_statistics['obs_mean'], data_statistics['obs_std'])
-        norm_acs = normalize(np.squeeze(actions), data_statistics['acs_mean'], data_statistics['acs_std'])
-
-        pred_delta = self.delta_network(ptu.from_numpy(np.concatenate((norm_obs, norm_acs), axis = 1)))
-        true_delta = ptu.from_numpy(normalize(next_observations - observations, data_statistics['delta_mean'], data_statistics['delta_std']))
-
-        loss = nn.functional.mse_loss(true_delta, pred_delta)
-
-        return loss
+        bs = obs.shape[0]
+        acs = F.one_hot(acs, num_classes = self.action_dim).float()
+        acs = acs.squeeze(1)
+        input = torch.cat((obs, acs), dim = 1)
+        delta = self.delta_network(input)
+        delta = delta.view(bs, -1, 3)
+        # check the last dim of obs, if it is 0/1
+        if obs[0, -1].round() != obs[0, -1]:
+            # the last dim is not binary, we don't need to predict it
+            delta[:, -1, :] *= 0
+        return delta
     
+    def predict(self, obs, acs, data_statistics):
+        """
+        Predict the q-values.
+
+        :param obs: Observation
+        :return: The estimated Q-Value for each action.
+        """
+
+        delta = self(obs, acs, data_statistics)
+        predicted_changes = torch.zeros_like(obs)
+        probabilities = F.softmax(delta, dim=2)
+        _, predicted_classes = torch.max(probabilities, dim=2)
+
+        if obs[0, -1].round() != obs[0, -1]:
+            # the last dim is not binary, we don't need to predict it
+            predicted_changes[:, :-1] = predicted_classes[:, :-1] - 1
+        else:
+            predicted_changes = predicted_classes - 1
+
+        return obs + predicted_changes
+    
+    def learn(self, obs, acs, next_obs, data_statistics):
+        """
+        Train the model.
+        """
+        delta_pred = self(obs, acs, data_statistics)
+        delta = next_obs - obs
+        target_indices = (delta + 1).long()
+        if obs[0, -1].round() != obs[0, -1]:
+            # the last dim is not binary, we don't need to predict it
+            delta_pred = delta_pred[:, :-1, :]
+            target_indices = target_indices[:, :-1]
+
+        loss = F.cross_entropy(delta_pred.reshape(-1, 3), target_indices.reshape(-1), reduction='mean')
+        return loss
+
+class RWModel(nn.Module):
+
+    action_space: spaces.Discrete
+    def __init__(
+        self,
+        observation_space: spaces.Space,
+        action_space: spaces.Discrete,
+        net_arch: Optional[List[int]] = None,
+        activation_fn: Type[nn.Module] = nn.ReLU,
+    ) -> None:
+        super(RWModel, self).__init__()
+        if net_arch is None:
+            net_arch = [64, 64]
+        self.net_arch = net_arch
+        self.activation_fn = activation_fn
+        self.action_space = action_space
+        self.observation_space = observation_space
+        self.action_dim = int(self.action_space.n)  # number of actions
+        pred_network = create_mlp(observation_space.shape[0]+self.action_dim, 1, self.net_arch, self.activation_fn)
+        self.pred_network = nn.Sequential(*pred_network)
+        self.rew_mean = None
+        self.rew_std = None
+
+    def forward(self, obs, acs, data_statistics):
+        """
+        Predict the q-values.
+
+        :param obs: Observation
+        :return: The estimated Q-Value for each action.
+        """
+        # transform acs to one hot
+        acs = F.one_hot(acs, num_classes = self.action_dim).float()
+        acs = acs.squeeze(1)
+        input = torch.cat((obs, acs), dim = 1)
+        unnormed_rew = self.pred_network(input)
+        normed_rew = unnormed_rew * data_statistics['rew_std'] + data_statistics['rew_mean']
+        return normed_rew
+    
+    def learn(self, obs, acs, rewards, data_statistics):
+        """
+        Train the model.
+        """
+        reward_pred = self(obs, acs, data_statistics)
+        loss = F.l1_loss(reward_pred, rewards)
+        return loss
+
 class MPCPolicy(BasePolicy):
 
     def __init__(
@@ -98,7 +157,7 @@ class MPCPolicy(BasePolicy):
         features_extractor_class: Type[BaseFeaturesExtractor] = FlattenExtractor,
         features_extractor_kwargs: Optional[Dict[str, Any]] = None,
         normalize_images: bool = True,
-        optimizer_class: Type[th.optim.Optimizer] = th.optim.Adam,
+        optimizer_class: Type[torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__(
@@ -152,87 +211,109 @@ class MPCPolicy(BasePolicy):
         :param lr_schedule: Learning rate schedule
             lr_schedule(1) is the initial learning rate
         """
-        features_extractor = self.make_features_extractor()
+        # note: In MBRL, we do not use the feature extractor, the dyn model and reward model have already do this. 
+        # features_extractor = self.make_features_extractor()
         self.dyn_models = []
+        all_parameters = []  # List to store all model parameters
+
         for _ in range(self.ensemble_size):
             model = FFModel(
                 observation_space=self.observation_space,
                 action_space=self.action_space,
-                features_extractor=features_extractor,
-                features_dim=features_extractor.features_dim,
                 net_arch=[self.dyn_model_size] * self.dyn_model_n_layers,
             )
             model.to(device)
             self.dyn_models.append(model)
+            all_parameters += list(model.parameters())  # Collect parameters from each model
 
-        # Setup optimizer with initial learning rate
-        self.optimizer = self.optimizer_class(  # type: ignore[call-arg]
-            self.parameters(),
+        self.rew_model = RWModel(
+            observation_space=self.observation_space,
+            action_space=self.action_space
+        )
+
+        all_parameters += list(self.rew_model.parameters())  # Collect parameters from each model
+        # Setup optimizer with all collected parameters
+        self.optimizer = self.optimizer_class(
+            all_parameters,
             lr=lr_schedule(1),
             **self.optimizer_kwargs,
         )
 
     def sample_action_sequences(self, num_sequences, horizon, obs=None):
         if self.sample_strategy == 'random' or (self.sample_strategy == 'cem' and obs is None):
-            return np.random.uniform(low=self.low, high=self.high, size=(num_sequences, horizon, self.ac_dim))
+            # Random sampling for discrete actions
+            return torch.randint(low=0, high=self.ac_dim, size=(num_sequences, horizon), device=self.device)
         elif self.sample_strategy == 'cem':
             # Initialize mean and variance for CEM
-            mean = np.zeros((horizon, self.ac_dim))
-            variance = np.ones((horizon, self.ac_dim)) * ((self.high - self.low) / 2)**2
+            mean = torch.zeros((horizon, self.ac_dim), device=self.device)
+            variance = torch.ones((horizon, self.ac_dim), device=self.device) * ((self.high - self.low) / 2)**2
+
             for i in range(self.cem_iterations):
                 if i == 0:
-                    # Initial sampling
-                    samples = np.random.uniform(low=self.low, high=self.high, size=(self.N, horizon, self.ac_dim))
+                    # Initial uniform sampling within bounds
+                    samples = torch.rand((self.N, horizon, self.ac_dim), device=self.device) * (self.high - self.low) + self.low
                 else:
-                    samples = np.random.normal(loc=mean, scale=np.sqrt(variance), size=(self.N, horizon, self.ac_dim))
-                    samples = np.clip(samples, self.low, self.high)  # Ensure samples are within bounds
+                    # Subsequent samples based on updated mean and variance
+                    samples = torch.normal(mean=mean, std=variance.sqrt(), size=(self.N, horizon, self.ac_dim)).to(self.device)
+                    samples = torch.clamp(samples, self.low, self.high)  # Ensure samples are within bounds
 
                 # Evaluate and select elites
                 rewards = self.evaluate_candidate_sequences(samples, obs)
-                elite_idxs = rewards.argsort()[-self.cem_num_elites:]
+                _, elite_idxs = torch.topk(rewards, self.cem_num_elites, largest=True, sorted=False)
                 elites = samples[elite_idxs]
 
                 # Update mean and variance
-                mean = np.mean(elites, axis=0) * self.cem_alpha + mean * (1 - self.cem_alpha)
-                variance = np.var(elites, axis=0) * self.cem_alpha + variance * (1 - self.cem_alpha)
+                mean = elites.mean(dim=0) * self.cem_alpha + mean * (1 - self.cem_alpha)
+                variance = elites.var(dim=0) * self.cem_alpha + variance * (1 - self.cem_alpha)
 
-            # return the mean as the optimal action sequence, copy 
-            return mean  # Return the mean as the optimal action sequence
+            # Return the mean as the optimal action sequence
+            return mean
         else:
             raise Exception(f"Invalid sample_strategy: {self.sample_strategy}")
 
-    def _predict(self, obs, deterministic: bool = True):
+    def _predict(self, obs: torch.Tensor, deterministic: bool = True) -> torch.Tensor:
         if self.data_statistics is None:
-            return self.sample_action_sequences(num_sequences = 1, horizon = 1)[0, 0]
+            return self.sample_action_sequences(num_sequences=1, horizon=1).squeeze()
 
-        #sample random actions (Nxhorizon)
-        candidate_action_sequences = self.sample_action_sequences(num_sequences=self.N, horizon=self.horizon, obs=obs)
+        # Sample random actions for all observations in the batch (batch_size x N x horizon)
+        candidate_action_sequences = self.sample_action_sequences(num_sequences=obs.size(0) * self.N, horizon=self.horizon, obs=obs)
 
-        if self.sample_strategy == 'random':
-            # a list you can use for storing the predicted reward for each candidate sequence
-            predicted_rewards_per_ens = []
+        # Reshape to (batch_size, N, horizon) for processing
+        candidate_action_sequences = candidate_action_sequences.view(obs.size(0), self.N, self.horizon)
 
-            for model in self.dyn_models:
-                sim_obs = np.tile(obs, (self.N, 1))
-                model_rewards = np.zeros(self.N)
+        predicted_rewards_per_ens = []
 
-                for t in range(self.horizon):
-                    rew, _ = self.env.get_reward(sim_obs, candidate_action_sequences[:, t, :])
-                    model_rewards += rew
-                    sim_obs = model.get_prediction(sim_obs, candidate_action_sequences[:, t, :], self.data_statistics)
-                predicted_rewards_per_ens.append(model_rewards)
+        for model in self.dyn_models:
+            # Expand observations to match the number of sequences (batch_size, N, obs_dim)
+            sim_obs = obs.unsqueeze(1).repeat(1, self.N, 1).view(-1, obs.size(1))
 
-            # calculate mean_across_ensembles(predicted rewards).
-            # the matrix dimensions should change as follows: [ens,N] --> N
-            predicted_rewards = np.mean(predicted_rewards_per_ens, axis = 0) # TODO(Q2)
+            model_rewards = torch.zeros(obs.size(0) * self.N, device=self.device)
 
-            # pick the action sequence and return the 1st element of that sequence
-            best_index = np.argmax(predicted_rewards) #TODO(Q2)
-            best_action_sequence = candidate_action_sequences[best_index] #TODO(Q2)
-            action_to_take = best_action_sequence[0] # TODO(Q2)
-        else:
-            action_to_take =  candidate_action_sequences[0]
-        return action_to_take
+            for t in range(self.horizon):
+                # Flatten candidate_action_sequences for batch processing in model
+                actions = candidate_action_sequences[:, :, t].view(-1)
+                rew = self.rew_model(sim_obs, actions, self.data_statistics).view(-1)
+                model_rewards += rew
+                sim_obs = model.predict(sim_obs, actions, self.data_statistics)
+                sim_obs = torch.clamp(sim_obs, 0, 1)
+                if deterministic:
+                    sim_obs = sim_obs.round()
+                else:
+                    sim_obs = torch.bernoulli(sim_obs)
+
+            # Reshape rewards back to (batch_size, N) and append
+            model_rewards = model_rewards.view(obs.size(0), self.N)
+            predicted_rewards_per_ens.append(model_rewards)
+
+        # Calculate mean across ensembles (predicted rewards)
+        predicted_rewards = torch.stack(predicted_rewards_per_ens).mean(dim=0)
+
+        # Find best actions for each batch
+        best_indices = torch.argmax(predicted_rewards, dim=1)  # Best index for each batch
+        actions_to_take = torch.gather(candidate_action_sequences[:, :, 0], 1, best_indices.unsqueeze(1)).squeeze(1)
+
+        return actions_to_take
+
 
     def evaluate_candidate_sequences(self, action_sequences, initial_obs):
         """
