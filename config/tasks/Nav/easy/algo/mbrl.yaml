@@ -96,6 +96,6 @@ stable_baselines:
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: true                   # Whether to train the model
-  checkpoint_path: ""           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/easy_mbrl_250000_steps.zip"           # Path to a checkpoint to restore the model from
   num_envs: 2                   # Number of environments to run in parallel
   total_timesteps: 1000000    # Total number of timesteps to run for all environments combined
