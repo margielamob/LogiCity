@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn import ModuleList
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import PyTorchObs, Schedule
 from stable_baselines3.common.torch_layers import (
@@ -184,7 +185,7 @@ class MPCPolicy(BasePolicy):
         self.ac_dim = self.ac_space.n
 
         # dynamics model
-        self.dyn_models = []
+        self.dyn_models = ModuleList()
         self.ensemble_size = dyn_model_kwargs['ensemble_size']
         self.dyn_model_size = dyn_model_kwargs['dyn_model_size']
         self.dyn_model_n_layers = dyn_model_kwargs['dyn_model_n_layers']
@@ -209,12 +210,8 @@ class MPCPolicy(BasePolicy):
         Put the target network into evaluation mode.
 
         :param lr_schedule: Learning rate schedule
-            lr_schedule(1) is the initial learning rate
         """
-        # note: In MBRL, we do not use the feature extractor, the dyn model and reward model have already do this. 
-        # features_extractor = self.make_features_extractor()
-        self.dyn_models = []
-        all_parameters = []  # List to store all model parameters
+        all_parameters = []
 
         for _ in range(self.ensemble_size):
             model = FFModel(
@@ -223,16 +220,15 @@ class MPCPolicy(BasePolicy):
                 net_arch=[self.dyn_model_size] * self.dyn_model_n_layers,
             )
             model.to(device)
-            self.dyn_models.append(model)
-            all_parameters += list(model.parameters())  # Collect parameters from each model
+            self.dyn_models.append(model)  # Append model to ModuleList
+            all_parameters += list(model.parameters())
 
         self.rew_model = RWModel(
             observation_space=self.observation_space,
             action_space=self.action_space
         )
+        all_parameters += list(self.rew_model.parameters())
 
-        all_parameters += list(self.rew_model.parameters())  # Collect parameters from each model
-        # Setup optimizer with all collected parameters
         self.optimizer = self.optimizer_class(
             all_parameters,
             lr=lr_schedule(1),

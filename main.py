@@ -167,10 +167,17 @@ def main_gym(args, logger):
         else:
             train_env = make_env(simulation_config)
         train_env.reset()
-        model = algorithm_class(rl_config["policy_network"], \
-                                train_env, \
-                                **hyperparameters, \
-                                policy_kwargs=policy_kwargs)
+        if os.path.isfile(rl_config["checkpoint_path"]):
+            logger.info("Resume training")
+            logger.info("Loading the model from checkpoint: {}".format(rl_config["checkpoint_path"]))
+            policy_kwargs_use = copy.deepcopy(policy_kwargs)
+            model = algorithm_class.load(rl_config["checkpoint_path"], \
+                                        train_env, **hyperparameters, policy_kwargs=policy_kwargs_use)
+        else:
+            model = algorithm_class(rl_config["policy_network"], \
+                                    train_env, \
+                                    **hyperparameters, \
+                                    policy_kwargs=policy_kwargs)
         # RL training mode
         # Create the custom checkpoint and evaluation callback
         eval_checkpoint_callback = EvalCheckpointCallback(exp_name=args.exp, **eval_checkpoint_config)
