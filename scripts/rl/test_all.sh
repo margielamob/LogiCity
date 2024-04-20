@@ -74,8 +74,8 @@ MODE=easy
 #     --checkpoint_path checkpoints/easy_a2c_${iter}_steps.zip
 # done
 
-for iter in 190000 160000 130000 100000
+for iter in 60000 80000 100000 160000
 do
-python3 main.py --use_gym --config config/tasks/Nav/expert/algo/nlmdqn_test.yaml --exp expert_nlmdqn_test_${iter} \
-    --checkpoint_path checkpoints/expert_nlmdqn_${iter}_steps.zip
+python3 main.py --use_gym --config config/tasks/Nav/expert/algo/a2c_test.yaml --exp expert_a2c_test_${iter} \
+    --checkpoint_path checkpoints/expert_a2c_${iter}_steps.zip
 done
