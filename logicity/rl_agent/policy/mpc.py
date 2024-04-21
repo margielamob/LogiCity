@@ -91,7 +91,22 @@ class FFModel(nn.Module):
             delta_pred = delta_pred[:, :-1, :]
             target_indices = target_indices[:, :-1]
 
-        loss = F.cross_entropy(delta_pred.reshape(-1, 3), target_indices.reshape(-1), reduction='mean')
+        # Reshape for cross-entropy
+        delta_pred = delta_pred.reshape(-1, 3)
+        target_indices = target_indices.reshape(-1)
+
+            # Compute class weights
+        class_counts = torch.bincount(target_indices, minlength=3)
+        total_counts = target_indices.size(0)
+        class_weights = total_counts / (class_counts + 1e-6)  # Add a small constant to avoid division by zero
+
+        # Normalize weights so that min weight is 1.0
+        class_weights = class_weights / class_weights.min()
+
+        # Apply weights to cross-entropy loss
+        loss = F.cross_entropy(delta_pred, target_indices, weight=class_weights, reduction='mean')
+
+        # loss = F.cross_entropy(delta_pred.reshape(-1, 3), target_indices.reshape(-1), reduction='mean')
         return loss
 
 class RWModel(nn.Module):
@@ -137,7 +152,26 @@ class RWModel(nn.Module):
         Train the model.
         """
         reward_pred = self(obs, acs, data_statistics)
-        loss = F.l1_loss(reward_pred, rewards)
+        # Calculate threshold using data statistics
+        mean_reward = data_statistics['rew_mean']
+        std_reward = data_statistics['rew_std']
+        
+        # Setting threshold to mean - 2*std could typically cover the lower 5% of data assuming normal distribution
+        threshold = mean_reward - 2 * std_reward
+        
+        # Adjust weight based on standard deviation
+        high_penalty_weight = max(10, 5 * std_reward)  # Ensure a minimum weight of 10
+
+        # Create masks for different reward areas based on threshold
+        high_penalty_mask = (rewards <= threshold).float()
+        low_penalty_mask = (rewards > threshold).float()
+        
+        # Calculate weights: increased weight for high penalty areas
+        weights = high_penalty_weight * high_penalty_mask + low_penalty_mask
+
+        # Calculate weighted L1 loss
+        loss = (F.l1_loss(reward_pred, rewards, reduction='none') * weights).mean()
+        # loss = F.l1_loss(reward_pred, rewards)
         return loss
 
 class MPCPolicy(BasePolicy):
