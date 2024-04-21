@@ -10,7 +10,13 @@ from stable_baselines3.common.torch_layers import (
     NatureCNN,
     create_mlp,
 )
-from logicity.rl_agent.alg.infra.utils import *
+from logicity.rl_agent.policy.dreamer_helper.utils.module import get_parameters, FreezeParameters
+from logicity.rl_agent.policy.dreamer_helper.utils.algorithm import compute_return
+
+from logicity.rl_agent.policy.dreamer_helper.models.actor import DiscreteActionModel
+from logicity.rl_agent.policy.dreamer_helper.models.dense import DenseModel
+from logicity.rl_agent.policy.dreamer_helper.models.rssm import RSSM
+from logicity.rl_agent.policy.dreamer_helper.models.pixel import ObsDecoder, ObsEncoder
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import numpy as np
@@ -18,143 +24,16 @@ from gymnasium import spaces
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-class FFModel(nn.Module):
-
-    action_space: spaces.Discrete
-    def __init__(
-        self,
-        observation_space: spaces.Space,
-        action_space: spaces.Discrete,
-        net_arch: Optional[List[int]] = None,
-        activation_fn: Type[nn.Module] = nn.ReLU,
-    ) -> None:
-        super(FFModel, self).__init__()
-        if net_arch is None:
-            net_arch = [64, 64]
-        self.net_arch = net_arch
-        self.activation_fn = activation_fn
-        self.action_space = action_space
-        self.observation_space = observation_space
-        self.action_dim = int(self.action_space.n)  # number of actions
-        delta_network = create_mlp(observation_space.shape[0]+self.action_dim, observation_space.shape[0]*3, self.net_arch, self.activation_fn)
-        self.delta_network = nn.Sequential(*delta_network)
-
-    def forward(self, obs, acs, data_statistics):
-        """
-        Predict the q-values.
-
-        :param obs: Observation
-        :return: The estimated Q-Value for each action.
-        """
-        bs = obs.shape[0]
-        acs = F.one_hot(acs, num_classes = self.action_dim).float()
-        acs = acs.squeeze(1)
-        input = torch.cat((obs, acs), dim = 1)
-        delta = self.delta_network(input)
-        delta = delta.view(bs, -1, 3)
-        # check the last dim of obs, if it is 0/1
-        if obs[0, -1].round() != obs[0, -1]:
-            # the last dim is not binary, we don't need to predict it
-            delta[:, -1, :] *= 0
-        return delta
-    
-    def predict(self, obs, acs, data_statistics):
-        """
-        Predict the q-values.
-
-        :param obs: Observation
-        :return: The estimated Q-Value for each action.
-        """
-
-        delta = self(obs, acs, data_statistics)
-        predicted_changes = torch.zeros_like(obs)
-        probabilities = F.softmax(delta, dim=2)
-        _, predicted_classes = torch.max(probabilities, dim=2)
-
-        if obs[0, -1].round() != obs[0, -1]:
-            # the last dim is not binary, we don't need to predict it
-            predicted_changes[:, :-1] = predicted_classes[:, :-1] - 1
-        else:
-            predicted_changes = predicted_classes - 1
-
-        return obs + predicted_changes
-    
-    def learn(self, obs, acs, next_obs, data_statistics):
-        """
-        Train the model.
-        """
-        delta_pred = self(obs, acs, data_statistics)
-        delta = next_obs - obs
-        target_indices = (delta + 1).long()
-        if obs[0, -1].round() != obs[0, -1]:
-            # the last dim is not binary, we don't need to predict it
-            delta_pred = delta_pred[:, :-1, :]
-            target_indices = target_indices[:, :-1]
-
-        loss = F.cross_entropy(delta_pred.reshape(-1, 3), target_indices.reshape(-1), reduction='mean')
-        return loss
-
-class RWModel(nn.Module):
-
-    action_space: spaces.Discrete
-    def __init__(
-        self,
-        observation_space: spaces.Space,
-        action_space: spaces.Discrete,
-        net_arch: Optional[List[int]] = None,
-        activation_fn: Type[nn.Module] = nn.ReLU,
-    ) -> None:
-        super(RWModel, self).__init__()
-        if net_arch is None:
-            net_arch = [64, 64]
-        self.net_arch = net_arch
-        self.activation_fn = activation_fn
-        self.action_space = action_space
-        self.observation_space = observation_space
-        self.action_dim = int(self.action_space.n)  # number of actions
-        pred_network = create_mlp(observation_space.shape[0]+self.action_dim, 1, self.net_arch, self.activation_fn)
-        self.pred_network = nn.Sequential(*pred_network)
-        self.rew_mean = None
-        self.rew_std = None
-
-    def forward(self, obs, acs, data_statistics):
-        """
-        Predict the q-values.
-
-        :param obs: Observation
-        :return: The estimated Q-Value for each action.
-        """
-        # transform acs to one hot
-        acs = F.one_hot(acs, num_classes = self.action_dim).float()
-        acs = acs.squeeze(1)
-        input = torch.cat((obs, acs), dim = 1)
-        unnormed_rew = self.pred_network(input)
-        normed_rew = unnormed_rew * data_statistics['rew_std'] + data_statistics['rew_mean']
-        return normed_rew
-    
-    def learn(self, obs, acs, rewards, data_statistics):
-        """
-        Train the model.
-        """
-        reward_pred = self(obs, acs, data_statistics)
-        loss = F.l1_loss(reward_pred, rewards)
-        return loss
-
 class DreamerPolicy(BasePolicy):
 
     def __init__(
         self,
         env,
+        config,
+        device,
         observation_space: spaces.Space,
         action_space: spaces.Discrete,
         lr_schedule: Schedule,
-        dyn_model_kwargs: Dict[str, Any],
-        horizon: int,
-        n_sequences: int,
-        sample_strategy: str,
-        cem_iterations: int = 4,
-        cem_num_elites: int = 10,
-        cem_alpha: float = 1.0,
         features_extractor_class: Type[BaseFeaturesExtractor] = FlattenExtractor,
         features_extractor_kwargs: Optional[Dict[str, Any]] = None,
         normalize_images: bool = True,
@@ -174,66 +53,51 @@ class DreamerPolicy(BasePolicy):
         # init vars
         # MPC policy needs env.get_reward for planning
         self.env = env
-        self.horizon = horizon
-        self.N = n_sequences
-        self.data_statistics = None  # NOTE must be updated from elsewhere
+        self._model_initialize(config)
+        self._optim_initialize(config)
 
-        self.ob_dim = self.env.observation_space.shape[0]
+    def _model_initialize(self, config):
+        obs_shape = config.obs_shape
+        action_size = config.action_size
+        deter_size = config.rssm_info['deter_size']
+        if config.rssm_type == 'continuous':
+            stoch_size = config.rssm_info['stoch_size']
+        elif config.rssm_type == 'discrete':
+            category_size = config.rssm_info['category_size']
+            class_size = config.rssm_info['class_size']
+            stoch_size = category_size*class_size
 
-        # action space
-        self.ac_space = self.env.action_space
-        self.ac_dim = self.ac_space.n
+        embedding_size = config.embedding_size
+        rssm_node_size = config.rssm_node_size
+        modelstate_size = stoch_size + deter_size 
+    
+        self.RSSM = RSSM(action_size, rssm_node_size, embedding_size, self.device, config.rssm_type, config.rssm_info).to(self.device)
+        self.ActionModel = DiscreteActionModel(action_size, deter_size, stoch_size, embedding_size, config.actor, config.expl).to(self.device)
+        self.RewardDecoder = DenseModel((1,), modelstate_size, config.reward).to(self.device)
+        self.ValueModel = DenseModel((1,), modelstate_size, config.critic).to(self.device)
+        self.TargetValueModel = DenseModel((1,), modelstate_size, config.critic).to(self.device)
+        self.TargetValueModel.load_state_dict(self.ValueModel.state_dict())
+        
+        if config.discount['use']:
+            self.DiscountModel = DenseModel((1,), modelstate_size, config.discount).to(self.device)
+        if config.pixel:
+            self.ObsEncoder = ObsEncoder(obs_shape, embedding_size, config.obs_encoder).to(self.device)
+            self.ObsDecoder = ObsDecoder(obs_shape, modelstate_size, config.obs_decoder).to(self.device)
+        else:
+            self.ObsEncoder = DenseModel((embedding_size,), int(np.prod(obs_shape)), config.obs_encoder).to(self.device)
+            self.ObsDecoder = DenseModel(obs_shape, modelstate_size, config.obs_decoder).to(self.device)
 
-        # dynamics model
-        self.dyn_models = ModuleList()
-        self.ensemble_size = dyn_model_kwargs['ensemble_size']
-        self.dyn_model_size = dyn_model_kwargs['dyn_model_size']
-        self.dyn_model_n_layers = dyn_model_kwargs['dyn_model_n_layers']
-        self._build(lr_schedule)
-        # Sampling strategy
-        allowed_sampling = ('random', 'cem')
-        assert sample_strategy in allowed_sampling, f"sample_strategy must be one of the following: {allowed_sampling}"
-        self.sample_strategy = sample_strategy
-        self.cem_iterations = cem_iterations
-        self.cem_num_elites = cem_num_elites
-        self.cem_alpha = cem_alpha
-
-        print(f"Using action sampling strategy: {self.sample_strategy}")
-        if self.sample_strategy == 'cem':
-            print(f"CEM params: alpha={self.cem_alpha}, "
-                + f"num_elites={self.cem_num_elites}, iterations={self.cem_iterations}")
-
-    def _build(self, lr_schedule: Schedule) -> None:
-        """
-        Create the network and the optimizer.
-
-        Put the target network into evaluation mode.
-
-        :param lr_schedule: Learning rate schedule
-        """
-        all_parameters = []
-
-        for _ in range(self.ensemble_size):
-            model = FFModel(
-                observation_space=self.observation_space,
-                action_space=self.action_space,
-                net_arch=[self.dyn_model_size] * self.dyn_model_n_layers,
-            )
-            model.to(device)
-            self.dyn_models.append(model)  # Append model to ModuleList
-            all_parameters += list(model.parameters())
-
-        self.rew_model = RWModel(
-            observation_space=self.observation_space,
-            action_space=self.action_space
-        )
-        all_parameters += list(self.rew_model.parameters())
-
-        self.optimizer = self.optimizer_class(
-            all_parameters,
-            lr=lr_schedule(1),
-            **self.optimizer_kwargs,
-        )
+    def _optim_initialize(self, config):
+        model_lr = config.lr['model']
+        actor_lr = config.lr['actor']
+        value_lr = config.lr['critic']
+        self.world_list = [self.ObsEncoder, self.RSSM, self.RewardDecoder, self.ObsDecoder, self.DiscountModel]
+        self.actor_list = [self.ActionModel]
+        self.value_list = [self.ValueModel]
+        self.actorcritic_list = [self.ActionModel, self.ValueModel]
+        self.model_optimizer = self.optimizer_class(get_parameters(self.world_list), model_lr)
+        self.actor_optimizer = self.optimizer_class(get_parameters(self.actor_list), actor_lr)
+        self.value_optimizer = self.optimizer_class(get_parameters(self.value_list), value_lr)
 
     def sample_action_sequences(self, num_sequences, horizon, obs=None):
         if self.sample_strategy == 'random' or (self.sample_strategy == 'cem' and obs is None):

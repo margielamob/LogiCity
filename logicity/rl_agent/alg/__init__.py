@@ -11,6 +11,7 @@ from .random import Random
 from .nlmppo import NLMPPO
 from .nlmdqn import NLMDQN
 from .mbrl import MBRL
+from .dreamer import Dreamer
 # Expert data
 from .expert import ExpertCollector
 from .bc import BehavioralCloning

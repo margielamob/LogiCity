@@ -7,6 +7,7 @@ from .nlm_helper import *
 from .nlm_ac import ActorCriticNLMPolicy
 from .nlm_dqn import DQNNLMPolicy, QNetwork
 from .mpc import MPCPolicy
+from .dreamer import DreamerPolicy
 
 # Supervised learning
 build_policy = {
@@ -15,5 +16,6 @@ build_policy = {
     "NLMPolicy": NLMPolicy,
     "ActorCriticNLMPolicy": ActorCriticNLMPolicy,
     "DQNNLMPolicy": DQNNLMPolicy,
-    "MPCPolicy": MPCPolicy
+    "MPCPolicy": MPCPolicy,
+    "DreamerPolicy": DreamerPolicy
 }
