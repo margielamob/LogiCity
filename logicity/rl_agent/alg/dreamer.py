@@ -1,6 +1,7 @@
 import warnings
 from typing import Any, ClassVar, Dict, List, Optional, Tuple, Type, TypeVar, Union
-
+import sys
+import time
 import numpy as np
 import torch as th
 from gymnasium import spaces
@@ -15,6 +16,7 @@ from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, RolloutReturn, Schedule, TrainFreq, TrainFrequencyUnit
 from stable_baselines3.common.utils import get_linear_fn, get_parameters_by_name, polyak_update, check_for_correct_spaces
 from stable_baselines3.common.save_util import load_from_zip_file, recursive_setattr
+from stable_baselines3.common.utils import safe_mean
 from stable_baselines3.common.vec_env.patch_gym import _convert_space
 
 SelfDreamer = TypeVar("SelfDreamer", bound="Dreamer")
@@ -312,6 +314,7 @@ class Dreamer(OffPolicyAlgorithm):
         prev_rssmstate = self.policy.RSSM._init_rssm_state(1)
         prev_action = th.zeros(1, self.action_size).to(self.device)
         episode_actor_ent = []
+        scores = []
         
         while self.num_timesteps < total_timesteps:
 
@@ -337,24 +340,15 @@ class Dreamer(OffPolicyAlgorithm):
                 self.replay_buffer.add(obs, action.squeeze(0).cpu().numpy(), rew, done)
                 train_metrics['train_rewards'] = score
                 train_metrics['action_ent'] =  np.mean(episode_actor_ent)
-                wandb.log(train_metrics, step=iter)
                 scores.append(score)
-                if len(scores)>100:
-                    scores.pop(0)
-                    current_average = np.mean(scores)
-                    if current_average>best_mean_score:
-                        best_mean_score = current_average 
-                        print('saving best model with mean score : ', best_mean_score)
-                        save_dict = trainer.get_save_dict()
-                        torch.save(save_dict, best_save_path)
                 
-                obs, score = env.reset(), 0
+                obs, score = self.env.reset(), 0
                 done = False
-                prev_rssmstate = trainer.RSSM._init_rssm_state(1)
-                prev_action = torch.zeros(1, trainer.action_size).to(trainer.device)
+                prev_rssmstate = self.policy.RSSM._init_rssm_state(1)
+                prev_action = th.zeros(1, self.action_size).to(self.device)
                 episode_actor_ent = []
             else:
-                trainer.buffer.add(obs, action.squeeze(0).detach().cpu().numpy(), rew, done)
+                self.replay_buffer.add(obs, action.squeeze(0).detach().cpu().numpy(), rew, done)
                 obs = next_obs
                 prev_rssmstate = posterior_rssm_state
                 prev_action = action
