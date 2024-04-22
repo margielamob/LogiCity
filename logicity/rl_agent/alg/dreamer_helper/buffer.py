@@ -9,12 +9,6 @@ import torch as th
 
 from stable_baselines3.common.buffers import BaseBuffer
 
-class TransitionBufferSamples(NamedTuple):
-    observations: th.Tensor
-    actions: th.Tensor
-    dones: th.Tensor
-    rewards: th.Tensor
-
 class TransitionBuffer(BaseBuffer):
     def __init__(
         self,
@@ -39,6 +33,8 @@ class TransitionBuffer(BaseBuffer):
         self.obs_type = obs_type
         self.action_type = action_type
         self.seq_len = seq_len
+        # Dreamer needs one-hot encoded actions
+        self.action_dim = action_space.n
         self.pos = 0
         self.full = False
         self.observations = np.empty((self.buffer_size, self.n_envs, *self.obs_shape), dtype=obs_type) 
@@ -59,13 +55,14 @@ class TransitionBuffer(BaseBuffer):
             obs = obs.reshape((self.n_envs, *self.obs_shape))
             next_obs = next_obs.reshape((self.n_envs, *self.obs_shape))
 
-        # Reshape to handle multi-dim and discrete action spaces, see GH #970 #1392
-        action = action.reshape((self.n_envs, self.action_dim))
+        # change action to one hot, use numpy
+        reference = np.zeros((self.n_envs, self.action_dim))
+        reference[np.arange(self.n_envs), action] = 1
 
         # Copy to avoid modification by reference
         self.observations[self.pos] = np.array(obs)
 
-        self.actions[self.pos] = np.array(action)
+        self.actions[self.pos] = np.array(reference)
         self.rewards[self.pos] = np.array(reward)
         self.dones[self.pos] = np.array(done)
 
@@ -77,27 +74,23 @@ class TransitionBuffer(BaseBuffer):
     def _sample_idx(self, L):
         valid_idx = False
         while not valid_idx:
-            idx = np.random.randint(0, self.buffer_size if self.full else self.idx - L)
+            idx = np.random.randint(0, self.buffer_size if self.full else self.pos - L)
             idxs = np.arange(idx, idx + L) % self.buffer_size
-            valid_idx = not self.idx in idxs[1:] 
+            valid_idx = not self.pos in idxs[1:] 
         return idxs
 
     def _retrieve_batch(self, idxs, n, l):
         vec_idxs = idxs.transpose().reshape(-1)
-        observation = self.observation[vec_idxs]
-        return observation.reshape(l, n, *self.obs_shape), self.action[vec_idxs].reshape(l, n, -1), self.reward[vec_idxs].reshape(l, n), self.terminal[vec_idxs].reshape(l, n)
+        observation = self.observations[vec_idxs]
+        return observation.reshape(l, n, *self.obs_shape), self.actions[vec_idxs].reshape(l, n, -1), self.rewards[vec_idxs].reshape(l, n), self.dones[vec_idxs].reshape(l, n)
 
-    def sample(self, batch_size: int, env = None) -> TransitionBufferSamples:
+    def sample(self, batch_size: int, env = None):
         n = batch_size
         l = self.seq_len+1
         obs,act,rew,term = self._retrieve_batch(np.asarray([self._sample_idx(l) for _ in range(n)]), n, l)
         obs,act,rew,term = self._shift_sequences(obs,act,rew,term)
-        return TransitionBufferSamples(
-            observations=th.as_tensor(obs, device=self.device),
-            actions=th.as_tensor(act, device=self.device),
-            rewards=th.as_tensor(rew, device=self.device),
-            dones=th.as_tensor(term, device=self.device)
-        )
+        # transform action to one hot
+        return obs,act,rew,term
 
     def _get_samples(self, batch_inds: np.ndarray, env = None):
         pass

@@ -33,8 +33,8 @@ simulation:
       prob: [0.25, 0.25, 0.5]
 
 eval_checkpoint:
-  eval_freq: 10000                        # This is the frequency of evaluation, will be multiplied by num_envs
-  save_freq: 10000
+  eval_freq: 500                        # This is the frequency of evaluation, will be multiplied by num_envs
+  save_freq: 500
   simulation_config:
     map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
     agent_yaml_file: "config/agents/easy/val.yaml" # Agents in the simulation
@@ -83,9 +83,9 @@ stable_baselines:
     config_name: "LogiCityEasyConfig"
     learning_rate: 0.00003          # Learning rate
     buffer_size: 10000            # Size of the replay buffer
-    learning_starts: 4000
-    train_freq: 400
-    gradient_steps: 10
+    learning_starts: 200
+    train_freq: 50
+    gradient_steps: 5
     batch_size: 256               # Number of samples in each batch
     seq_len: 50
     verbose: 1                    # Verbosity level

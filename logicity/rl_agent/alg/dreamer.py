@@ -12,6 +12,7 @@ from copy import deepcopy
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from logicity.rl_agent.policy import DreamerPolicy
 from logicity.rl_agent.alg.dreamer_helper.buffer import TransitionBuffer
+from logicity.rl_agent.policy.dreamer_helper.utils.module import get_parameters
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, RolloutReturn, Schedule, TrainFreq, TrainFrequencyUnit
 from stable_baselines3.common.utils import get_linear_fn, get_parameters_by_name, polyak_update, check_for_correct_spaces
@@ -99,15 +100,8 @@ class Dreamer(OffPolicyAlgorithm):
         )
         self.action_size = self.config.action_size
         self.pixel = self.config.pixel
-        self.kl_info = self.config.kl
         self.seq_len = self.config.seq_len
         self.batch_size = self.config.batch_size
-        self.collect_intervals = self.config.collect_intervals
-        self.discount = self.config.discount_
-        self.lambda_ = self.config.lambda_
-        self.horizon = self.config.horizon
-        self.loss_scale = self.config.loss_scale
-        self.actor_entropy_scale = self.config.actor_entropy_scale
         self.grad_clip_norm = self.config.grad_clip
         if _init_setup_model:
             self._setup_model()
@@ -142,87 +136,93 @@ class Dreamer(OffPolicyAlgorithm):
         self._convert_train_freq()
     
     def train(self, gradient_steps: int, batch_size: int = 100) -> None:
-        # Implementation of your training logic
-        # For example, use self.buffer to train your model
-        self.policy.set_training_mode(True)
-        # Update learning rate according to schedule
-        self._update_learning_rate(self.policy.optimizer)
+        """ 
+        trains the world model and imagination actor and critic for collect_interval times using sequence-batch data from buffer
+        """
+        actor_l = []
+        value_l = []
+        obs_l = []
+        model_l = []
+        reward_l = []
+        prior_ent_l = []
+        post_ent_l = []
+        kl_l = []
+        pcont_l = []
+        mean_targ = []
+        min_targ = []
+        max_targ = []
+        std_targ = []
 
-        losses = {
-            "dyn": [],
-            "rew": []
-        }
-        for _ in range(gradient_steps):
-            # Sample replay buffer
-            replay_data = self.replay_buffer.sample(batch_size * self.policy.ensemble_size, env=self._vec_normalize_env)  # type: ignore[union-attr]
+        for i in range(gradient_steps):
+            obs, actions, rewards, terms = self.replay_buffer.sample(batch_size)
+            obs = th.tensor(obs, dtype=th.float32).to(self.device)                         #t, t+seq_len 
+            actions = th.tensor(actions, dtype=th.float32).to(self.device)                 #t-1, t+seq_len-1
+            rewards = th.tensor(rewards, dtype=th.float32).to(self.device).unsqueeze(-1)   #t-1 to t+seq_len-1
+            nonterms = th.tensor(1-terms, dtype=th.float32).to(self.device).unsqueeze(-1)  #t-1 to t+seq_len-1
 
-            train_losses_dyn = []
-            train_losses_rew = []
-            ob_no = replay_data.observations
-            ac_na = replay_data.actions
-            rew = replay_data.rewards
-            next_ob_no = replay_data.next_observations
+            model_loss, kl_loss, obs_loss, reward_loss, pcont_loss, prior_dist, post_dist, posterior = self.policy.representation_loss(obs, actions, rewards, nonterms)
+            
+            self.policy.model_optimizer.zero_grad()
+            model_loss.backward()
+            grad_norm_model = th.nn.utils.clip_grad_norm_(get_parameters(self.policy.world_list), self.grad_clip_norm)
+            self.policy.model_optimizer.step()
 
-            num_data = ob_no.shape[0]
-            num_data_per_ens = int(num_data / self.policy.ensemble_size)
+            actor_loss, value_loss, target_info = self.policy.actorcritc_loss(posterior)
 
-            for i in range(self.policy.ensemble_size):
-                # select which datapoints to use for this model of the ensemble
-                start_idx = i * num_data_per_ens
-                end_idx = (i + 1) * num_data_per_ens if i < self.policy.ensemble_size - 1 else num_data
+            self.policy.actor_optimizer.zero_grad()
+            self.policy.value_optimizer.zero_grad()
 
-                observations = ob_no[start_idx:end_idx]
-                actions = ac_na[start_idx:end_idx]
-                next_observations = next_ob_no[start_idx:end_idx]
-                rewards = rew[start_idx:end_idx]
+            actor_loss.backward()
+            value_loss.backward()
 
-                # use datapoints to update one of the dyn_models
-                model = self.policy.dyn_models[i]
-                loss_dyn = model.learn(observations, actions, next_observations, self.data_statistics)
-                loss_rew = self.policy.rew_model.learn(observations, actions, rewards, self.data_statistics)
-                train_losses_dyn.append(loss_dyn)
-                train_losses_rew.append(loss_rew)
+            grad_norm_actor = th.nn.utils.clip_grad_norm_(get_parameters(self.policy.actor_list), self.grad_clip_norm)
+            grad_norm_value = th.nn.utils.clip_grad_norm_(get_parameters(self.policy.value_list), self.grad_clip_norm)
 
-            # Optimize the policy
-            total_loss = sum(train_losses_dyn)/self.policy.ensemble_size + 5 * sum(train_losses_rew)/self.policy.ensemble_size
-            self.policy.optimizer.zero_grad()
-            total_loss.backward()
-            # Clip gradient norm
-            th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
-            self.policy.optimizer.step()
-            losses["dyn"].append(sum(train_losses_dyn).detach().cpu().numpy()/self.policy.ensemble_size)
-            losses["rew"].append(sum(train_losses_rew).detach().cpu().numpy()/self.policy.ensemble_size)
+            self.policy.actor_optimizer.step()
+            self.policy.value_optimizer.step()
 
-        # Increase update counter
+            with th.no_grad():
+                prior_ent = th.mean(prior_dist.entropy())
+                post_ent = th.mean(post_dist.entropy())
+
+            prior_ent_l.append(prior_ent.item())
+            post_ent_l.append(post_ent.item())
+            actor_l.append(actor_loss.item())
+            value_l.append(value_loss.item())
+            obs_l.append(obs_loss.item())
+            model_l.append(model_loss.item())
+            reward_l.append(reward_loss.item())
+            kl_l.append(kl_loss.item())
+            pcont_l.append(pcont_loss.item())
+            mean_targ.append(target_info['mean_targ'])
+            min_targ.append(target_info['min_targ'])
+            max_targ.append(target_info['max_targ'])
+            std_targ.append(target_info['std_targ'])
+
+        self.logger.record("train/model_loss", np.mean(model_l))
+        self.logger.record("train/kl_loss", np.mean(kl_l))
+        self.logger.record("train/reward_loss", np.mean(reward_l))
+        self.logger.record("train/obs_loss", np.mean(obs_l))
+        self.logger.record("train/value_loss", np.mean(value_l))
+        self.logger.record("train/actor_loss", np.mean(actor_l))
+        self.logger.record("train/prior_entropy", np.mean(prior_ent_l))
+        self.logger.record("train/posterior_entropy", np.mean(post_ent_l))
+        self.logger.record("train/pcont_loss", np.mean(pcont_l))
+        self.logger.record("train/mean_targ", np.mean(mean_targ))
+        self.logger.record("train/min_targ", np.mean(min_targ))
+        self.logger.record("train/max_targ", np.mean(max_targ))
+        self.logger.record("train/std_targ", np.mean(std_targ))
         self._n_updates += gradient_steps
-
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
-        self.logger.record("train/loss_dyn", np.mean(losses["dyn"]))
-        self.logger.record("train/loss_rew", np.mean(losses["rew"]))
 
     def _on_step(self) -> None:
         """
         Get updated mean/std of the data in our replay buffer
         """
-        self._n_calls += 1
-        observations = th.tensor(self.replay_buffer.observations, device=self.device)
-        actions = th.tensor(self.replay_buffer.actions, device=self.device)
-        next_observations = th.tensor(self.replay_buffer.next_observations, device=self.device)
-        rewards = th.tensor(self.replay_buffer.rewards, device=self.device)
-
-        deltas = next_observations - observations
-
-        self.data_statistics = {
-            # 'obs_mean': observations.mean(dim=0),
-            # 'obs_std': observations.std(dim=0),
-            # 'acs_mean': actions.mean(dim=0),
-            # 'acs_std': actions.std(dim=0),
-            # 'delta_mean': deltas.mean(dim=0),
-            # 'delta_std': deltas.std(dim=0),
-            'rew_mean': rewards.mean(),
-            'rew_std': rewards.std(),
-        }
-        self.policy.data_statistics = self.data_statistics
+        if self.num_timesteps % self.config.slow_target_update == 0:
+            mix = self.config.slow_target_fraction if self.config.use_slow_target else 1
+            for param, target_param in zip(self.policy.ValueModel.parameters(), self.policy.TargetValueModel.parameters()):
+                target_param.data.copy_(mix * param.data + (1 - mix) * target_param.data)
 
     def _store_transition(
         self,
@@ -298,49 +298,54 @@ class Dreamer(OffPolicyAlgorithm):
         reset_num_timesteps: bool = True,
         progress_bar: bool = False,
     ) -> SelfDreamer:
+        
+        total_timesteps, callback = self._setup_learn(
+            total_timesteps,
+            callback,
+            reset_num_timesteps,
+            tb_log_name,
+            progress_bar,
+        )
+
         callback.on_training_start(locals(), globals())
+
         rollout = self.collect_rollouts(
                 self.env,
-                train_freq=self.train_freq,
-                action_noise=self.action_noise,
                 callback=callback,
                 learning_starts=self.learning_starts,
                 replay_buffer=self.replay_buffer,
                 log_interval=log_interval,
             )
         
-        obs = self.env.reset()
+        obs, score = self.env.reset(), 0
         done = False
         prev_rssmstate = self.policy.RSSM._init_rssm_state(1)
         prev_action = th.zeros(1, self.action_size).to(self.device)
         episode_actor_ent = []
-        scores = []
         
         while self.num_timesteps < total_timesteps:
 
-            if self.num_timesteps % self.train_freq == 0:
-                train_metrics = self.train(train_metrics)
-
-            if self.num_timesteps % self.config.slow_target_update == 0:
-                self.update_target()            
+            if self.num_timesteps % self.train_freq.frequency == 0:
+                self.train(self.gradient_steps, self.batch_size)     
 
             with th.no_grad():
-                embed = self.policy.ObsEncoder(th.tensor(obs, dtype=th.float32).unsqueeze(0).to(self.device))  
+                embed = self.policy.ObsEncoder(th.tensor(obs, dtype=th.float32).to(self.device))  
                 _, posterior_rssm_state = self.policy.RSSM.rssm_observe(embed, prev_action, not done, prev_rssmstate)
                 model_state = self.policy.RSSM.get_model_state(posterior_rssm_state)
                 action, action_dist = self.policy.ActionModel(model_state)
-                action = self.policy.ActionModel.add_exploration(action, iter).detach()
+                action = self.policy.ActionModel.add_exploration(action, self.num_timesteps).detach()
                 action_ent = th.mean(action_dist.entropy()).item()
                 episode_actor_ent.append(action_ent)
 
-            next_obs, rew, done, _ = self.env.step(action.squeeze(0).cpu().numpy())
+            # Step the env, using the discrete numbers, not the one-hot
+            env_action = th.argmax(action, dim=-1).cpu().numpy()
+            next_obs, rew, done, _ = self.env.step(env_action)
             score += rew
 
             if done:
-                self.replay_buffer.add(obs, action.squeeze(0).cpu().numpy(), rew, done)
-                train_metrics['train_rewards'] = score
-                train_metrics['action_ent'] =  np.mean(episode_actor_ent)
-                scores.append(score)
+                self.replay_buffer.add(obs, env_action, rew, done)
+                self.logger.record("train/train_rewards", np.mean(score))
+                self.logger.record("train/action_ent", np.mean(np.mean(episode_actor_ent)))
                 
                 obs, score = self.env.reset(), 0
                 done = False
@@ -348,7 +353,7 @@ class Dreamer(OffPolicyAlgorithm):
                 prev_action = th.zeros(1, self.action_size).to(self.device)
                 episode_actor_ent = []
             else:
-                self.replay_buffer.add(obs, action.squeeze(0).detach().cpu().numpy(), rew, done)
+                self.replay_buffer.add(obs, env_action, rew, done)
                 obs = next_obs
                 prev_rssmstate = posterior_rssm_state
                 prev_action = action
@@ -444,28 +449,28 @@ class Dreamer(OffPolicyAlgorithm):
             return RolloutReturn(num_collected_steps * env.num_envs, num_collected_episodes, continue_training)
 
     def _dump_logs(self) -> None:
-            """
-            Write log.
-            """
-            assert self.ep_info_buffer is not None
-            assert self.ep_success_buffer is not None
+        """
+        Write log.
+        """
+        assert self.ep_info_buffer is not None
+        assert self.ep_success_buffer is not None
 
-            time_elapsed = max((time.time_ns() - self.start_time) / 1e9, sys.float_info.epsilon)
-            fps = int((self.num_timesteps - self._num_timesteps_at_start) / time_elapsed)
-            self.logger.record("time/episodes", self._episode_num, exclude="tensorboard")
-            if len(self.ep_info_buffer) > 0 and len(self.ep_info_buffer[0]) > 0:
-                self.logger.record("rollout/ep_rew_mean", safe_mean([ep_info["r"] for ep_info in self.ep_info_buffer]))
-                self.logger.record("rollout/ep_len_mean", safe_mean([ep_info["l"] for ep_info in self.ep_info_buffer]))
-            self.logger.record("time/fps", fps)
-            self.logger.record("time/time_elapsed", int(time_elapsed), exclude="tensorboard")
-            self.logger.record("time/total_timesteps", self.num_timesteps, exclude="tensorboard")
-            if self.use_sde:
-                self.logger.record("train/std", (self.actor.get_std()).mean().item())
+        time_elapsed = max((time.time_ns() - self.start_time) / 1e9, sys.float_info.epsilon)
+        fps = int((self.num_timesteps - self._num_timesteps_at_start) / time_elapsed)
+        self.logger.record("time/episodes", self._episode_num, exclude="tensorboard")
+        if len(self.ep_info_buffer) > 0 and len(self.ep_info_buffer[0]) > 0:
+            self.logger.record("rollout/ep_rew_mean", safe_mean([ep_info["r"] for ep_info in self.ep_info_buffer]))
+            self.logger.record("rollout/ep_len_mean", safe_mean([ep_info["l"] for ep_info in self.ep_info_buffer]))
+        self.logger.record("time/fps", fps)
+        self.logger.record("time/time_elapsed", int(time_elapsed), exclude="tensorboard")
+        self.logger.record("time/total_timesteps", self.num_timesteps, exclude="tensorboard")
+        if self.use_sde:
+            self.logger.record("train/std", (self.actor.get_std()).mean().item())
 
-            if len(self.ep_success_buffer) > 0:
-                self.logger.record("rollout/success_rate", safe_mean(self.ep_success_buffer))
-            # Pass the number of timesteps for tensorboard
-            self.logger.dump(step=self.num_timesteps)
+        if len(self.ep_success_buffer) > 0:
+            self.logger.record("rollout/success_rate", safe_mean(self.ep_success_buffer))
+        # Pass the number of timesteps for tensorboard
+        self.logger.dump(step=self.num_timesteps)
 
     @classmethod
     def load(  # noqa: C901
@@ -503,7 +508,7 @@ class Dreamer(OffPolicyAlgorithm):
         :return: new model instance with loaded parameters
         """
 
-        data, params, pytorch_variables = load_from_zip_file(
+        data, params, pyth_variables = load_from_zip_file(
             path,
             device=device,
             custom_objects=custom_objects,
@@ -583,19 +588,19 @@ class Dreamer(OffPolicyAlgorithm):
                 )
             else:
                 raise e
-        # put other pytorch variables back in place
-        if pytorch_variables is not None:
-            for name in pytorch_variables:
-                # Skip if PyTorch variable was not defined (to ensure backward compatibility).
+        # put other pyth variables back in place
+        if pyth_variables is not None:
+            for name in pyth_variables:
+                # Skip if Pyth variable was not defined (to ensure backward compatibility).
                 # This happens when using SAC/TQC.
                 # SAC has an entropy coefficient which can be fixed or optimized.
-                # If it is optimized, an additional PyTorch variable `log_ent_coef` is defined,
+                # If it is optimized, an additional Pyth variable `log_ent_coef` is defined,
                 # otherwise it is initialized to `None`.
-                if pytorch_variables[name] is None:
+                if pyth_variables[name] is None:
                     continue
                 # Set the data attribute directly to avoid issue when using optimizers
                 # See https://github.com/DLR-RM/stable-baselines3/issues/391
-                recursive_setattr(model, f"{name}.data", pytorch_variables[name].data)
+                recursive_setattr(model, f"{name}.data", pyth_variables[name].data)
 
         # Sample gSDE exploration matrix, so it uses the right device
         # see issue #44
