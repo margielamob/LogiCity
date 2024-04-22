@@ -290,6 +290,7 @@ def main_gym(args, logger):
             if ts in worlds.keys():
                 worlds[ts] = cached_observation
         mean_reward = np.mean(rew_list)
+        np.save(os.path.join(args.log_dir, "{}_rewards.npy".format(args.exp)), rew_list)
         sr = np.mean(success)
         mSuccD, aSuccD, SuccDAct = cal_step_metric(decision_step, succ_decision)
         logger.info("Mean Score achieved: {}".format(mean_reward))

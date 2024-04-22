@@ -46,6 +46,5 @@ stable_baselines:
   train: false                   # Whether to train the model
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
-  episode_data: "dataset/easy/oracle_easy_test_steps.pkl"
+  episode_data: "dataset/easy/test_100_episodes.pkl"
   eval_actions: {"Stop": 3}
-  vis_id: [4, 30, 32, 84]

@@ -4,7 +4,7 @@ simulation:
   agent_yaml_file: "config/agents/expert/test.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology_full.yaml" # Ontology of the simulation
   rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/expert/expert.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/expert/expert_fast.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false

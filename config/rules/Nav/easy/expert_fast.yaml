@@ -1,0 +1,74 @@
+Rules:
+  Sim: # how the determinist agents move
+    - name: Stop
+      formula: |
+        Stop(entity) == Exists(
+          [dummyEntity], 
+          Or(
+            And(
+              IsAtInter(entity), 
+              IsInInter(dummyEntity), 
+            ),
+            And(
+              IsAtInter(entity), 
+              IsAtInter(dummyEntity), 
+              HigherPri(dummyEntity, entity),
+            ),
+            CollidingClose(entity, dummyEntity)
+          )
+        )
+      description: Or version of the 3 stop rule.
+  Task: # how the reward/score is calculated
+    - name: Collision and Intersection
+      description: should not collide.
+      dead: true
+      reward: -10
+      formula: |
+        Implies(Exists(
+          [dummyEntity], 
+            Or(
+              And(
+                IsAtInter(entity), 
+                IsInInter(dummyEntity), 
+              ),
+              And(
+                IsAtInter(entity), 
+                IsAtInter(dummyEntity), 
+                HigherPri(dummyEntity, entity),
+              ),
+              CollidingClose(entity, dummyEntity)
+            )
+          ),
+          Stop(entity)
+        )
+  Expert: # how the expert agents should move
+    - name: Stop
+      description: should not disobey rules.
+      formula: |
+        Stop(entity) == Exists(
+        [dummyEntity], 
+          Or(
+            And(
+              IsAtInter(entity), 
+              IsInInter(dummyEntity), 
+            ),
+            And(
+              IsAtInter(entity), 
+              IsAtInter(dummyEntity), 
+              HigherPri(dummyEntity, entity),
+            ),
+            CollidingClose(entity, dummyEntity)
+          )
+        )
+    - name: Slow
+      description: Never take slow action.
+      formula: |
+        Not(Slow(entity))
+    - name: Normal
+      description: Never take Normal action.
+      formula: |
+        Not(Normal(entity))
+    - name: Fast
+      description: If not stop, then fast.
+      formula: |
+        Fast(entity) == Not(Fast(entity))

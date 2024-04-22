@@ -1,10 +1,10 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/expert/test.yaml" # Agents in the simulation
-  ontology_yaml_file: "config/rules/ontology_full.yaml" # Ontology of the simulation
+  agent_yaml_file: "config/agents/medium/test.yaml" # Agents in the simulation
+  ontology_yaml_file: "config/rules/ontology_medium.yaml" # Ontology of the simulation
   rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/expert/expert.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/medium/expert_fast.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
@@ -24,9 +24,9 @@ simulation:
       Entity: 5                        # Maximum number of agents in the FOV, include the RL agent
     action_cost:
       0: -2
-      1: -1
+      1: 0
       2: -2
-      3: -3
+      3: -5
 
 # Stable Baselines specific settings
 stable_baselines:
@@ -43,5 +43,5 @@ stable_baselines:
   train: false                   # Whether to train the model
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
-  episode_data: "dataset/expert/test_100_episodes.pkl"
-  eval_actions: {"Stop": 3, "Fast": 2, "Slow": 0}
+  episode_data: "dataset/medium/test_100_episodes.pkl"
+  eval_actions: {"Stop": 3}
