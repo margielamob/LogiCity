@@ -185,4 +185,4 @@ Rules:
     - name: Fast
       description: If not stop, then fast.
       formula: |
-        Fast(entity) == Not(Fast(entity))
+        Fast(entity) == Not(Stop(entity))

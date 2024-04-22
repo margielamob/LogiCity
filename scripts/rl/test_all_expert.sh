@@ -1,11 +1,9 @@
-
-for mode in easy medium hard expert
+python3 main.py --use_gym --config config/tasks/Nav/easy/experts/expert_test_fast.yaml --exp easy_test_fast
+for mode in medium hard expert
 do
 python3 main.py --use_gym --config config/tasks/Nav/${mode}/experts/expert_test.yaml --exp ${mode}_test_normal
 
 python3 main.py --use_gym --config config/tasks/Nav/${mode}/experts/expert_test_slow.yaml --exp ${mode}_test_slow
-
-python3 main.py --use_gym --config config/tasks/Nav/${mode}/experts/expert_test_fast.yaml --exp ${mode}_test_fast
 done
 
 # python3 main.py --config config/tasks/Nav/${MODE}/algo/random_test.yaml \
