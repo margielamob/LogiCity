@@ -2,9 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Load data from npy files
-rewards1 = np.load('log_rl/easy_test_fast_rewards.npy')
-rewards2 = np.load('log_rl/easy_test_normal_rewards.npy')
-rewards3 = np.load('log_rl/easy_test_slow_rewards.npy')
+mode = 'hard'
+rewards1 = np.load('log_rl/hard_test_fast_rewards.npy')
+rewards2 = np.load('log_rl/hard_test_normal_rewards.npy')
+rewards3 = np.load('log_rl/hard_test_slow_rewards.npy')
 
 # filtering out rewards < -10
 rewards1[rewards1 < -10] = -10
@@ -39,7 +40,7 @@ for i in range(num_rows):
 plt.tight_layout()
 
 # Save the figure
-plt.savefig('rewards_bar_chart.png')
+plt.savefig('hard_stupid_rewards.png')
 
 # Display the plot
 plt.show()

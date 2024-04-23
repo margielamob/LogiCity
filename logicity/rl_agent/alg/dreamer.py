@@ -326,6 +326,7 @@ class Dreamer(OffPolicyAlgorithm):
         while self.num_timesteps < total_timesteps:
 
             if self.num_timesteps % self.train_freq.frequency == 0:
+                callback.on_rollout_end()
                 self.train(self.gradient_steps, self.batch_size)     
 
             with th.no_grad():
@@ -357,6 +358,10 @@ class Dreamer(OffPolicyAlgorithm):
                 obs = next_obs
                 prev_rssmstate = posterior_rssm_state
                 prev_action = action
+
+            callback.update_locals(locals())
+            if callback.on_step() is False:
+                break
 
         callback.on_training_end()
 
