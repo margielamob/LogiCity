@@ -79,23 +79,18 @@ stable_baselines:
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
-    mpc_kwargs:
-      dyn_model_kwargs:
-        ensemble_size: 50
-        dyn_model_size: 64
-        dyn_model_n_layers: 2
-      horizon: 20
-      n_sequences: 100
-      sample_strategy: "random"
+    config_path: "logicity.rl_agent.alg.dreamer_helper"
+    config_name: "LogiCityEasyConfig"
     learning_rate: 0.00003          # Learning rate
     buffer_size: 10000            # Size of the replay buffer
     learning_starts: 4000
-    train_freq: 400
-    gradient_steps: 10
-    batch_size: 256               # Number of samples in each batch
+    train_freq: 50
+    gradient_steps: 5
+    batch_size: 50               # Number of samples in each batch
+    seq_len: 50
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: true                   # Whether to train the model
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
-  num_envs: 2                   # Number of environments to run in parallel
+  num_envs: 1                   # Number of environments to run in parallel
   total_timesteps: 1000000    # Total number of timesteps to run for all environments combined

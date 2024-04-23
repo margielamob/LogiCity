@@ -16,13 +16,13 @@ from logicity.utils.vis import visualize_city
 from logicity.rl_agent.alg import *
 from logicity.utils.gym_wrapper import GymCityWrapper
 from stable_baselines3.common.vec_env import SubprocVecEnv
-from logicity.utils.gym_callback import EvalCheckpointCallback
+from logicity.utils.gym_callback import EvalCheckpointCallback, DreamerEvalCheckpointCallback
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="mbrl_debug")
+    parser.add_argument('--exp', type=str, default="dreamer_debug")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
     parser.add_argument('--seed', type=int, default=2)
@@ -31,8 +31,8 @@ def parse_arguments():
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--save_steps', action='store_true', help='Save step-wise decision for each trajectory.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/mbrltest.yaml', help='Configure file for this RL exp.')
-    parser.add_argument('--checkpoint_path', default="checkpoints/easy_mbrl_10000_steps.zip", help='Path to the trained model.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/dreamer.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--checkpoint_path', default=None, help='Path to the trained model.')
 
     return parser.parse_args()
 
@@ -157,7 +157,7 @@ def main_gym(args, logger):
     hyperparameters = rl_config["hyperparameters"]
     train = rl_config["train"]
     
-    # data rollouts
+    # model training
     if train: 
         num_envs = rl_config["num_envs"]
         total_timesteps = rl_config["total_timesteps"]
@@ -180,14 +180,17 @@ def main_gym(args, logger):
                                     policy_kwargs=policy_kwargs)
         # RL training mode
         # Create the custom checkpoint and evaluation callback
-        eval_checkpoint_callback = EvalCheckpointCallback(exp_name=args.exp, **eval_checkpoint_config)
+        if "Dreamer" == rl_config["algorithm"]:
+            eval_checkpoint_callback = DreamerEvalCheckpointCallback(exp_name=args.exp, **eval_checkpoint_config)
+        else:
+            eval_checkpoint_callback = EvalCheckpointCallback(exp_name=args.exp, **eval_checkpoint_config)
         # Train the model
         model.learn(total_timesteps=total_timesteps, callback=eval_checkpoint_callback\
                     , tb_log_name=args.exp)
         # Save the model
         model.save(eval_checkpoint_config["name_prefix"])
         return
-    
+    # model evaluation
     else:
         assert os.path.isfile(rl_config["episode_data"])
         logger.info("Testing the trained model on episode data {}".format(rl_config["episode_data"]))
@@ -290,6 +293,7 @@ def main_gym(args, logger):
             if ts in worlds.keys():
                 worlds[ts] = cached_observation
         mean_reward = np.mean(rew_list)
+        np.save(os.path.join(args.log_dir, "{}_rewards.npy".format(args.exp)), rew_list)
         sr = np.mean(success)
         mSuccD, aSuccD, SuccDAct = cal_step_metric(decision_step, succ_decision)
         logger.info("Mean Score achieved: {}".format(mean_reward))

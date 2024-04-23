@@ -1,10 +1,11 @@
-MODE=expert
-
-for iter in 2000 3000
+for mode in hard
 do
-python3 main.py --use_gym --config config/tasks/Nav/easy/algo/hritest.yaml --exp easy_hri_test_${iter} \
-    --checkpoint_path checkpoints/final_models/easy/hri_${iter}
+python3 main.py --use_gym --config config/tasks/Nav/${mode}/experts/expert_test_fast.yaml --exp ${mode}_test_fast
 done
+
+# python3 main.py --use_gym --config config/tasks/Nav/expert/experts/expert_test.yaml --exp expert_test_normal
+
+# python3 main.py --use_gym --config config/tasks/Nav/expert/experts/expert_test_slow.yaml --exp expert_test_slow
 
 # python3 main.py --config config/tasks/Nav/${MODE}/algo/random_test.yaml \
 #     --exp random_${MODE}_test \
