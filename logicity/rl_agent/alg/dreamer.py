@@ -340,8 +340,11 @@ class Dreamer(OffPolicyAlgorithm):
 
             # Step the env, using the discrete numbers, not the one-hot
             env_action = th.argmax(action, dim=-1).cpu().numpy()
-            next_obs, rew, done, _ = self.env.step(env_action)
+            next_obs, rew, done, info = self.env.step(env_action)
             score += rew
+
+            # Retrieve reward and episode length if using Monitor wrapper
+            self._update_info_buffer(info, done)
 
             if done:
                 self.replay_buffer.add(obs, env_action, rew, done)
@@ -362,6 +365,9 @@ class Dreamer(OffPolicyAlgorithm):
             callback.update_locals(locals())
             if callback.on_step() is False:
                 break
+
+            if log_interval is not None and self._episode_num % log_interval == 0:
+                self._dump_logs()
 
         callback.on_training_end()
 
