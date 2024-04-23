@@ -65,6 +65,8 @@ class EvalCheckpointCallback(CheckpointCallback):
                 max_steps = episode_cache["label_info"]["oracle_step"] * 2
                 eval_env = make_env(self.simulation_config, episode_cache, False)
                 obs = eval_env.init()
+                if "dreamer" in self.exp_name:
+                    obs = np.array(obs)
                 episode_rewards = 0
                 step = 0
                 local_decision_step = {}
