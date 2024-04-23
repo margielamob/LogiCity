@@ -44,19 +44,21 @@ stable_baselines:
         ensemble_size: 50
         dyn_model_size: 64
         dyn_model_n_layers: 2
-      horizon: 20
+      horizon: 2
       n_sequences: 100
       sample_strategy: "random"
-    learning_rate: 0.00003          # Learning rate
-    buffer_size: 1000            # Size of the replay buffer
+    learning_rate: 
+      model: 0.00001          # Learning rate
+      reward: 0.0001
+    buffer_size: 100000            # Size of the replay buffer
     learning_starts: 1000
-    train_freq: 400
-    gradient_steps: 10
+    train_freq: 10
+    gradient_steps: 2
     batch_size: 256               # Number of samples in each batch
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/easy_mbrl_20000_steps.zip"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/easy_mbrl_10000_steps.zip"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   episode_data: "dataset/easy/test_100_episodes.pkl"
   eval_actions: {"Stop": 3}

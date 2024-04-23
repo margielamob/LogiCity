@@ -82,7 +82,7 @@ class MBRL(OffPolicyAlgorithm):
             self._setup_model()
 
     def _setup_model(self) -> None:
-        self._setup_lr_schedule()
+        # self._setup_lr_schedule()
         self.set_random_seed(self.seed)
 
         if self.replay_buffer_class is None:
@@ -109,11 +109,14 @@ class MBRL(OffPolicyAlgorithm):
             self.env,
             self.observation_space,
             self.action_space,
-            self.lr_schedule,
+            self.learning_rate,
             **self.mpc_kwargs,
             **self.policy_kwargs,
         )
         self.policy = self.policy.to(self.device)
+
+        if self.data_statistics is not None:
+            self.policy.data_statistics = self.data_statistics
 
         # Convert train freq parameter to TrainFreq object
         self._convert_train_freq()
@@ -123,7 +126,7 @@ class MBRL(OffPolicyAlgorithm):
         # For example, use self.buffer to train your model
         self.policy.set_training_mode(True)
         # Update learning rate according to schedule
-        self._update_learning_rate(self.policy.optimizer)
+        # self._update_learning_rate(self.policy.optimizer)
 
         losses = {
             "dyn": [],
@@ -161,14 +164,20 @@ class MBRL(OffPolicyAlgorithm):
                 train_losses_rew.append(loss_rew)
 
             # Optimize the policy
-            total_loss = sum(train_losses_dyn)/self.policy.ensemble_size + 5 * sum(train_losses_rew)/self.policy.ensemble_size
-            self.policy.optimizer.zero_grad()
-            total_loss.backward()
-            # Clip gradient norm
-            th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
-            self.policy.optimizer.step()
-            losses["dyn"].append(sum(train_losses_dyn).detach().cpu().numpy()/self.policy.ensemble_size)
-            losses["rew"].append(sum(train_losses_rew).detach().cpu().numpy()/self.policy.ensemble_size)
+            loss_dyn_all = sum(train_losses_dyn)/self.policy.ensemble_size
+            loss_rew_all = sum(train_losses_rew)/self.policy.ensemble_size
+
+            self.policy.model_optimizer.zero_grad()
+            loss_dyn_all.backward()
+            self.policy.model_optimizer.step()
+
+            self.policy.rew_optimizer.zero_grad()
+            loss_rew_all.backward()
+            th.nn.utils.clip_grad_norm_(self.policy.rew_model.parameters(), self.max_grad_norm)
+            self.policy.rew_optimizer.step()
+
+            losses["dyn"].append(loss_dyn_all.detach().cpu().numpy())
+            losses["rew"].append(loss_rew_all.detach().cpu().numpy())
 
         # Increase update counter
         self._n_updates += gradient_steps
