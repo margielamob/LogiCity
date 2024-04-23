@@ -181,7 +181,7 @@ class MPCPolicy(BasePolicy):
         env,
         observation_space: spaces.Space,
         action_space: spaces.Discrete,
-        lr_schedule: Schedule,
+        learning_rate: Dict[str, Union[float, Schedule]],
         dyn_model_kwargs: Dict[str, Any],
         horizon: int,
         n_sequences: int,
@@ -223,7 +223,7 @@ class MPCPolicy(BasePolicy):
         self.ensemble_size = dyn_model_kwargs['ensemble_size']
         self.dyn_model_size = dyn_model_kwargs['dyn_model_size']
         self.dyn_model_n_layers = dyn_model_kwargs['dyn_model_n_layers']
-        self._build(lr_schedule)
+        self._build(learning_rate)
         # Sampling strategy
         allowed_sampling = ('random', 'cem')
         assert sample_strategy in allowed_sampling, f"sample_strategy must be one of the following: {allowed_sampling}"
@@ -237,7 +237,7 @@ class MPCPolicy(BasePolicy):
             print(f"CEM params: alpha={self.cem_alpha}, "
                 + f"num_elites={self.cem_num_elites}, iterations={self.cem_iterations}")
 
-    def _build(self, lr_schedule: Schedule) -> None:
+    def _build(self, learning_rate) -> None:
         """
         Create the network and the optimizer.
 
@@ -261,11 +261,14 @@ class MPCPolicy(BasePolicy):
             observation_space=self.observation_space,
             action_space=self.action_space
         )
-        all_parameters += list(self.rew_model.parameters())
-
-        self.optimizer = self.optimizer_class(
+        self.model_optimizer = self.optimizer_class(
             all_parameters,
-            lr=lr_schedule(1),
+            lr=learning_rate["model"],
+            **self.optimizer_kwargs,
+        )
+        self.rew_optimizer = self.optimizer_class(
+            self.rew_model.parameters(),
+            lr=learning_rate["reward"],
             **self.optimizer_kwargs,
         )
 

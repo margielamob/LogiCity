@@ -31,8 +31,8 @@ def parse_arguments():
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--save_steps', action='store_true', help='Save step-wise decision for each trajectory.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/mbrl.yaml', help='Configure file for this RL exp.')
-    parser.add_argument('--checkpoint_path', default=None, help='Path to the trained model.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/mbrltest.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--checkpoint_path', default="checkpoints/easy_mbrl_10000_steps.zip", help='Path to the trained model.')
 
     return parser.parse_args()
 
