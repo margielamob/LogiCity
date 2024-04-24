@@ -44,7 +44,7 @@ stable_baselines:
         ensemble_size: 50
         dyn_model_size: 64
         dyn_model_n_layers: 2
-      horizon: 2
+      horizon: 10
       n_sequences: 100
       sample_strategy: "random"
     learning_rate: 
