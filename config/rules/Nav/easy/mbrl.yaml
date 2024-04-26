@@ -22,7 +22,7 @@ Rules:
     - name: Collision and Intersection
       description: should not collide.
       dead: true
-      reward: -2
+      reward: -1
       formula: |
         Implies(Exists(
           [dummyEntity], 

@@ -78,6 +78,7 @@ class MBRL(OffPolicyAlgorithm):
         self._n_calls = 0
         self.max_grad_norm = max_grad_norm
         self.mpc_kwargs = mpc_kwargs
+        self.data_statistics = None
         if _init_setup_model:
             self._setup_model()
 
