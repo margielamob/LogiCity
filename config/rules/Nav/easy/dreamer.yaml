@@ -1,0 +1,43 @@
+Rules:
+  Sim: # how the determinist agents move
+    - name: Stop
+      formula: |
+        Stop(entity) == Exists(
+          [dummyEntity], 
+          Or(
+            And(
+              IsAtInter(entity), 
+              IsInInter(dummyEntity), 
+            ),
+            And(
+              IsAtInter(entity), 
+              IsAtInter(dummyEntity), 
+              HigherPri(dummyEntity, entity),
+            ),
+            CollidingClose(entity, dummyEntity)
+          )
+        )
+      description: Or version of the 3 stop rule.
+  Task: # how the reward/score is calculated
+    - name: Collision and Intersection
+      description: should not collide.
+      dead: true
+      reward: -4
+      formula: |
+        Implies(Exists(
+          [dummyEntity], 
+            Or(
+              And(
+                IsAtInter(entity), 
+                IsInInter(dummyEntity), 
+              ),
+              And(
+                IsAtInter(entity), 
+                IsAtInter(dummyEntity), 
+                HigherPri(dummyEntity, entity),
+              ),
+              CollidingClose(entity, dummyEntity)
+            )
+          ),
+          Stop(entity)
+        )

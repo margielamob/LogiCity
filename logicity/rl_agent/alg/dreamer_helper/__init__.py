@@ -1,1 +1,1 @@
-from .config import LogiCityEasyConfig
+from .config import *

@@ -14,7 +14,7 @@ simulation:
     cat_length: true
     use_expert: false
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
-    max_horizon: 400                          # Maximum steps in each episode 
+    max_horizon: 100                          # Maximum steps in each episode 
     action_space: 4                       # Number of discrete actions, 4 means slow/normal/fast/stop
     action_mapping:                       # Mapping from policy action index to actual action space, see /agent folder
       0: [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -80,14 +80,14 @@ stable_baselines:
       features_dim: 64
   hyperparameters:
     config_path: "logicity.rl_agent.alg.dreamer_helper"
-    config_name: "LogiCityEasyConfig1"
+    config_name: "LogiCityEasyConfig"
     learning_rate: 0.00003          # Learning rate
     buffer_size: 10000            # Size of the replay buffer
     learning_starts: 4000
     train_freq: 50
     gradient_steps: 5
-    batch_size: 50               # Number of samples in each batch
-    seq_len: 50
+    batch_size: 128               # Number of samples in each batch
+    seq_len: 10
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: true                   # Whether to train the model

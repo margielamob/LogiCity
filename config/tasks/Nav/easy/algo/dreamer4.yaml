@@ -4,7 +4,7 @@ simulation:
   agent_yaml_file: "config/agents/easy/train.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology_easy.yaml" # Ontology of the simulation
   rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/easy/mbrl.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/easy/dreamer.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
@@ -14,7 +14,7 @@ simulation:
     cat_length: true
     use_expert: false
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
-    max_horizon: 400                          # Maximum steps in each episode 
+    max_horizon: 200                          # Maximum steps in each episode 
     action_space: 4                       # Number of discrete actions, 4 means slow/normal/fast/stop
     action_mapping:                       # Mapping from policy action index to actual action space, see /agent folder
       0: [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -82,12 +82,12 @@ stable_baselines:
     config_path: "logicity.rl_agent.alg.dreamer_helper"
     config_name: "LogiCityEasyConfig1"
     learning_rate: 0.00003          # Learning rate
-    buffer_size: 10000            # Size of the replay buffer
+    buffer_size: 100000            # Size of the replay buffer
     learning_starts: 4000
     train_freq: 50
     gradient_steps: 5
     batch_size: 50               # Number of samples in each batch
-    seq_len: 50
+    seq_len: 10
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: true                   # Whether to train the model
