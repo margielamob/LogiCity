@@ -139,6 +139,7 @@ class Dreamer(OffPolicyAlgorithm):
         """ 
         trains the world model and imagination actor and critic for collect_interval times using sequence-batch data from buffer
         """
+        self.policy.set_training_mode(True)
         actor_l = []
         value_l = []
         obs_l = []
@@ -219,7 +220,8 @@ class Dreamer(OffPolicyAlgorithm):
         """
         Get updated mean/std of the data in our replay buffer
         """
-        if self.num_timesteps % self.config.slow_target_update == 0:
+        self._n_calls += 1
+        if self._n_calls % self.config.slow_target_update == 0:
             mix = self.config.slow_target_fraction if self.config.use_slow_target else 1
             for param, target_param in zip(self.policy.ValueModel.parameters(), self.policy.TargetValueModel.parameters()):
                 target_param.data.copy_(mix * param.data + (1 - mix) * target_param.data)
@@ -347,6 +349,7 @@ class Dreamer(OffPolicyAlgorithm):
             self._update_info_buffer(info, done)
 
             if done:
+                self._episode_num += 1
                 self.replay_buffer.add(obs, env_action, rew, done)
                 self.logger.record("train/train_rewards", np.mean(score))
                 self.logger.record("train/action_ent", np.mean(np.mean(episode_actor_ent)))
@@ -363,9 +366,11 @@ class Dreamer(OffPolicyAlgorithm):
                 prev_action = action
 
             callback.update_locals(locals())
+            self._on_step()
+            self.num_timesteps += self.env.num_envs
             if callback.on_step() is False:
                 break
-
+            
             if log_interval is not None and self._episode_num % log_interval == 0:
                 self._dump_logs()
 
