@@ -1,17 +1,16 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/easy/test.yaml" # Agents in the simulation
-  ontology_yaml_file: "config/rules/ontology_easy.yaml" # Ontology of the simulation
+  agent_yaml_file: "config/agents/medium/test.yaml" # Agents in the simulation
+  ontology_yaml_file: "config/rules/ontology_medium.yaml" # Ontology of the simulation
   rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/easy/expert.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/medium/expert.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
   agent_region: 120
   rl_agent: 
-    max_priority: 10
-    cat_length: true
+    max_priority: 11
     use_expert: true
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
     max_horizon: 10000                          # Maximum steps in each episode 
@@ -27,7 +26,7 @@ simulation:
       0: -2
       1: 0
       2: -2
-      3: -5
+      3: -5   
 
 # Stable Baselines specific settings
 stable_baselines:
@@ -44,7 +43,7 @@ stable_baselines:
         ensemble_size: 50
         dyn_model_size: 64
         dyn_model_n_layers: 2
-      horizon: 10
+      horizon: 14
       n_sequences: 100
       sample_strategy: "random"
     learning_rate: 
@@ -58,7 +57,7 @@ stable_baselines:
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/easy_mbrl_10000_steps.zip"           # Path to a checkpoint to restore the model from
+  checkpoint_path: ""           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
-  episode_data: "dataset/easy/test_100_episodes.pkl"
+  episode_data: "dataset/medium/test_100_episodes.pkl"
   eval_actions: {"Stop": 3}
