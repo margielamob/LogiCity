@@ -40,7 +40,7 @@ class TransitionBuffer(BaseBuffer):
         self.observations = np.empty((self.buffer_size, self.n_envs, *self.obs_shape), dtype=obs_type) 
         self.actions = np.empty((self.buffer_size, self.n_envs, self.action_dim), dtype=np.float32)
         self.rewards = np.empty((self.buffer_size, self.n_envs), dtype=np.float32) 
-        self.dones = np.empty((self.buffer_size, self.n_envs), dtype=np.float32)
+        self.dones = np.empty((self.buffer_size, self.n_envs), dtype=bool)
 
     def add(
         self,

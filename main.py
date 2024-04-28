@@ -22,7 +22,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="nlm_debug")
+    parser.add_argument('--exp', type=str, default="dreamer_debug")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
     parser.add_argument('--seed', type=int, default=2)
@@ -31,7 +31,7 @@ def parse_arguments():
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--save_steps', action='store_true', help='Save step-wise decision for each trajectory.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/nlmdqn_debug.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/dreamertest.yaml', help='Configure file for this RL exp.')
     parser.add_argument('--checkpoint_path', default=None, help='Path to the trained model.')
 
     return parser.parse_args()
@@ -255,22 +255,46 @@ def main_gym(args, logger):
                 local_decision_step[id] = 0
                 local_succ_decision[id] = 1
             d = False
-            while (not d) and (step < max_steps):
-                step += 1
-                oracle_action = eval_env.expert_action
-                action, _ = model.predict(o, deterministic=True)
-                # save step_wise decision succ per trajectory
-                if oracle_action in local_decision_step.keys():
-                    local_decision_step[oracle_action] = 1
-                    if int(action) != oracle_action:
-                        local_succ_decision[oracle_action] = 0
-                o, r, d, i = eval_env.step(int(action))
-                if ts in vis_id:
-                    cached_observation["Time_Obs"][step] = i
-                if i["Fail"][0]:
+            if rl_config["algorithm"] == 'Dreamer':
+                prev_rssmstate = model.policy.RSSM._init_rssm_state(1)
+                prev_action = torch.zeros(1, model.action_size).to(model.device)
+                while (not d) and (step < max_steps):
+                    step += 1
+                    oracle_action = eval_env.expert_action
+                    with torch.no_grad():
+                        embed = model.policy.ObsEncoder(torch.tensor(o, dtype=torch.float32).unsqueeze(0).to(model.device))    
+                        _, posterior_rssm_state = model.policy.RSSM.rssm_observe(embed, prev_action, not d, prev_rssmstate)
+                        model_state = model.policy.RSSM.get_model_state(posterior_rssm_state)
+                        action, _ = model.policy.ActionModel(model_state)
+                        prev_rssmstate = posterior_rssm_state
+                        prev_action = action
+                    env_action = torch.argmax(action, dim=-1).cpu().numpy()
+                    if oracle_action in local_decision_step.keys():
+                        local_decision_step[oracle_action] = 1
+                        if int(env_action) != oracle_action:
+                            local_succ_decision[oracle_action] = 0
+                    o, r, d, i = eval_env.step(int(env_action))
+                    if i["Fail"][0]:
+                        rew += r
+                        break
                     rew += r
-                    break
-                rew += r
+            else:
+                while (not d) and (step < max_steps):
+                    step += 1
+                    oracle_action = eval_env.expert_action
+                    action, _ = model.predict(o, deterministic=True)
+                    # save step_wise decision succ per trajectory
+                    if oracle_action in local_decision_step.keys():
+                        local_decision_step[oracle_action] = 1
+                        if int(action) != oracle_action:
+                            local_succ_decision[oracle_action] = 0
+                    o, r, d, i = eval_env.step(int(action))
+                    if ts in vis_id:
+                        cached_observation["Time_Obs"][step] = i
+                    if i["Fail"][0]:
+                        rew += r
+                        break
+                    rew += r
             if i["success"]:
                 success.append(1)
             else:
