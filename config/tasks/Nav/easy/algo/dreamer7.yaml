@@ -11,7 +11,7 @@ simulation:
   agent_region: 100
   rl_agent: 
     max_priority: 7
-    cat_length: false
+    cat_length: true
     use_expert: false
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
     max_horizon: 200                          # Maximum steps in each episode 
@@ -47,7 +47,7 @@ eval_checkpoint:
     agent_region: 120
     rl_agent: 
       max_priority: 8
-      cat_length: false
+      cat_length: true
       use_expert: true
       agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
       max_horizon: 10000                          # Maximum steps in each episode 
@@ -80,14 +80,14 @@ stable_baselines:
       features_dim: 64
   hyperparameters:
     config_path: "logicity.rl_agent.alg.dreamer_helper"
-    config_name: "LogiCityEasyConfig3"
+    config_name: "LogiCityEasyConfig1"
     learning_rate: 0.00003          # Learning rate
     buffer_size: 100000            # Size of the replay buffer
     learning_starts: 4000
     train_freq: 50
     gradient_steps: 5
-    batch_size: 128               # Number of samples in each batch
-    seq_len: 2
+    batch_size: 50               # Number of samples in each batch
+    seq_len: 5
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: true                   # Whether to train the model
