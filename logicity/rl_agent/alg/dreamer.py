@@ -446,12 +446,6 @@ class Dreamer(OffPolicyAlgorithm):
 
                 self._update_current_progress_remaining(self.num_timesteps, self._total_timesteps)
 
-                # For DQN, check if the target network should be updated
-                # and update the exploration schedule
-                # For SAC/TD3, the update is dones as the same time as the gradient update
-                # see https://github.com/hill-a/stable-baselines/issues/900
-                self._on_step()
-
                 for idx, done in enumerate(dones):
                     if done:
                         # Update stats
@@ -547,10 +541,6 @@ class Dreamer(OffPolicyAlgorithm):
         if "policy_kwargs" in kwargs and kwargs["policy_kwargs"] != data["policy_kwargs"]:
             data["policy_kwargs"].update(kwargs["policy_kwargs"])
 
-        mpc_kwargs = kwargs["policy_kwargs"]
-        if "observation_space" not in data or "action_space" not in data:
-            raise KeyError("The observation_space and action_space were not given, can't verify new environments")
-
         # Gym -> Gymnasium space conversion
         for key in {"observation_space", "action_space"}:
             data[key] = _convert_space(data[key])
@@ -576,8 +566,8 @@ class Dreamer(OffPolicyAlgorithm):
             policy=data["policy_class"],
             env=env,
             device=device,
-            mpc_kwargs=mpc_kwargs,
             _init_setup_model=False,  # type: ignore[call-arg]
+            **kwargs,
         )
 
         # load parameters

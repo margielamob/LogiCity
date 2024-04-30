@@ -14,7 +14,7 @@ from logicity.utils.logger import setup_logger
 from logicity.utils.vis import visualize_city
 # RL
 from logicity.rl_agent.alg import *
-from logicity.utils.gym_wrapper import GymCityWrapper
+from logicity.utils.gym_wrapper_es import GymCityWrapperES
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from logicity.utils.gym_callback import EvalCheckpointCallback, DreamerEvalCheckpointCallback
 
@@ -22,16 +22,14 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="dreamer_debug")
-    parser.add_argument('--vis', action='store_true', help='Visualize the city.')
+    parser.add_argument('--exp', type=str, default="dqnes_debug")
     # seed
     parser.add_argument('--seed', type=int, default=2)
     parser.add_argument('--max-steps', type=int, default=300)
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
-    parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--save_steps', action='store_true', help='Save step-wise decision for each trajectory.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/dreamertest.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/dqn_es.yaml', help='Configure file for this RL exp.')
     parser.add_argument('--checkpoint_path', default=None, help='Path to the trained model.')
 
     return parser.parse_args()
@@ -47,7 +45,7 @@ def dynamic_import(module_name, class_name):
 def make_env(simulation_config, episode_cache=None, return_cache=False): 
     # Unpack arguments from simulation_config and pass them to CityLoader
     city, cached_observation = CityLoader.from_yaml(**simulation_config, episode_cache=episode_cache)
-    env = GymCityWrapper(city)
+    env = GymCityWrapperES(city)
     if return_cache: 
         return env, cached_observation
     else:
@@ -95,35 +93,7 @@ def main_collect(args, logger):
             with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
                 pkl.dump(full_world[ts], f)
 
-def main(args, logger):
-    config = load_config(args.config)
-    # simulation config
-    simulation_config = config["simulation"]
-    logger.info("Simulation config: {}".format(simulation_config))
-    torch.manual_seed(args.seed)
-    np.random.seed(args.seed)
-    # Create a city instance with a predefined grid
-    city, cached_observation = CityLoader.from_yaml(**simulation_config)
-    visualize_city(city, 4*WORLD_SIZE, -1, "vis/init.png")
-    # Main simulation loop
-    steps = 0
-    while steps < args.max_steps:
-        logger.info("Simulating Step_{}...".format(steps))
-        s = time.time()
-        time_obs = city.update()
-        e = time.time()
-        logger.info("Time spent: {}".format(e-s))
-        # Visualize the current state of the city (optional)
-        if args.vis:
-            visualize_city(city, 4*WORLD_SIZE, -1, "vis/step_{}.png".format(steps))
-        steps += 1
-        cached_observation["Time_Obs"][steps] = time_obs
-
-    # Save the cached observation for better rendering
-    with open(os.path.join(args.log_dir, "{}.pkl".format(args.exp)), "wb") as f:
-        pkl.dump(cached_observation, f)
-
-def main_gym(args, logger): 
+def main(args, logger): 
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     config = load_config(args.config)
@@ -353,15 +323,7 @@ if __name__ == '__main__':
         logger.info("Running in data collection mode.")
         logger.info("Loading simulation config from {}.".format(args.config))
         main_collect(args, logger)
-    elif args.use_gym:
-        logger.info("Running in RL mode.")
-        logger.info("Loading RL config from {}.".format(args.config))
-        # RL mode, will use gym wrapper to learn and test an agent
-        main_gym(args, logger)
-    else:
-        # Sim mode, will use the logic-based simulator to run a simulation (no learning)
-        logger.info("Running in simulation mode.")
-        logger.info("Loading simulation config from {}.".format(args.config))
-        e = time.time()
-        main(args, logger)
-        logger.info("Total time spent: {}".format(time.time()-e))
+    logger.info("Running in RL mode.")
+    logger.info("Loading RL config from {}.".format(args.config))
+    # RL mode, will use gym wrapper to learn and test an agent
+    main(args, logger)
