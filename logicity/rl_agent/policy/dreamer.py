@@ -152,7 +152,7 @@ class DreamerPolicy(BasePolicy):
 
         return actor_loss, value_loss, target_info
 
-    def representation_loss(self, obs, actions, rewards, nonterms):
+    def representation_loss(self, obs, actions, rewards, nonterms, reward_weighing=False):
 
         embed = self.ObsEncoder(obs)                                         #t to t+seq_len   
         prev_rssm_state = self.RSSM._init_rssm_state(self.batch_size)   
@@ -163,7 +163,7 @@ class DreamerPolicy(BasePolicy):
         pcont_dist = self.DiscountModel(post_modelstate[:-1])                #t to t+seq_len-1   
         
         obs_loss = self._obs_loss(obs_dist, obs[:-1])
-        reward_loss = self._reward_loss(reward_dist, rewards[1:])
+        reward_loss = self._reward_loss(reward_dist, rewards[1:], reward_weighing)
         pcont_loss = self._pcont_loss(pcont_dist, nonterms[1:])
         prior_dist, post_dist, div = self._kl_loss(prior, posterior)
 
@@ -223,8 +223,12 @@ class DreamerPolicy(BasePolicy):
                 kl_loss = torch.max(kl_loss, kl_loss.new_full(kl_loss.size(), free_nats))
         return prior_dist, post_dist, kl_loss
     
-    def _reward_loss(self, reward_dist, rewards):
-        reward_loss = -torch.mean(reward_dist.log_prob(rewards))
+    def _reward_loss(self, reward_dist, rewards, reward_weighing):
+        if reward_weighing:
+            weights = self.calculate_weights(rewards)
+            reward_loss = -torch.mean(reward_dist.log_prob(rewards) * weights.squeeze())
+        else:
+            reward_loss = -torch.mean(reward_dist.log_prob(rewards))
         return reward_loss
     
     def _pcont_loss(self, pcont_dist, nonterms):
@@ -232,3 +236,7 @@ class DreamerPolicy(BasePolicy):
         pcont_loss = -torch.mean(pcont_dist.log_prob(pcont_target))
         return pcont_loss
 
+    def calculate_weights(self, rewards, scale=3):
+        # Weights increase as rewards decrease. The scale factor adjusts sensitivity.
+        weights = torch.exp(-scale * rewards)
+        return weights / weights.mean()

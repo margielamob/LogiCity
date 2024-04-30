@@ -38,6 +38,7 @@ class Dreamer(OffPolicyAlgorithm):
         learning_starts: int = 100,
         batch_size: int = 32,
         seq_len: int = 50,
+        reward_weighting: bool = False,
         tau: float = 1.0,
         gamma: float = 0.99,
         train_freq: Union[int, Tuple[int, str]] = 4,
@@ -103,6 +104,7 @@ class Dreamer(OffPolicyAlgorithm):
         self.seq_len = self.config.seq_len
         self.batch_size = self.config.batch_size
         self.grad_clip_norm = self.config.grad_clip
+        self.reward_weighting = reward_weighting
         if _init_setup_model:
             self._setup_model()
 
@@ -161,7 +163,7 @@ class Dreamer(OffPolicyAlgorithm):
             rewards = th.tensor(rewards, dtype=th.float32).to(self.device).unsqueeze(-1)   #t-1 to t+seq_len-1
             nonterms = th.tensor(1-terms, dtype=th.float32).to(self.device).unsqueeze(-1)  #t-1 to t+seq_len-1
 
-            model_loss, kl_loss, obs_loss, reward_loss, pcont_loss, prior_dist, post_dist, posterior = self.policy.representation_loss(obs, actions, rewards, nonterms)
+            model_loss, kl_loss, obs_loss, reward_loss, pcont_loss, prior_dist, post_dist, posterior = self.policy.representation_loss(obs, actions, rewards, nonterms, self.reward_weighting)
             
             self.policy.model_optimizer.zero_grad()
             model_loss.backward()
