@@ -16,7 +16,7 @@ from logicity.utils.vis import visualize_city
 from logicity.rl_agent.alg import *
 from logicity.utils.gym_wrapper_es import GymCityWrapperES
 from stable_baselines3.common.vec_env import SubprocVecEnv
-from logicity.utils.gym_callback import EvalCheckpointCallback, DreamerEvalCheckpointCallback
+from logicity.utils.gym_callback_es import EvalCheckpointCallbackES
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
@@ -150,10 +150,7 @@ def main(args, logger):
                                     policy_kwargs=policy_kwargs)
         # RL training mode
         # Create the custom checkpoint and evaluation callback
-        if "Dreamer" == rl_config["algorithm"]:
-            eval_checkpoint_callback = DreamerEvalCheckpointCallback(exp_name=args.exp, **eval_checkpoint_config)
-        else:
-            eval_checkpoint_callback = EvalCheckpointCallback(exp_name=args.exp, **eval_checkpoint_config)
+        eval_checkpoint_callback = EvalCheckpointCallbackES(exp_name=args.exp, **eval_checkpoint_config)
         # Train the model
         model.learn(total_timesteps=total_timesteps, callback=eval_checkpoint_callback\
                     , tb_log_name=args.exp)
