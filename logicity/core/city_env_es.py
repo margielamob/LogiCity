@@ -80,7 +80,7 @@ class CityEnvES(CityEnv):
             # local reasoning-based action distribution
             # global trajectory-based action or sampling from local action distribution
             if agent.layer_id == idx: 
-                current_obs["World_state"].append(agent_action_dist["{}_grounding".format(agent_name)])
+                current_obs["World_state"].append(agent_action_dist["{}_obs_es".format(agent_name)])
                 new_matrix[agent.layer_id] = self.city_grid[agent.layer_id].clone()
                 # expert will provide the action and scene graph and groundings
                 if "{}_grounding_dic".format(agent_name) in agent_action_dist:

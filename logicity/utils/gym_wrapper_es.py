@@ -28,7 +28,8 @@ class GymCityWrapperES(GymCityWrapper):
         #     "position": Box(low=0.0, high=1.0, shape=(6,), dtype=np.float32)
         # })
         self.cat_length = False
-        self.fov = (AGENT_FOV + 1) * (2 * AGENT_FOV)
+        # max num of points in fov, 625 points
+        self.fov = AGENT_FOV * AGENT_FOV
         self.observation_space = Box(low=0.0, high=1.0, shape=(self.fov * self.agent_obs_dim, ), dtype=np.float32)
         self.last_dist = -1
         self.agent_name = env.rl_agent["agent_name"]
@@ -74,7 +75,7 @@ class GymCityWrapperES(GymCityWrapper):
         if self.cat_length:
             return np.concatenate([obs_dict["World_state"][0], [self.normed_path_length]], axis=0, dtype=np.float32)
         else:
-            return obs_dict["World_state"][0]
+            return obs_dict["World_state"][0].flatten().numpy()
                 
     def _get_reward(self, obs_dict):
         ''' Get the reward for the current step.
