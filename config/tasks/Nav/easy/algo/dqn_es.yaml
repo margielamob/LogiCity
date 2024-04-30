@@ -81,7 +81,7 @@ stable_baselines:
   hyperparameters:
     learning_rate: 0.00003          # Learning rate
     buffer_size: 1000            # Size of the replay buffer
-    learning_starts: 1000
+    learning_starts: 100
     target_update_interval: 500
     train_freq: 4
     gradient_steps: 1
@@ -92,5 +92,5 @@ stable_baselines:
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: true                   # Whether to train the model
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
-  num_envs: 1                   # Number of environments to run in parallel
+  num_envs: 2                   # Number of environments to run in parallel
   total_timesteps: 1000000    # Total number of timesteps to run for all environments combined

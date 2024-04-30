@@ -73,6 +73,7 @@ class Z3PlannerExpertES(Z3PlannerExpert):
                     self.last_rl_obs = {
                         "last_obs_dict": copy.deepcopy(result["{}_grounding_dic".format(ego_name)]),
                         "last_obs": result["{}_grounding".format(ego_name)].copy(),
+                        "last_obs_es": result["{}_obs_es".format(ego_name)].clone(),
                         "expert_action": result["{}_action".format(ego_name)].clone(),
                     }
                 else:
@@ -152,12 +153,30 @@ def solve_sub_problem(ego_name,
                       max_priority=None):
     grounding = []
     grounding_dic = {}
-    fov = (AGENT_FOV + 1) * (2 * AGENT_FOV + 1)
-    ego_pos = torch.zeros(2, dtype=torch.float32) - 1
-    obs_array_es = torch.zeros(fov * rl_input_shape, dtype=torch.float32)
-    obs_matrix_es = torch.zeros((rl_input_shape, partial_intersections.shape[1], partial_intersections.shape[2]), dtype=torch.float32)
-    # 0-3 is intersection matrix
-    obs_matrix_es[:3] =  partial_intersections > 0
+    fov = AGENT_FOV * AGENT_FOV
+    if rl_flag:
+        assert rl_input_shape is not None, "Make sure the rl_input_shape is not None"
+        assert semantic_pred2index is not None, "Make sure the semantic_pred2index is not None"
+        assert max_priority is not None, "Make sure the max_priority is not None"
+        ego_pos = torch.zeros(2, dtype=torch.float32) - 1
+        obs_array_es = torch.zeros((fov, rl_input_shape), dtype=torch.float32)
+        obs_matrix_es = torch.zeros((partial_intersections.shape[1], partial_intersections.shape[2], rl_input_shape), dtype=torch.float32)
+        # 0-3 is intersection matrix
+        obs_matrix_es[:, :, :3] =  (partial_intersections > 0).permute(1, 2, 0).float()
+        map_mask = partial_intersections.sum(dim=0) > 0
+        # dx dy
+        # Get the shape of the observation matrix
+        rows, cols = obs_matrix_es.shape[0], obs_matrix_es.shape[1]
+
+        # Generate a range of indices
+        i_indices = torch.arange(rows).reshape(rows, 1)  # Column vector
+        j_indices = torch.arange(cols).reshape(1, cols)  # Row vector
+        obs_matrix_es[:, :, semantic_pred2index["dx"]] = i_indices
+        obs_matrix_es[:, :, semantic_pred2index["dy"]] = j_indices
+        map_points = obs_matrix_es[map_mask, :]
+        obs_array_es[0:map_points.shape[0], :] = map_points
+        pointer = map_points.shape[0]
+
     # 1. create sorts and variables
     entity_sorts = {}
     for entity_type in entity_types:
@@ -260,6 +279,7 @@ def solve_sub_problem(ego_name,
         'height': 0,
         'objects': {}
         }
+        obs_agent_array = {}
         for ent in local_entities["Entity"]:
             entity_name = ent.decl().name()
             _, obj_name, layer_id = entity_name.split("_")
@@ -302,12 +322,24 @@ def solve_sub_problem(ego_name,
                         grounding.append(1)
                         k += 1
                         if pred_name in semantic_pred2index.keys():
-                            # add to obs matrix
                             layer_id_int = int(layer_id)
                             agent_layer = partial_world[layer_id_int]
                             agent_position = (agent_layer == TYPE_MAP[agent_type]).nonzero()[0]
+                            if entity_name not in obs_agent_array.keys():
+                                # init an obs array
+                                obs_agent_array[entity_name] = {
+                                    "pointer": pointer,
+                                    "array": torch.zeros(rl_input_shape, dtype=torch.float32)
+                                }
+                                # init spatial infos, map semantics, dx, dy
+                                obs_agent_array[entity_name]["array"][:3] = obs_matrix_es[agent_position[0], agent_position[1], :3]
+                                obs_agent_array[entity_name]["array"][semantic_pred2index["dx"]] = \
+                                    obs_matrix_es[agent_position[0], agent_position[1], semantic_pred2index["dx"]]
+                                obs_agent_array[entity_name]["array"][semantic_pred2index["dy"]] = \
+                                    obs_matrix_es[agent_position[0], agent_position[1], semantic_pred2index["dy"]]
+                                pointer += 1
                             # semantic
-                            obs_matrix_es[semantic_pred2index[pred_name], agent_position[0], agent_position[1]] = 1
+                            obs_agent_array[entity_name]["array"][semantic_pred2index[pred_name]] = 1.0
                             # direction and priority
                             if layer_id in partial_agents.keys():
                                 priority = partial_agents[layer_id].priority
@@ -319,9 +351,9 @@ def solve_sub_problem(ego_name,
                                 ego_pos = agent_position
                             if direction is not None:
                                 one_hot = direction2onehot(direction)
-                                obs_matrix_es[semantic_pred2index["direction"]:semantic_pred2index["direction"]+4, \
-                                              agent_position[0], agent_position[1]] = one_hot
-                            obs_matrix_es[semantic_pred2index["priority"], agent_position[0], agent_position[1]] = priority/max_priority
+                                obs_agent_array[entity_name]["array"][semantic_pred2index["direction"]:semantic_pred2index["direction"]+4] \
+                                    = one_hot
+                            obs_agent_array[entity_name]["array"][semantic_pred2index["priority"]] = priority/max_priority
                     else:
                         local_solver.add(Not(eval_pred(entity)))
                         grounding_dic["{}_{}".format(pred_name, k)] = 0
@@ -394,27 +426,14 @@ def solve_sub_problem(ego_name,
 
         # 7. comput dx dy for the obs matrix
         assert ego_pos[0] != -1, "Ego position is not found"
-        # Get the shape of the observation matrix
-        rows, cols = obs_matrix_es.shape[1], obs_matrix_es.shape[2]
+        # add agent_obs to obs_array_es
+        for entity_name, obs in obs_agent_array.items():
+            obs_array_es[obs["pointer"], :] = obs["array"]
 
-        # Generate a range of indices
-        i_indices = torch.arange(rows).reshape(rows, 1)  # Column vector
-        j_indices = torch.arange(cols).reshape(1, cols)  # Row vector
-
-        # Calculate dx and dy using broadcasting
-        dx = (i_indices - ego_pos[0]) / rows
-        dy = (j_indices - ego_pos[1]) / cols
-
-        # Assign these calculations back to obs_matrix_es
-        obs_matrix_es[semantic_pred2index["dx"], :, :] = dx
-        obs_matrix_es[semantic_pred2index["dy"], :, :] = dy
-        # from matrix to array
-        flatten_obs = obs_matrix_es.flatten()
-        if flatten_obs.shape[0] <= obs_array_es.shape[0]:
-            obs_array_es[:flatten_obs.shape[0]] = flatten_obs
-        elif flatten_obs.shape[0] > obs_array_es.shape[0]:
-            # if the obs is too large, then only take the first part
-            obs_array_es = obs_matrix_es[:obs_array_es.shape[0]]
+        # normalize the dx dy
+        rows, cols = obs_matrix_es.shape[0], obs_matrix_es.shape[1]
+        obs_array_es[0:pointer, semantic_pred2index["dx"]] = (obs_array_es[0:pointer, semantic_pred2index["dx"]] - ego_pos[0]) / rows
+        obs_array_es[0:pointer, semantic_pred2index["dy"]] = (obs_array_es[0:pointer, semantic_pred2index["dy"]] - ego_pos[1]) / cols
         
         agents_actions = {
             "{}_action".format(ego_name): action_dist,
@@ -423,7 +442,6 @@ def solve_sub_problem(ego_name,
             "{}_scene_graph".format(ego_name): scene_graph,
             "{}_obs_es".format(ego_name): obs_array_es
         }
-        assert len(grounding) == rl_input_shape
 
         return agents_actions
 
