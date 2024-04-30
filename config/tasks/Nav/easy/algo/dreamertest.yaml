@@ -45,7 +45,7 @@ stable_baselines:
     buffer_size: 100000            # Size of the replay buffer
     learning_starts: 4000
     train_freq: 50
-    gradient_steps: 10
+    gradient_steps: 5
     batch_size: 50               # Number of samples in each batch
     seq_len: 5
     verbose: 1                    # Verbosity level
