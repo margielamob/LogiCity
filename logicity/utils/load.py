@@ -55,7 +55,7 @@ class CityLoader:
         if rl:
             assert rl_agent is not None, "Please specify the RL agent! Use AgentType_ID format. \
                 See the agents file for options ({agent_yaml_file})."
-            use_exact = rl_agent["exact_state"]
+            use_exact = rl_agent["exact_state"] if "exact_state" in rl_agent else False
             if use_exact:
                 city = CityEnvES(grid_size=(WORLD_SIZE, WORLD_SIZE), local_planner=rule_type, \
                             logic_engine_file=logic_engine_file, rl_agent=rl_agent, use_multi=use_multi)
