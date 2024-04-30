@@ -81,7 +81,7 @@ stable_baselines:
   hyperparameters:
     learning_rate: 0.00003          # Learning rate
     buffer_size: 1000            # Size of the replay buffer
-    learning_starts: 100
+    learning_starts: 1000
     target_update_interval: 500
     train_freq: 4
     gradient_steps: 1
