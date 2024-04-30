@@ -1,0 +1,102 @@
+# General simulation settings
+simulation:
+  map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
+  agent_yaml_file: "config/agents/expert/train.yaml" # Agents in the simulation
+  ontology_yaml_file: "config/rules/ontology_full.yaml" # Ontology of the simulation
+  rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
+  rule_yaml_file: "config/rules/Nav/expert/mbrl.yaml"                    # Whether to render the environment
+  rl: true
+  debug: false
+  use_multi: false
+  agent_region: 100
+  rl_agent: 
+    max_priority: 13
+    use_expert: false
+    agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
+    max_horizon: 200                          # Maximum steps in each episode 
+    action_space: 4                       # Number of discrete actions, 4 means slow/normal/fast/stop
+    action_mapping:                       # Mapping from policy action index to actual action space, see /agent folder
+      0: [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      1: [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0]
+      2: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0]
+      3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    fov_entities:
+      Entity: 5                        # Maximum number of agents in the FOV, include the RL agent
+    action_cost:
+      0: -2
+      1: -1
+      2: -2
+      3: -3
+    reset_dist:
+      concepts: ['ambulance', 'bus', 'police', 'reckless', 'tiro', 'normal']
+      prob: [0.18, 0.18, 0.18, 0.18, 0.18, 0.1]
+    overtime_cost: -3
+
+eval_checkpoint:
+  eval_freq: 10000                        # This is the frequency of evaluation, will be multiplied by num_envs
+  save_freq: 10000
+  simulation_config:
+    map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
+    agent_yaml_file: "config/agents/expert/val.yaml" # Agents in the simulation
+    ontology_yaml_file: "config/rules/ontology_full.yaml" # Ontology of the simulation
+    rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
+    rule_yaml_file: "config/rules/Nav/expert/expert.yaml"                    # Whether to render the environment
+    rl: true
+    debug: false
+    use_multi: false
+    agent_region: 120
+    rl_agent: 
+      max_priority: 9
+      use_expert: true
+      agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
+      max_horizon: 10000                          # Maximum steps in each episode 
+      action_space: 4                       # Number of discrete actions, 4 means slow/normal/fast/stop
+      action_mapping:                       # Mapping from policy action index to actual action space, see /agent folder
+        0: [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        1: [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0]
+        2: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0]
+        3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      fov_entities:
+        Entity: 5                        # Maximum number of agents in the FOV, include the RL agent
+      action_cost:
+        0: -2
+        1: -1
+        2: -2
+        3: -3
+  save_path: './checkpoints/'
+  name_prefix: 'expert_mbrl'
+  episode_data: "dataset/expert/val_40_episodes.pkl"
+  eval_actions: {"Stop": 3, "Fast": 2, "Slow": 0}
+
+# Stable Baselines specific settings
+stable_baselines:
+  algorithm: "MBRL"
+  policy_network: "MPCPolicy"
+  policy_kwargs:
+    features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
+    features_extractor_class: "MLPFeatureExtractor"
+    features_extractor_kwargs:
+      features_dim: 64
+  hyperparameters:
+    mpc_kwargs:
+      dyn_model_kwargs:
+        ensemble_size: 50
+        dyn_model_size: 64
+        dyn_model_n_layers: 2
+      horizon: 8
+      n_sequences: 100
+      sample_strategy: "random"
+    learning_rate: 
+      model: 0.00001          # Learning rate
+      reward: 0.0001
+    buffer_size: 100000            # Size of the replay buffer
+    learning_starts: 1000
+    train_freq: 10
+    gradient_steps: 2
+    batch_size: 256               # Number of samples in each batch
+    verbose: 1                    # Verbosity level
+    tensorboard_log: "./tb_logs"  # Tensorboard log directory
+  train: true                   # Whether to train the model
+  checkpoint_path: ""           # Path to a checkpoint to restore the model from
+  num_envs: 2                   # Number of environments to run in parallel
+  total_timesteps: 1000000    # Total number of timesteps to run for all environments combined
