@@ -27,10 +27,13 @@ class GymCityWrapperES(GymCityWrapper):
         #     "map": Box(low=-1.0, high=1.0, shape=(3, self.fov, self.fov), dtype=np.float32),  # Adjust the shape as needed
         #     "position": Box(low=0.0, high=1.0, shape=(6,), dtype=np.float32)
         # })
-        self.cat_length = False
+        self.cat_length = self.env.rl_agent["cat_length"] if "cat_length" in self.env.rl_agent else False
         # max num of points in fov, 625 points
         self.fov = AGENT_FOV * AGENT_FOV
-        self.observation_space = Box(low=0.0, high=1.0, shape=(self.fov * self.agent_obs_dim, ), dtype=np.float32)
+        if self.cat_length:
+            self.observation_space = Box(low=0.0, high=1.0, shape=(self.fov * (self.agent_obs_dim + 1), ), dtype=np.float32)
+        else:
+            self.observation_space = Box(low=0.0, high=1.0, shape=(self.fov * self.agent_obs_dim, ), dtype=np.float32)
         self.last_dist = -1
         self.agent_name = env.rl_agent["agent_name"]
         self.horizon = env.rl_agent["max_horizon"]
@@ -73,7 +76,10 @@ class GymCityWrapperES(GymCityWrapper):
     
     def _flatten_obs(self, obs_dict):
         if self.cat_length:
-            return np.concatenate([obs_dict["World_state"][0], [self.normed_path_length]], axis=0, dtype=np.float32)
+            original_obs = obs_dict["World_state"][0].numpy()
+            repeat_path_length = np.repeat(self.normed_path_length, self.fov)
+            repeat_path_length = repeat_path_length.reshape((self.fov, 1))
+            return np.concatenate([original_obs, repeat_path_length], axis=1, dtype=np.float32).flatten()
         else:
             return obs_dict["World_state"][0].flatten().numpy()
                 

@@ -10,7 +10,7 @@ import io
 from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.her.her_replay_buffer import HerReplayBuffer
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
-from logicity.rl_agent.policy import MPCPolicy
+from logicity.rl_agent.policy import MPCPolicy, MPCPolicyES
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import get_linear_fn, get_parameters_by_name, polyak_update, check_for_correct_spaces
@@ -21,12 +21,13 @@ SelfMBRL = TypeVar("SelfMBRL", bound="MBRL")
 
 class MBRL(OffPolicyAlgorithm):
     policy_aliases: ClassVar[Dict[str, Type[BasePolicy]]] = {
-        "MPCPolicy": MPCPolicy
+        "MPCPolicy": MPCPolicy,
+        "MPCPolicyES": MPCPolicyES,
     }
-    policy: MPCPolicy
+    policy: BasePolicy
     def __init__(
         self,
-        policy: Union[str, Type[MPCPolicy]],
+        policy: Union[str, Type[BasePolicy]],
         env: Union[GymEnv, str],
         mpc_kwargs: Dict[str, Any],
         learning_rate: Union[float, Schedule] = 1e-4,

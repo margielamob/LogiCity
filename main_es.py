@@ -22,14 +22,14 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="dqnes_debug")
+    parser.add_argument('--exp', type=str, default="mbrles_debug")
     # seed
     parser.add_argument('--seed', type=int, default=2)
     parser.add_argument('--max-steps', type=int, default=300)
     # RL
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--save_steps', action='store_true', help='Save step-wise decision for each trajectory.')
-    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/dqn_es.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/easy/algo/mbrl_es.yaml', help='Configure file for this RL exp.')
     parser.add_argument('--checkpoint_path', default=None, help='Path to the trained model.')
 
     return parser.parse_args()
