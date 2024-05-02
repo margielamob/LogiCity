@@ -39,8 +39,12 @@ class FFModel(nn.Module):
         self.action_space = action_space
         self.observation_space = observation_space
         self.action_dim = int(self.action_space.n)  # number of actions
-        discrete_delta_network = create_mlp(observation_space.shape[0]+self.action_dim, observation_space.shape[0]*3, self.net_arch, self.activation_fn)
-        self.delta_network = nn.Sequential(*discrete_delta_network)
+        num_discrete = int(self.binary_mask.sum())
+        num_continuous = observation_space.shape[0] - num_discrete
+        discrete_delta_network = create_mlp(observation_space.shape[0]+self.action_dim, num_discrete*3, self.net_arch, self.activation_fn)
+        self.delta_network_discrete = nn.Sequential(*discrete_delta_network)
+        continuous_delta_network = create_mlp(observation_space.shape[0]+self.action_dim, num_continuous, self.net_arch, self.activation_fn)
+        self.delta_network_continuous = nn.Sequential(*continuous_delta_network)
 
     def forward(self, obs, acs, data_statistics):
         """
@@ -53,13 +57,12 @@ class FFModel(nn.Module):
         acs = F.one_hot(acs, num_classes = self.action_dim).float()
         acs = acs.squeeze(1)
         input = torch.cat((obs, acs), dim = 1)
-        delta = self.delta_network(input)
-        delta = delta.view(bs, -1, 3)
-        # check the last dim of obs, if it is 0/1
-        if obs[0, -1].round() != obs[0, -1]:
-            # the last dim is not binary, we don't need to predict it
-            delta[:, -1, :] *= 0
-        return delta
+        delta_discrete = self.delta_network_discrete(input)
+        delta_discrete = delta_discrete.view(bs, -1, 3)
+        delta_continuous = self.delta_network_continuous(input)
+        delta_continuous = delta_continuous.view(bs, self.fov, -1)
+        delta_continuous[:, :, -1] *= 0
+        return delta_discrete, delta_continuous
     
     def predict(self, obs, acs, data_statistics):
         """
@@ -68,17 +71,17 @@ class FFModel(nn.Module):
         :param obs: Observation
         :return: The estimated Q-Value for each action.
         """
-
-        delta = self(obs, acs, data_statistics)
+        bs = obs.shape[0]
+        delta_discrete, delta_continuous = self(obs, acs, data_statistics)
         predicted_changes = torch.zeros_like(obs)
-        probabilities = F.softmax(delta, dim=2)
+        probabilities = F.softmax(delta_discrete, dim=2)
         _, predicted_classes = torch.max(probabilities, dim=2)
 
-        if obs[0, -1].round() != obs[0, -1]:
-            # the last dim is not binary, we don't need to predict it
-            predicted_changes[:, :-1] = predicted_classes[:, :-1] - 1
-        else:
-            predicted_changes = predicted_classes - 1
+        predicted_changes_discrete = predicted_classes - 1
+        obs = obs.view(-1, self.fov, obs.shape[1]//self.fov)
+        predicted_changes = torch.zeros_like(obs)
+        predicted_changes[:, :, :-4] = predicted_changes_discrete.view(bs, self.fov, -1)
+        predicted_changes[:, :, -4:] = delta_continuous
 
         return obs + predicted_changes
     
@@ -86,16 +89,17 @@ class FFModel(nn.Module):
         """
         Train the model.
         """
-        delta_pred = self(obs, acs, data_statistics)
+        delta_discrete_pred, delta_continuous_pred = self(obs, acs, data_statistics)
+        obs = obs.view(-1, self.fov, obs.shape[1]//self.fov)
+        next_obs = next_obs.view(-1, self.fov, next_obs.shape[1]//self.fov)
         delta = next_obs - obs
-        target_indices = (delta + 1).long()
-        if obs[0, -1].round() != obs[0, -1]:
-            # the last dim is not binary, we don't need to predict it
-            delta_pred = delta_pred[:, :-1, :]
-            target_indices = target_indices[:, :-1]
+        delta_discrete = delta[:, :, :-4]
+        delta_continuous = delta[:, :, -4:]
+
+        target_indices = (delta_discrete + 1).long()
 
         # Reshape for cross-entropy
-        delta_pred = delta_pred.reshape(-1, 3)
+        delta_discrete_pred = delta_discrete_pred.reshape(-1, 3)
         target_indices = target_indices.reshape(-1)
 
             # Compute class weights
@@ -107,10 +111,11 @@ class FFModel(nn.Module):
         class_weights = class_weights / class_weights.min()
 
         # Apply weights to cross-entropy loss
-        loss = F.cross_entropy(delta_pred, target_indices, weight=class_weights, reduction='mean')
+        loss_discrete = F.cross_entropy(delta_discrete_pred, target_indices, weight=class_weights, reduction='mean')
+        loss_continuous = F.l1_loss(delta_continuous_pred, delta_continuous, reduction='mean')
 
         # loss = F.cross_entropy(delta_pred.reshape(-1, 3), target_indices.reshape(-1), reduction='mean')
-        return loss
+        return loss_discrete + 10*loss_continuous
 
 class RWModel(nn.Module):
 
@@ -331,11 +336,8 @@ class MPCPolicyES(BasePolicy):
                 rew = self.rew_model(sim_obs, actions, self.data_statistics).view(-1)
                 model_rewards += rew
                 sim_obs = model.predict(sim_obs, actions, self.data_statistics)
-                sim_obs = torch.clamp(sim_obs, 0, 1)
-                if deterministic:
-                    sim_obs = sim_obs.round()
-                else:
-                    sim_obs = torch.bernoulli(sim_obs)
+                sim_obs[:, :, :-4] = torch.clamp(sim_obs[:, :, :-4], 0, 1)
+                sim_obs = sim_obs.view(-1, obs.size(1))
 
             # Reshape rewards back to (batch_size, N) and append
             model_rewards = model_rewards.view(obs.size(0), self.N)
