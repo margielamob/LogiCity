@@ -74,8 +74,8 @@ MODE=easy
 #     --checkpoint_path checkpoints/easy_a2c_${iter}_steps.zip
 # done
 
-for iter in 1
+for iter in 60000 70000 
 do
-python3 main.py --use_gym --config config/tasks/Nav/easy/algo/dreamertest.yaml --exp easy_dreamer5_test_${iter} \
-    --checkpoint_path checkpoints/easy_dreamer7_cb${iter}.zip
+python3 main.py --use_gym --config config/tasks/Nav/hard/algo/dreamer_test.yaml --exp hard_dreamer5_test_${iter} \
+    --checkpoint_path checkpoints/hard_mbrl_${iter}_steps.zip
 done
