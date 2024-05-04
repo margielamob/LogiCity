@@ -22,13 +22,13 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="medium_episode_val")
+    parser.add_argument('--exp', type=str, default="transfer_easy_val")
     parser.add_argument('--replace_key', type=list, default=[])
     # seed
     parser.add_argument('--seed', type=int, default=2)
     parser.add_argument('--max_episodes', type=int, default=40)
     # RL
-    parser.add_argument('--config', default='config/tasks/Nav/medium/experts/expert_episode_val.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/transfer/easy/expert_episode_val.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 
@@ -89,42 +89,36 @@ def main(args, logger):
     vis_id = [0, 1, 2, 3, 4]
     # 0: Slow, 1: Normal, 2: Fast, 3: Stop
     # Test
+    desired_num = 25 if 'test' in args.config else 10
+    if 'val' in args.config:
+        assert args.max_episodes == 40
+    if 'test' in args.config:
+        assert args.max_episodes == 100
     num_desired = {
         'ambulance':{
-            3: 8
+            3: desired_num
         },
         'bus':{
-            3: 15
+            3: desired_num
         },
-        'tiro':{
-            3: 8
+        'police':{
+            3: desired_num
         },
         'normal':{
-            3: 16
+            3: desired_num
         }
     }
     num_counter = {
-        'police':{
-            0: 0,
-            2: 0,
-            3: 0
-        },
         'ambulance':{
-            0: 0,
             3: 0
         },
-        'reckless':{
-            2: 0,
+        'bus':{
             3: 0
         },
-        'tiro': {
-            0: 0,
+        'police':{
             3: 0
         },
         'normal':{
-            3: 0
-        },
-        'tiro':{
             3: 0
         }
     }
