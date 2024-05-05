@@ -297,7 +297,7 @@ def main_gym(args, logger):
                         rew += r
                         break
                     rew += r
-            if i["success"]:
+            if i["is_success"]:
                 success.append(1)
             else:
                 success.append(0)

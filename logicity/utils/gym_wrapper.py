@@ -58,6 +58,8 @@ class GymCityWrapper(gym.core.Env):
         self.scale = [25, 7, 3.5, 8.3]
         self.mini_scale = [0, 0, -1, 0]
         self.t = 0
+        self.current_episode_reward = 0
+        self.current_episode_length = 0
 
     def full_action2index(self, action):
         # see agents/car.py
@@ -146,6 +148,8 @@ class GymCityWrapper(gym.core.Env):
         self.current_obs = obs
         self.last_dist = -1
         self.last_pos = None
+        self.current_episode_reward = 0
+        self.current_episode_length = 0
         if self.use_expert:
             self.expert_action = self.full_action2index(ob_dict["Expert_actions"][0])
             if return_info:
@@ -187,15 +191,18 @@ class GymCityWrapper(gym.core.Env):
             info["Next_grounding"] = new_ob_dict["Ground_dic"][0]
             info["Next_sg"] = new_ob_dict["Expert_sg"][0]
         # ob_dict = self.env.update()
+        self.current_episode_reward += rew
+        self.current_episode_length += 1
         obs = self._flatten_obs(new_ob_dict)
         self.current_obs = obs
         
         # offset the index by 3 layers 0,1,2 are static in world matrix
         done = self.agent.reach_goal
-        info["success"] = False
+        info["is_success"] = False
 
         if done:
-            info["success"] = True
+            info['episode'] = {'r': self.current_episode_reward, 'l': self.current_episode_length}
+            info["is_success"] = True
             logger.info("will reset agent by success")
             self.reset()
         
@@ -203,12 +210,14 @@ class GymCityWrapper(gym.core.Env):
             done = True
             rew += self.overtime_cost
             info["overtime"] = True
+            info['episode'] = {'r': self.current_episode_reward, 'l': self.current_episode_length}
             logger.info("Reset agent by overtime")
             self.reset()
             
         if info["Fail"][0]: 
             done = True
             logger.info("Reset agent by failing")
+            info['episode'] = {'r': self.current_episode_reward, 'l': self.current_episode_length}
             self.reset()
 
         return self.current_obs, rew, done, info
