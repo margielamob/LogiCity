@@ -22,7 +22,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="dqn_debug")
+    parser.add_argument('--exp', type=str, default="maxsynth_debug")
     parser.add_argument('--vis', action='store_true', help='Visualize the city.')
     # seed
     parser.add_argument('--seed', type=int, default=2)
@@ -31,7 +31,7 @@ def parse_arguments():
     parser.add_argument('--collect_only', action='store_true', help='Only collect expert data.')
     parser.add_argument('--use_gym', action='store_true', help='In gym mode, we can use RL alg. to control certain agents.')
     parser.add_argument('--save_steps', action='store_true', help='Save step-wise decision for each trajectory.')
-    parser.add_argument('--config', default='config/tasks/Nav/transfer/easy/algo/dqn.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/medium/algo/maxsynthtest.yaml', help='Configure file for this RL exp.')
     parser.add_argument('--checkpoint_path', default=None, help='Path to the trained model.')
 
     return parser.parse_args()
@@ -229,6 +229,8 @@ def main_gym(args, logger):
             if rl_config["algorithm"] == "ExpertCollector" or rl_config["algorithm"] == "Random":
                 # expert and random agent do not need a policy network
                 model = algorithm_class(eval_env)
+            elif rl_config["algorithm"] == "MaxSynth":
+                model = algorithm_class(eval_env, **policy_kwargs)
             elif rl_config["algorithm"] in ["HRI", "NLM"]:
                 # HRI and NLM are trained w/ ext code, just load the network
                 model = algorithm_class(rl_config["policy_network"], \
