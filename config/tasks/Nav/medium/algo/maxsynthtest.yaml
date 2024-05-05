@@ -4,7 +4,7 @@ simulation:
   agent_yaml_file: "config/agents/medium/test.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology_medium.yaml" # Ontology of the simulation
   rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/medium/maxsynth.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/medium/expert.yaml"                     # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
@@ -30,16 +30,12 @@ simulation:
 
 # Stable Baselines specific settings
 stable_baselines:
-  algorithm: "ExpertCollector"
+  algorithm: "MaxSynth"
   policy_kwargs:
-    num_episodes: -1    # Total number of episodes to collect data for.
-    return_full_world: False
-    features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
-    features_extractor_class: "MLPFeatureExtractor"
-    features_extractor_kwargs:
-      features_dim: 64
-  hyperparameters:
-    None
+    logic_engine_file:
+      ontology: "config/rules/ontology_medium.yaml"
+      rule: "config/rules/Nav/medium/maxsynth.yaml"
+  hyperparameters: None
   train: false                   # Whether to train the model
   checkpoint_path: ""           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel

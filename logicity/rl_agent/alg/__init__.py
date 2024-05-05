@@ -17,5 +17,6 @@ from .expert import ExpertCollector
 from .bc import BehavioralCloning
 from .hri import HRI
 from .nlmbc import NLM
+from .maxsynth import MaxSynth
 # from .loa import LOA
 # from .ailp import aILP
