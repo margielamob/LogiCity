@@ -1,0 +1,158 @@
+Rules:
+  Sim: # how the determinist agents move
+    - name: Stop
+      formula: |
+        Stop(entity) == Exists(
+          [dummyEntityA, dummyEntityB], 
+          Or(
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              IsAtInter(entity), 
+              IsInInter(dummyEntityA), 
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              IsAtInter(entity), 
+              IsAtInter(dummyEntityA), 
+              HigherPri(dummyEntityA, entity),
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              IsInInter(entity), 
+              IsInInter(dummyEntityA), 
+              IsAmbulance(dummyEntityA)
+            ),
+            And(
+              IsBus(entity),
+              Not(IsInInter(entity)),
+              Not(IsAtInter(entity)),
+              RightOf(dummyEntityA, entity), 
+              NextTo(dummyEntityA, entity),
+              IsPedestrian(dummyEntityA)
+            ),
+            And(
+              IsAmbulance(entity), 
+              RightOf(dummyEntityA, entity), 
+              IsOld(dummyEntityA)
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              CollidingClose(entity, dummyEntityA)
+            )
+          )
+        )
+      description: Medium stop rule.
+  Task: # how the reward/score is calculated
+    - name: Medium Stop
+      description: should not collide.
+      dead: true
+      reward: -10
+      formula: |
+        Implies(Exists(
+          [dummyEntityA, dummyEntityB], 
+            Or(
+              And(
+                Not(IsAmbulance(entity)), 
+                Not(IsOld(entity)),
+                IsAtInter(entity), 
+                IsInInter(dummyEntityA), 
+              ),
+              And(
+                Not(IsAmbulance(entity)), 
+                Not(IsOld(entity)),
+                IsAtInter(entity), 
+                IsAtInter(dummyEntityA), 
+                HigherPri(dummyEntityA, entity),
+              ),
+              And(
+                Not(IsAmbulance(entity)), 
+                Not(IsOld(entity)),
+                IsInInter(entity), 
+                IsInInter(dummyEntityA), 
+                IsAmbulance(dummyEntityA)
+              ),
+              And(
+                IsBus(entity),
+                Not(IsInInter(entity)),
+                Not(IsAtInter(entity)),
+                RightOf(dummyEntityA, entity), 
+                NextTo(dummyEntityA, entity),
+                IsPedestrian(dummyEntityA)
+              ),
+              And(
+                IsAmbulance(entity), 
+                RightOf(dummyEntityA, entity), 
+                IsOld(dummyEntityA)
+              ),
+              And(
+                Not(IsAmbulance(entity)), 
+                Not(IsOld(entity)),
+                CollidingClose(entity, dummyEntityA)
+              )
+            )
+          ),
+          Stop(entity)
+        )
+  Expert: # how the expert agents should move
+    - name: Stop
+      description: should not disobey rules.
+      formula: |
+        Stop(entity) == Exists(
+          [dummyEntityA, dummyEntityB], 
+          Or(
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              IsAtInter(entity), 
+              IsInInter(dummyEntityA), 
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              IsAtInter(entity), 
+              IsAtInter(dummyEntityA), 
+              HigherPri(dummyEntityA, entity),
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              IsInInter(entity), 
+              IsInInter(dummyEntityA), 
+              IsAmbulance(dummyEntityA)
+            ),
+            And(
+              IsBus(entity),
+              Not(IsInInter(entity)),
+              Not(IsAtInter(entity)),
+              RightOf(dummyEntityA, entity), 
+              NextTo(dummyEntityA, entity),
+              IsPedestrian(dummyEntityA)
+            ),
+            And(
+              IsAmbulance(entity), 
+              RightOf(dummyEntityA, entity), 
+              IsOld(dummyEntityA)
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              Not(IsOld(entity)),
+              CollidingClose(entity, dummyEntityA)
+            )
+          )
+        )
+    - name: Slow
+      description: Never take slow action.
+      formula: |
+        Not(Slow(entity))
+    - name: Fast
+      description: Never take fast action.
+      formula: |
+        Not(Fast(entity))
+    - name: Normal
+      description: If not stop, then normal.
+      formula: |
+        Normal(entity) == Not(Stop(entity))
