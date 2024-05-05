@@ -1,0 +1,21 @@
+Rules:
+  - Stop:
+      formula: |
+        Stop(entity) == Exists(
+          [dummyEntityA], 
+          Or(
+            And(
+              Not(IsAmbulance(entity)), 
+              CollidingClose(entity, dummyEntityA)
+            ),
+            And(
+              IsAmbulance(entity),
+              RightOf(dummyEntityA, entity)
+            ),
+            And(
+              IsAtInter(entity), 
+              HigherPri(dummyEntityA, entity),
+            )
+          )
+        )
+      description: Or version of the 3 stop rule.

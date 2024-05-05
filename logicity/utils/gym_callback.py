@@ -87,7 +87,7 @@ class EvalCheckpointCallback(CheckpointCallback):
                         break
                     episode_rewards += reward
                     step += 1
-                if info["success"]:
+                if info["is_success"]:
                     logger.info("Episode {} success.".format(ts))
                     success.append(1)
                 else:
