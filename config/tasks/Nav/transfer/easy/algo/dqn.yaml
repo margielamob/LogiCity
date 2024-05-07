@@ -30,11 +30,10 @@ simulation:
     reset_dist:
       concepts: ['ambulance', 'bus', 'police', 'normal']
       prob: [0.25, 0.25, 0.25, 0.25]
-    overtime_cost: -5
 
 eval_checkpoint:
-  eval_freq: 1000                        # This is the frequency of evaluation, will be multiplied by num_envs
-  save_freq: 1000
+  eval_freq: 5000                        # This is the frequency of evaluation, will be multiplied by num_envs
+  save_freq: 5000
   simulation_config:
     map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
     agent_yaml_file: "config/agents/transfer/val.yaml" # Agents in the simulation
