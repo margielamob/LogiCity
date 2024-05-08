@@ -74,16 +74,19 @@ MODE=easy
 #     --checkpoint_path checkpoints/easy_a2c_${iter}_steps.zip
 # done
 
-python3 main_es.py --config config/tasks/Nav/easy/algo/dqn_estest.yaml --exp easy_dqnes_test
+# python3 main_es.py --config config/tasks/Nav/easy/algo/dqn_estest.yaml --exp easy_dqnes_test
 
-python3 main_es.py --config config/tasks/Nav/easy/algo/mbrl_estest.yaml --exp easy_mbrles_test
+# python3 main_es.py --config config/tasks/Nav/easy/algo/mbrl_estest.yaml --exp easy_mbrles_test
 
-python3 main_es.py --config config/tasks/Nav/hard/algo/dqn_estest.yaml --exp hard_dqnes_test
+# python3 main_es.py --config config/tasks/Nav/hard/algo/dqn_estest.yaml --exp hard_dqnes_test
 
-python3 main_es.py --config config/tasks/Nav/hard/algo/mbrl_estest.yaml --exp hard_mbrles_test
+# python3 main_es.py --config config/tasks/Nav/hard/algo/mbrl_estest.yaml --exp hard_mbrles_test
 
-for iter in 100000
-do
-python3 main.py --config config/tasks/Nav/transfer/easy/algo/dqn_test.yaml --exp transfer_easy_dqn_test_${iter} \
-    --checkpoint_path checkpoints/transfer_dqn_easy_initial_${iter}_steps.zip --use_gym
-done
+python3 main.py --config config/tasks/Nav/transfer/easy/algo/dqn_test_train.yaml --exp transfer_easy_dqn_test_train --use_gym
+
+python3 transfer.py --config config/tasks/Nav/transfer/medium/algo/dqn_transfer.yaml --exp transfer_easy2medium_dqn_train1 --use_gym
+# for iter in 100000
+# do
+# python3 main.py --config config/tasks/Nav/transfer/easy/algo/dqn_test.yaml --exp transfer_easy_dqn_test_${iter} \
+#     --checkpoint_path checkpoints/transfer_dqn_easy_initial_${iter}_steps.zip --use_gym
+# done
