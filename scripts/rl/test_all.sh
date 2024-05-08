@@ -74,8 +74,16 @@ MODE=easy
 #     --checkpoint_path checkpoints/easy_a2c_${iter}_steps.zip
 # done
 
-for iter in 40000 70000 110000
+python3 main_es.py --config config/tasks/Nav/easy/algo/dqn_estest.yaml --exp easy_dqnes_test
+
+python3 main_es.py --config config/tasks/Nav/easy/algo/mbrl_estest.yaml --exp easy_mbrles_test
+
+python3 main_es.py --config config/tasks/Nav/hard/algo/dqn_estest.yaml --exp hard_dqnes_test
+
+python3 main_es.py --config config/tasks/Nav/hard/algo/mbrl_estest.yaml --exp hard_mbrles_test
+
+for iter in 100000
 do
-python3 main_es.py --config config/tasks/Nav/easy/algo/mbrl_estest.yaml --exp easy_mbrles_test_${iter} \
-    --checkpoint_path checkpoints/easy_mbrles_${iter}_steps.zip
+python3 main.py --config config/tasks/Nav/transfer/easy/algo/dqn_test.yaml --exp transfer_easy_dqn_test_${iter} \
+    --checkpoint_path checkpoints/transfer_dqn_easy_initial_${iter}_steps.zip --use_gym
 done

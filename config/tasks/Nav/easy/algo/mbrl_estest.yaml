@@ -13,7 +13,7 @@ simulation:
     max_priority: 10
     cat_length: true
     exact_state: true
-    use_expert: false
+    use_expert: true
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
     max_horizon: 10000                          # Maximum steps in each episode 
     action_space: 4                       # Number of discrete actions, 4 means slow/normal/fast/stop
@@ -59,7 +59,7 @@ stable_baselines:
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: false                   # Whether to train the model
-  checkpoint_path: ""           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/final_models/easy/mbrles.zip"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   episode_data: "dataset/easy/test_100_episodes.pkl"
   eval_actions: {"Stop": 3}    # Total number of timesteps to run for all environments combined
