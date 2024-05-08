@@ -1,10 +1,10 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/hard/train.yaml" # Agents in the simulation
+  agent_yaml_file: "config/agents/transfer/train.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology_full.yaml" # Ontology of the simulation
-  rule_type: "Z3_RL"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/hard/rl.yaml"                    # Whether to render the environment
+  rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
+  rule_yaml_file: "config/rules/Nav/transfer/easy/expert.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
@@ -30,17 +30,16 @@ simulation:
     reset_dist:
       concepts: ['ambulance', 'bus', 'police', 'normal']
       prob: [0.25, 0.25, 0.25, 0.25]
-    overtime_cost: -5
 
 eval_checkpoint:
-  eval_freq: 10000                        # This is the frequency of evaluation, will be multiplied by num_envs
-  save_freq: 10000
+  eval_freq: 5000                        # This is the frequency of evaluation, will be multiplied by num_envs
+  save_freq: 5000
   simulation_config:
     map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-    agent_yaml_file: "config/agents/hard/val.yaml" # Agents in the simulation
+    agent_yaml_file: "config/agents/transfer/val.yaml" # Agents in the simulation
     ontology_yaml_file: "config/rules/ontology_full.yaml" # Ontology of the simulation
     rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-    rule_yaml_file: "config/rules/Nav/hard/expert.yaml"                    # Whether to render the environment
+    rule_yaml_file: "config/rules/Nav/transfer/easy/expert.yaml"                 # Whether to render the environment
     rl: true
     debug: false
     use_multi: false
@@ -57,15 +56,15 @@ eval_checkpoint:
         2: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0]
         3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
       fov_entities:
-        Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
+        Entity: 5                        # Maximum number of agents in the FOV, include the RL agent
       action_cost:
         0: -2
         1: 0
         2: -2
-        3: -5
+        3: -5                        # Maximum number of agents in the FOV, include the RL agent
   save_path: './checkpoints/'
-  name_prefix: 'hard_nlmdqn'
-  episode_data: "dataset/hard/val_40_episodes.pkl"
+  name_prefix: 'transfer_nlmdqn_easy_initial'
+  episode_data: "dataset/transfer/easy/val_40_episodes.pkl"
   eval_actions: {"Stop": 3}
 
 # Stable Baselines specific settings
@@ -115,7 +114,7 @@ stable_baselines:
     gradient_steps: 1
     exploration_fraction: 0.1
     exploration_final_eps: 0.01
-    batch_size: 256               # Number of samples in each batch
+    batch_size: 128               # Number of samples in each batch
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: true                   # Whether to train the model

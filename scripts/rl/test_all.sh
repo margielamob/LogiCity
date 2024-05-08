@@ -74,8 +74,12 @@ MODE=easy
 #     --checkpoint_path checkpoints/easy_a2c_${iter}_steps.zip
 # done
 
-for iter in 40000 60000 80000
+for iter in 60000 70000 140000 160000
 do
-python3 main.py --config config/tasks/Nav/expert/algo/dreamer5_test.yaml --exp expert_dreamer5_test_${iter} \
-    --checkpoint_path checkpoints/expert_mbrl_${iter}_steps.zip --use_gym
+python3 main.py --config config/tasks/Nav/transfer/easy/algo/nlmdqn_test.yaml --exp transfer_easy_nlmdqn_test_${iter} \
+    --checkpoint_path checkpoints/transfer_nlmdqn_easy_initial_${iter}_steps --use_gym
 done
+
+python3 main.py --config config/tasks/Nav/medium/algo/dreamertest.yaml --exp dreamer_medium_test --use_gym
+
+python3 main.py --config config/tasks/Nav/expert/algo/dreamer5_test.yaml --exp dreamer_expert_test --use_gym
