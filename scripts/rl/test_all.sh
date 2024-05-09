@@ -82,4 +82,15 @@ MODE=easy
 
 # python3 main.py --config config/tasks/Nav/medium/algo/dreamertest.yaml --exp dreamer_medium_test --use_gym
 
-python3 main.py --config config/tasks/Nav/expert/algo/dreamer5_test.yaml --exp dreamer_expert_test --use_gym
+# python3 main_es.py --config config/tasks/Nav/hard/algo/dqn_estest.yaml --exp hard_dqnes_test
+
+# python3 main_es.py --config config/tasks/Nav/hard/algo/mbrl_estest.yaml --exp hard_mbrles_test
+
+python3 main.py --config config/tasks/Nav/transfer/easy/algo/dqn_test_train.yaml --exp transfer_easy_dqn_test_train --use_gym
+
+python3 transfer.py --config config/tasks/Nav/transfer/medium/algo/dqn_transfer.yaml --exp transfer_easy2medium_dqn_train1 --use_gym
+# for iter in 100000
+# do
+# python3 main.py --config config/tasks/Nav/transfer/easy/algo/dqn_test.yaml --exp transfer_easy_dqn_test_${iter} \
+#     --checkpoint_path checkpoints/transfer_dqn_easy_initial_${iter}_steps.zip --use_gym
+# done

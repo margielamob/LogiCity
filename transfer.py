@@ -22,11 +22,10 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="maxsynth_debug")
+    parser.add_argument('--exp', type=str, default="dqn_transfer_train")
     # seed
     parser.add_argument('--seed', type=int, default=2)
     # RL
-    parser.add_argument('--save_steps', action='store_true', help='Save step-wise decision for each trajectory.')
     parser.add_argument('--config', default='config/tasks/Nav/transfer/medium/algo/dqn_transfer.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
@@ -97,132 +96,30 @@ def main(args, logger):
     train = rl_config["train"]
     
     # model training
-    if train: 
-        num_envs = rl_config["num_envs"]
-        total_timesteps = rl_config["total_timesteps"]
-        if num_envs > 1:
-            logger.info("Running in RL mode with {} parallel environments.".format(num_envs))
-            train_env = SubprocVecEnv([make_envs(simulation_config, i) for i in range(num_envs)])
-        else:
-            train_env = make_env(simulation_config)
-        train_env.reset()
-        assert os.path.isfile(rl_config["checkpoint_path"]), "Checkpoint path not found."
-        logger.info("Continue Learning")
-        logger.info("Loading the model from checkpoint: {}".format(rl_config["checkpoint_path"]))
-        policy_kwargs_use = copy.deepcopy(policy_kwargs)
-        model = algorithm_class.load(rl_config["checkpoint_path"], \
-                                    train_env, **hyperparameters, policy_kwargs=policy_kwargs_use)
-        # RL training mode
-        # Create the custom checkpoint and evaluation callback
-        eval_checkpoint_callback = EvalCheckpointCallback(exp_name=args.exp, **eval_checkpoint_config)
-        # Train the model
-        model.learn(total_timesteps=total_timesteps, callback=eval_checkpoint_callback\
-                    , tb_log_name=args.exp)
-        # Save the model
-        model.save(eval_checkpoint_config["name_prefix"])
-        return
-    # model evaluation
+    assert train
+    num_envs = rl_config["num_envs"]
+    total_timesteps = rl_config["total_timesteps"]
+    if num_envs > 1:
+        logger.info("Running in RL mode with {} parallel environments.".format(num_envs))
+        train_env = SubprocVecEnv([make_envs(simulation_config, i) for i in range(num_envs)])
     else:
-        assert os.path.isfile(rl_config["episode_data"])
-        logger.info("Testing the trained model on episode data {}".format(rl_config["episode_data"]))
-        assert "eval_actions" in rl_config
-        logger.info("Evaluating the model with actions/id: {}".format(rl_config["eval_actions"]))
-        # RL testing mode
-        with open(rl_config["episode_data"], "rb") as f:
-            episode_data = pkl.load(f)
-        logger.info("Loaded episode data with {} episodes.".format(len(episode_data.keys())))
-        # Checkpoint evaluation
-        rew_list = []
-        success = []
-        decision_step = {}
-        succ_decision = {}
-        for action, id in rl_config["eval_actions"].items():
-            decision_step[id] = 0
-            succ_decision[id] = 0
-        vis_id = [] if "vis_id" not in rl_config else rl_config["vis_id"]
-        worlds = {ts: None for ts in vis_id}
-        # over write the checkpoint path if not none
-        if args.checkpoint_path is not None:
-            rl_config["checkpoint_path"] = args.checkpoint_path
-
-        for ts in list(episode_data.keys()): 
-            if (ts not in vis_id) and len(vis_id) > 0:
-                continue
-            logger.info("Evaluating episode {}...".format(ts))
-            episode_cache = episode_data[ts]
-            max_steps = 10000
-            if "label_info" in episode_cache:
-                logger.info("Episode label: {}".format(episode_cache["label_info"]))
-            assert "oracle_step" in episode_cache["label_info"], "Need oracle step for evaluation."
-            max_steps = episode_cache["label_info"]["oracle_step"] * 2
-            eval_env, cached_observation = make_env(simulation_config, episode_cache, True)
-            # SB3-based agents
-            policy_kwargs_use = copy.deepcopy(policy_kwargs)
-            model = algorithm_class.load(rl_config["checkpoint_path"], \
-                            eval_env, **hyperparameters, policy_kwargs=policy_kwargs_use)
-            logger.info("Loaded model from {}".format(rl_config["checkpoint_path"]))
-            o = eval_env.init()
-            rew = 0    
-            step = 0   
-            local_decision_step = {}
-            local_succ_decision = {}
-            for acc, id in rl_config["eval_actions"].items():
-                local_decision_step[id] = 0
-                local_succ_decision[id] = 1
-            d = False
-            while (not d) and (step < max_steps):
-                step += 1
-                oracle_action = eval_env.expert_action
-                action, _ = model.predict(o, deterministic=True)
-                # save step_wise decision succ per trajectory
-                if oracle_action in local_decision_step.keys():
-                    local_decision_step[oracle_action] = 1
-                    if int(action) != oracle_action:
-                        local_succ_decision[oracle_action] = 0
-                o, r, d, i = eval_env.step(int(action))
-                if ts in vis_id:
-                    cached_observation["Time_Obs"][step] = i
-                if i["Fail"][0]:
-                    rew += r
-                    break
-                rew += r
-            if i["is_success"]:
-                success.append(1)
-            else:
-                success.append(0)
-            for acc, id in rl_config["eval_actions"].items():
-                if local_decision_step[id] == 0:
-                    local_succ_decision[id] = 0
-                decision_step[id] += local_decision_step[id]
-                succ_decision[id] += local_succ_decision[id]
-            if step >= max_steps:
-                rew -= 3
-            rew_list.append(rew)
-            if args.save_steps:
-                episode_cache["label_info"]['oracle_step'] = step
-            logger.info("Episode {} took {} steps.".format(ts, step))
-            logger.info("Episode {} achieved a score of {}".format(ts, rew))
-            logger.info("Episode {} Success: {}".format(ts, success[-1]))
-            logger.info("Episode {} Decision Step: {}".format(ts, local_decision_step))
-            logger.info("Episode {} Success Decision: {}".format(ts, local_succ_decision))
-            if ts in worlds.keys():
-                worlds[ts] = cached_observation
-        mean_reward = np.mean(rew_list)
-        np.save(os.path.join(args.log_dir, "{}_rewards.npy".format(args.exp)), rew_list)
-        sr = np.mean(success)
-        mSuccD, aSuccD, SuccDAct = cal_step_metric(decision_step, succ_decision)
-        logger.info("Mean Score achieved: {}".format(mean_reward))
-        logger.info("Success Rate: {}".format(sr))
-        logger.info("Mean Decision Succ: {}".format(mSuccD))
-        logger.info("Average Decision Succ: {}".format(aSuccD))
-        logger.info("Decision Succ for each action: {}".format(SuccDAct))
-        if args.save_steps:
-            with open(os.path.join(args.log_dir, "{}_steps.pkl".format(args.exp)), "wb") as f:
-                pkl.dump(episode_data, f)
-        for ts in worlds.keys():
-            if worlds[ts] is not None:
-                with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
-                    pkl.dump(worlds[ts], f)
+        train_env = make_env(simulation_config)
+    train_env.reset()
+    assert os.path.isfile(rl_config["checkpoint_path"]), "Checkpoint path not found."
+    logger.info("Continue Learning")
+    logger.info("Loading the model from checkpoint: {}".format(rl_config["checkpoint_path"]))
+    policy_kwargs_use = copy.deepcopy(policy_kwargs)
+    model = algorithm_class.load(rl_config["checkpoint_path"], \
+                                train_env, **hyperparameters, policy_kwargs=policy_kwargs_use)
+    # RL training mode
+    # Create the custom checkpoint and evaluation callback
+    eval_checkpoint_callback = EvalCheckpointCallback(exp_name=args.exp, **eval_checkpoint_config)
+    # Train the model
+    model.learn(total_timesteps=total_timesteps, callback=eval_checkpoint_callback\
+                , tb_log_name=args.exp)
+    # Save the model
+    model.save(eval_checkpoint_config["name_prefix"])
+    return
 
 
 def cal_step_metric(decision_step, succ_decision):
