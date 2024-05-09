@@ -63,21 +63,50 @@ eval_checkpoint:
         2: -2
         3: -5                        # Maximum number of agents in the FOV, include the RL agent
   save_path: './checkpoints/'
-  name_prefix: 'transfer_dqn_medium_transfer'
+  name_prefix: 'transfer_nlmdqn_medium_transfer'
   episode_data: "dataset/transfer/medium/val_40_episodes.pkl"
   eval_actions: {"Stop": 3}
 
 # Stable Baselines specific settings
 stable_baselines:
-  algorithm: "DQN"
-  policy_network: "MlpPolicy"
+  algorithm: "NLMDQN"
+  policy_network: "DQNNLMPolicy"
   policy_kwargs:
-    features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
-    features_extractor_class: "MLPFeatureExtractor"
+    features_extractor_module: "logicity.rl_agent.policy.nlm_dqn" # Module path
+    features_extractor_class: "NLM"
     features_extractor_kwargs:
-      features_dim: 64
+      tgt_arity: 1 # determines the feature axis
+      nlm_args:
+        input_dims: [0, 11, 6, 0] # the same as input_dims
+        output_dims: 16 # the same as nlm_attributes
+        logic_hidden_dim: []
+        exclude_self: true
+        depth: 5
+        breadth: 3
+        io_residual: false
+        residual: false
+        recursion: false
+      num_ents: 5
+      pred_grounding_index:
+        IsPedestrian: [0, 5]
+        IsCar: [5, 10]
+        IsAmbulance: [10, 15]
+        IsBus: [15, 20]
+        IsPolice: [20, 25]
+        IsTiro: [25, 30]
+        IsReckless: [30, 35]
+        IsOld: [35, 40]
+        IsYoung: [40, 45]
+        IsAtInter: [45, 50]
+        IsInInter: [50, 55]
+        IsClose: [55, 80]
+        HigherPri': [80, 105]
+        CollidingClose: [105, 130]
+        LeftOf: [130, 155]
+        RightOf: [155, 180]
+        NextTo: [180, 205]
   hyperparameters:
-    learning_rate: 0.000003          # Learning rate
+    learning_rate: 0.00005          # Learning rate
     buffer_size: 1000            # Size of the replay buffer
     learning_starts: 1000
     target_update_interval: 500
@@ -89,6 +118,6 @@ stable_baselines:
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: true                   # Whether to train the model
-  checkpoint_path: "checkpoints/final_models/transfer_dqn_train2/transfer_dqn_easy_initial_100000_steps.zip"           # Path to a checkpoint to restore the model from
+  checkpoint_path: "checkpoints/tl_easy_nlmdqn/transfer_nlmdqn_easy_initial_140000_steps.zip"         # Path to a checkpoint to restore the model from
   num_envs: 2                   # Number of environments to run in parallel
   total_timesteps: 1000000    # Total number of timesteps to run for all environments combined

@@ -29,7 +29,7 @@ class EvalCheckpointCallback(CheckpointCallback):
         self.eval_actions = eval_actions
 
     def _on_step(self) -> bool:
-        if self.n_calls % self.save_freq == 0:
+        if self.n_calls % self.save_freq == 0 and (self.model.num_timesteps > self.model.learning_starts):
             model_path = self._checkpoint_path(extension="zip")
             self.model.save(model_path)
             if self.verbose >= 2:

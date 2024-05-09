@@ -1,17 +1,16 @@
 # General simulation settings
 simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
-  agent_yaml_file: "config/agents/expert/test.yaml" # Agents in the simulation
+  agent_yaml_file: "config/agents/transfer/test.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology_full.yaml" # Ontology of the simulation
   rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/expert/expert.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/transfer/medium/expert.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
   agent_region: 120
   rl_agent: 
     max_priority: 11
-    cat_length: true
     use_expert: true
     agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
     max_horizon: 10000                          # Maximum steps in each episode 
@@ -22,36 +21,39 @@ simulation:
       2: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0]
       3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     fov_entities:
-      Entity: 5                        # Maximum number of agents in the FOV, include the RL agent
+      Entity: 5                        # Maximum number of entities in the FOV, include the RL agent
     action_cost:
       0: -2
-      1: -1
+      1: 0
       2: -2
-      3: -3
+      3: -5
+    reset_dist:
+      concepts: ['ambulance', 'bus', 'police', 'normal']
+      prob: [0.25, 0.25, 0.25, 0.25]
 
 # Stable Baselines specific settings
 stable_baselines:
-  algorithm: "Dreamer"
-  policy_network: "DreamerPolicy"
+  algorithm: "DQN"
+  policy_network: "MlpPolicy"
   policy_kwargs:
     features_extractor_module: "logicity.rl_agent.policy.neural" # Module path
     features_extractor_class: "MLPFeatureExtractor"
     features_extractor_kwargs:
       features_dim: 64
   hyperparameters:
-    config_path: "logicity.rl_agent.alg.dreamer_helper"
-    config_name: "LogiCityEasyConfig1"
     learning_rate: 0.00003          # Learning rate
-    buffer_size: 100000            # Size of the replay buffer
-    learning_starts: 4000
-    train_freq: 50
-    gradient_steps: 10
-    batch_size: 50               # Number of samples in each batch
-    seq_len: 5
+    buffer_size: 1000            # Size of the replay buffer
+    learning_starts: 1000
+    target_update_interval: 500
+    train_freq: 4
+    gradient_steps: 1
+    exploration_fraction: 0.1
+    exploration_final_eps: 0.01
+    batch_size: 128               # Number of samples in each batch
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/final_models/expert/dreamer.zip"           # Path to a checkpoint to restore the model from
-  num_envs: 1                  # Number of environments to run in parallel
-  episode_data: "dataset/expert/test_100_episodes.pkl"
-  eval_actions: {"Stop": 3, "Fast": 2, "Slow": 0}    # Total number of timesteps to run for all environments combined
+  checkpoint_path: "checkpoints/final_models/transfer_dqn_train2/transfer_dqn_easy_initial_100000_steps.zip"           # Path to a checkpoint to restore the model from
+  num_envs: 1                   # Number of environments to run in parallel
+  episode_data: "dataset/transfer/medium/test_100_episodes.pkl"
+  eval_actions: {"Stop": 3}     # Total number of timesteps to run for all environments combined
