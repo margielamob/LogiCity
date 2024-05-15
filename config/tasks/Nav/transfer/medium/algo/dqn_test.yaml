@@ -53,7 +53,7 @@ stable_baselines:
     verbose: 1                    # Verbosity level
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
   train: false                   # Whether to train the model
-  checkpoint_path: "checkpoints/final_models/transfer_dqn_train2/transfer_dqn_easy_initial_100000_steps.zip"           # Path to a checkpoint to restore the model from
+  checkpoint_path: ""           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
   episode_data: "dataset/transfer/medium/test_100_episodes.pkl"
   eval_actions: {"Stop": 3}     # Total number of timesteps to run for all environments combined

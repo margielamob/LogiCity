@@ -4,11 +4,11 @@ simulation:
   agent_yaml_file: "config/agents/transfer/train.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology_full.yaml" # Ontology of the simulation
   rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
-  rule_yaml_file: "config/rules/Nav/transfer/easy/expert.yaml"                    # Whether to render the environment
+  rule_yaml_file: "config/rules/Nav/transfer/medium/expert.yaml"                    # Whether to render the environment
   rl: true
   debug: false
   use_multi: false
-  agent_region: 120
+  agent_region: 100
   rl_agent: 
     max_priority: 11
     use_expert: true
@@ -55,5 +55,5 @@ stable_baselines:
   train: false                   # Whether to train the model
   checkpoint_path: "checkpoints/final_models/transfer_dqn_train2/transfer_dqn_easy_initial_100000_steps.zip"           # Path to a checkpoint to restore the model from
   num_envs: 1                   # Number of environments to run in parallel
-  episode_data: "dataset/transfer/easy/test_100_episodes.pkl"
-  eval_actions: {"Stop": 3}    # Total number of timesteps to run for all environments combined
+  episode_data: "dataset/transfer/medium/test_100_episodes.pkl"
+  eval_actions: {"Stop": 3}     # Total number of timesteps to run for all environments combined
