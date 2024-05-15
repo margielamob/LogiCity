@@ -74,10 +74,10 @@ MODE=easy
 #     --checkpoint_path checkpoints/transfer_dqn_medium_transfer_${iter}_steps.zip
 # done
 
-for iter in 1200 1600 2400 3600 5000 8000 10000 13000 16000 18000 20000 22000 24000 26000 28000 30000
+for iter in 200000 750000 110000
 do
-python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmdqn_test.yaml --exp transfer_easy2medium_nlmdqn_test_${iter} \
-    --checkpoint_path checkpoints/transfer_nlmdqn_medium_transfer_${iter}_steps.zip --use_gym
+python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmdqn_test.yaml --exp scratch_medium_nlmdqn_test_${iter} \
+    --checkpoint_path checkpoints/transfer_nlmdqn_medium_scracth_${iter}_steps.zip --use_gym
 # python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmdqn_test_train.yaml --exp transfer_easy2medium_nlmdqn_test_train_${iter} \
 #     --checkpoint_path checkpoints/transfer_nlmdqn_medium_transfer_${iter}_steps.zip --use_gym
 done
@@ -91,13 +91,13 @@ done
 # python3 main.py --config config/tasks/Nav/expert/algo/dreamer5_test.yaml --exp dreamer_expert_test --use_gym
 
 # python3 main.py --config config/tasks/Nav/transfer/easy/algo/nlmdqn_test_train.yaml --exp transfer_easy_nlmdqn_test_train --use_gym
-for iter in 1200 1600 2400 3600 5000 8000 10000 13000 16000 18000 20000 22000 24000 26000 28000
-do
-python3 main.py --config config/tasks/Nav/transfer/medium/algo/dqn_test.yaml --exp transfer_easy2medium_dqn_test_${iter} \
-    --checkpoint_path checkpoints/transfer_dqn_medium_transfer_${iter}_steps.zip --use_gym
-# python3 main.py --config config/tasks/Nav/transfer/medium/algo/dqn_test_train.yaml --exp transfer_easy2medium_dqn_test_train_${iter} \
+# for iter in 1200 1600 2400 3600 5000 8000 10000 13000 16000 18000 20000 22000 24000 26000 28000
+# do
+# python3 main.py --config config/tasks/Nav/transfer/medium/algo/dqn_test.yaml --exp transfer_easy2medium_dqn_test_${iter} \
 #     --checkpoint_path checkpoints/transfer_dqn_medium_transfer_${iter}_steps.zip --use_gym
-done
+# # python3 main.py --config config/tasks/Nav/transfer/medium/algo/dqn_test_train.yaml --exp transfer_easy2medium_dqn_test_train_${iter} \
+# #     --checkpoint_path checkpoints/transfer_dqn_medium_transfer_${iter}_steps.zip --use_gym
+# done
 # for iter in 100000
 # do
 # python3 main.py --config config/tasks/Nav/transfer/easy/algo/dqn_test.yaml --exp transfer_easy_dqn_test_${iter} \

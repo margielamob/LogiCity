@@ -43,6 +43,7 @@ class BehavioralCloning(ABC):
         self.tensorboard_log = tensorboard_log
         self.log_interval = log_interval
         self.device = device
+        self.learning_starts = 0
         # discrete action space
         self.loss = nn.CrossEntropyLoss()
         self.policy.to(self.device)
