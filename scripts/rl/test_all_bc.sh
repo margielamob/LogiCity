@@ -74,16 +74,19 @@ MODE=easy
 #     --checkpoint_path checkpoints/transfer_dqn_medium_transfer_${iter}_steps.zip
 # done
 
-for iter in 2500 4000 3500
+for iter in 1 2 3 4 5
 do
-python3 main.py --config config/tasks/Nav/transfer/easy/algo/bc_test.yaml --exp scratch_easy_bc_test_${iter} \
-    --checkpoint_path checkpoints/easy_bc_100_${iter}_steps.zip --use_gym
+python3 main.py --config config/tasks/Nav/transfer/easy/algo/nlmval.yaml --exp scratch_easy_nlm_val_${iter} \
+    --checkpoint_path checkpoints/tl_nlm_easy/checkpoints/checkpoint_${iter}.pth --use_gym
 done
 
-for iter in 4000 3500 2000
+for run in 0 1 2
 do
-python3 main.py --config config/tasks/Nav/transfer/medium/algo/bc_test.yaml --exp scratch_medium_bc_test_${iter} \
-    --checkpoint_path checkpoints/medium_bc_100_${iter}_steps.zip --use_gym
+    for iter in 1 2 3 4 5
+    do
+    python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmval.yaml --exp scratch_medium_nlm_val_${iter}_${run} \
+        --checkpoint_path checkpoints/tl_nlm_med_scratch${run}/checkpoints/checkpoint_${iter}.pth --use_gym
+    done
 done
 
 # python3 main.py --config config/tasks/Nav/medium/algo/dreamertest.yaml --exp dreamer_medium_test --use_gym

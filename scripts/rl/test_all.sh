@@ -74,13 +74,23 @@ MODE=easy
 #     --checkpoint_path checkpoints/transfer_dqn_medium_transfer_${iter}_steps.zip
 # done
 
-for iter in 200000 150000 110000
+# for iter in 4 5
+# do
+# python3 main.py --config config/tasks/Nav/transfer/easy/algo/nlmtest.yaml --exp scratch_easy_nlm_test_${iter} \
+#     --checkpoint_path checkpoints/tl_nlm_easy/checkpoints/checkpoint_${iter}.pth --use_gym
+# done
+
+for run in 0 1 2
 do
-python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmdqn_test.yaml --exp scratch_medium_nlmdqn_test_${iter} \
-    --checkpoint_path checkpoints/transfer_nlmdqn_medium_scracth_${iter}_steps.zip --use_gym
-# python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmdqn_test_train.yaml --exp transfer_easy2medium_nlmdqn_test_train_${iter} \
-#     --checkpoint_path checkpoints/transfer_nlmdqn_medium_transfer_${iter}_steps.zip --use_gym
+    for iter in 4 5
+    do
+    python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmval.yaml --exp scratch_medium_nlm_val_${iter}_${run} \
+        --checkpoint_path checkpoints/tl_nlm_med_scratch${run}/checkpoints/checkpoint_${iter}.pth --use_gym
+    done
 done
+
+python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmtest.yaml --exp transfer_easy2med_nlm_test_init \
+    --checkpoint_path checkpoints/tl_nlm_easy/checkpoints/checkpoint_4.pth --use_gym
 
 # python3 main.py --config config/tasks/Nav/medium/algo/dreamertest.yaml --exp dreamer_medium_test --use_gym
 

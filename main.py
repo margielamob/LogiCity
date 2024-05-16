@@ -213,6 +213,7 @@ def main_gym(args, logger):
         # over write the checkpoint path if not none
         if args.checkpoint_path is not None:
             rl_config["checkpoint_path"] = args.checkpoint_path
+            logger.info("Overwrite the checkpoint path to {}".format(args.checkpoint_path))
 
         for ts in list(episode_data.keys()): 
             if (ts not in vis_id) and len(vis_id) > 0:
