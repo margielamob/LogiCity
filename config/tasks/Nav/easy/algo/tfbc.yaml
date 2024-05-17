@@ -82,7 +82,7 @@ stable_baselines:
     optimizer: 
       type: "Adam"             # Optimizer to use
       args:
-        lr: 0.00001          # Learning rate
+        lr: 0.00002          # Learning rate
     batch_size: 256                # Batch size for training
     tensorboard_log: "./tb_logs"  # Tensorboard log directory
     log_interval: 20
