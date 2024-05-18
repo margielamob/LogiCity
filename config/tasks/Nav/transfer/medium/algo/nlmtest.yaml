@@ -1,4 +1,5 @@
 # General simulation settings
+simulation:
   map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
   agent_yaml_file: "config/agents/transfer/test.yaml" # Agents in the simulation
   ontology_yaml_file: "config/rules/ontology_full.yaml" # Ontology of the simulation

@@ -74,18 +74,15 @@ MODE=easy
 #     --checkpoint_path checkpoints/transfer_dqn_medium_transfer_${iter}_steps.zip
 # done
 
-for iter in 1 2 3 4 5
-do
-python3 main.py --config config/tasks/Nav/transfer/easy/algo/nlmval.yaml --exp scratch_easy_nlm_val_${iter} \
-    --checkpoint_path checkpoints/tl_nlm_easy/checkpoints/checkpoint_${iter}.pth --use_gym
-done
-
 for run in 0 1 2
 do
-    for iter in 1 2 3 4 5
+    for data in 60 70 80 90 100
     do
-    python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmval.yaml --exp scratch_medium_nlm_val_${iter}_${run} \
-        --checkpoint_path checkpoints/tl_nlm_med_scratch${run}/checkpoints/checkpoint_${iter}.pth --use_gym
+        for iter in 1 2 3 4 5
+        do
+        python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmval.yaml --exp transfer_easy2med_nlm_val_${iter}_${run}_${data} \
+            --checkpoint_path checkpoints/logicity_transfer_medium${run}_tl${data}/checkpoints/checkpoint_${iter}.pth --use_gym
+        done
     done
 done
 
