@@ -74,18 +74,26 @@ MODE=easy
 #     --checkpoint_path checkpoints/transfer_dqn_medium_transfer_${iter}_steps.zip
 # done
 
-for iter in 2500 4000 3500
+# for iter in 2500 4000 3500
+# do
+# python3 main.py --config config/tasks/Nav/transfer/easy/algo/bc_test.yaml --exp scratch_easy_bc_test_${iter} \
+#     --checkpoint_path checkpoints/easy_bc_100_${iter}_steps.zip --use_gym
+# done
+
+for iter in 1000 1500 3000
 do
-python3 main.py --config config/tasks/Nav/transfer/easy/algo/bc_test.yaml --exp scratch_easy_bc_test_${iter} \
-    --checkpoint_path checkpoints/easy_bc_100_${iter}_steps.zip --use_gym
+python3 main.py --config config/tasks/Nav/transfer/medium/algo/bc_test.yaml --exp scratch_medium_bc_test1_${iter} \
+    --checkpoint_path checkpoints/medium_bc_100_rand0_${iter}_steps.zip --use_gym
 done
 
-for iter in 4000 3500 2000
+for iter in 1500 2500 3500
 do
-python3 main.py --config config/tasks/Nav/transfer/medium/algo/bc_test.yaml --exp scratch_medium_bc_test_${iter} \
-    --checkpoint_path checkpoints/medium_bc_100_${iter}_steps.zip --use_gym
+python3 main.py --config config/tasks/Nav/transfer/medium/algo/bc_test.yaml --exp scratch_medium_bc_test2_${iter} \
+    --checkpoint_path checkpoints/medium_bc_100_rand1_${iter}_steps.zip --use_gym
 done
 
+python3 main.py --config config/tasks/Nav/transfer/medium/algo/bc_test.yaml --exp transfer_easy2med_bc_test_init \
+    --checkpoint_path checkpoints/tl_easy_mlp/easy_bc_100_3500_steps.zip --use_gym
 # python3 main.py --config config/tasks/Nav/medium/algo/dreamertest.yaml --exp dreamer_medium_test --use_gym
 
 # python3 main_es.py --config config/tasks/Nav/hard/algo/dqn_estest.yaml --exp hard_dqnes_test

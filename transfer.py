@@ -22,11 +22,11 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Logic-based city simulation.')
     # logger
     parser.add_argument('--log_dir', type=str, default="./log_rl")
-    parser.add_argument('--exp', type=str, default="nlmdqn_transfer_train")
+    parser.add_argument('--exp', type=str, default="bc_transfer_train")
     # seed
     parser.add_argument('--seed', type=int, default=2)
     # RL
-    parser.add_argument('--config', default='config/tasks/Nav/transfer/medium/algo/nlmdqn_transfer.yaml', help='Configure file for this RL exp.')
+    parser.add_argument('--config', default='config/tasks/Nav/transfer/medium/algo/bc/bc_10.yaml', help='Configure file for this RL exp.')
 
     return parser.parse_args()
 

@@ -74,12 +74,21 @@ MODE=easy
 #     --checkpoint_path checkpoints/transfer_dqn_medium_transfer_${iter}_steps.zip
 # done
 
-for iter in 200000 150000 110000
+# for iter in 150000
+# do
+# python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmdqn_test.yaml --exp scratch_medium_nlmdqn_test_${iter} \
+#     --checkpoint_path checkpoints/transfer_nlmdqn_medium_scracth_${iter}_steps.zip --use_gym
+# # python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmdqn_test_train.yaml --exp transfer_easy2medium_nlmdqn_test_train_${iter} \
+# #     --checkpoint_path checkpoints/transfer_nlmdqn_medium_transfer_${iter}_steps.zip --use_gym
+# done
+
+for data in 10 20 30 40 50 60 70 80 90 100
 do
-python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmdqn_test.yaml --exp scratch_medium_nlmdqn_test_${iter} \
-    --checkpoint_path checkpoints/transfer_nlmdqn_medium_scracth_${iter}_steps.zip --use_gym
-# python3 main.py --config config/tasks/Nav/transfer/medium/algo/nlmdqn_test_train.yaml --exp transfer_easy2medium_nlmdqn_test_train_${iter} \
-#     --checkpoint_path checkpoints/transfer_nlmdqn_medium_transfer_${iter}_steps.zip --use_gym
+python3 transfer.py --config config/tasks/Nav/transfer/medium/algo/bc/bc_${data}.yaml --exp transfer_easy2medium_bc_${data}
+
+python3 transfer.py --config config/tasks/Nav/transfer/medium/algo/bc1/bc_${data}.yaml --exp transfer_easy2medium_bc1_${data}
+
+python3 transfer.py --config config/tasks/Nav/transfer/medium/algo/bc2/bc_${data}.yaml --exp transfer_easy2medium_bc2_${data}
 done
 
 # python3 main.py --config config/tasks/Nav/medium/algo/dreamertest.yaml --exp dreamer_medium_test --use_gym
