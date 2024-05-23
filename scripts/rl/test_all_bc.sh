@@ -86,6 +86,8 @@ do
     done
 done
 
+python3 main.py --config config/tasks/Nav/transfer/medium/algo/bc_test.yaml --exp transfer_easy2med_bc_test_init \
+    --checkpoint_path checkpoints/tl_easy_mlp/easy_bc_100_3500_steps.zip --use_gym
 # python3 main.py --config config/tasks/Nav/medium/algo/dreamertest.yaml --exp dreamer_medium_test --use_gym
 
 # python3 main_es.py --config config/tasks/Nav/hard/algo/dqn_estest.yaml --exp hard_dqnes_test

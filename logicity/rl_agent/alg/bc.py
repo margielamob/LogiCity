@@ -239,8 +239,8 @@ class BehavioralCloning(ABC):
         )
 
         # load parameters
-        model.__dict__.update(data)
-        model.__dict__.update(kwargs)
+        # model.__dict__.update(data)
+        # model.__dict__.update(kwargs)
 
         try:
             # put state_dicts back in place
