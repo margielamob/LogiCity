@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Voxel Learning for Novel Instance Detection">
+  <meta name="keywords" content="Novel Object Detection, Instance Perception, Voxel Representation">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VoxDet</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script> -->
+  <link rel="icon" type="image/png" href="./static/images/airlab.png"> 
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/airlab.png">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+  <div class="navbar-menu">
+    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+      <a class="navbar-item" href="https://jaraxxus-me.github.io/">
+      <span class="icon">
+          <i class="fas fa-home"></i>
+      </span>
+      </a>
+
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link">
+          More Research
+        </a>
+        <div class="navbar-dropdown">
+          <a class="navbar-item" href="https://ieeexplore.ieee.org/document/9561564">
+            ADTrack - ICRA 2021
+          </a>
+          <a class="navbar-item" href="https://jaraxxus-me.github.io/ECCV2022_AirDet">
+            AirDet - ECCV 2022
+          </a>
+          <a class="navbar-item" href="https://jaraxxus-me.github.io/ICCV2023_PVTpp">
+            PVT++ - ICCV 2023
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <img src="./static/images/title.png" width="300">
+          <h1 class="title is-2 publication-title">Voxel Learning for Novel Instance Detection</h1>
+          <div class="column is-full_width">
+            <h2 class="title is-3">NeurIPS'23 <span style="color: gold;">&#9733;</span> SpotLight <span style="color: gold;">&#9733;</span> </h2>
+          </div>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://jaraxxus-me.github.io/">Bowen Li</a><sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="https://jiashunwang.github.io/">Jiashun Wang</a><sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="http://www.huyaoyu.com/">Yaoyu Hu</a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://sairlab.org/team/chenw/">Chen Wang</a><sup>2</sup>,
+            </span>
+            <span class="author-block">
+              <a href="http://theairlab.org/team/sebastian/">Sebastian Scherer</a><sup>1</sup>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1</sup>Carnegie Mellon University</span>,<span class="author-block"><sup>2</sup>State University of New York at Buffalo</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="https://arxiv.org/pdf/2305.17220.pdf"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://arxiv.org/pdf/2305.17220.pdf"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <!-- Video Link. -->
+              <span class="link-block">
+                <a href="https://youtu.be/tiXpOV1ROOI"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                  </span>
+                  <span>Video</span>
+                </a>
+              </span>
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="https://github.com/Jaraxxus-Me/VoxDet"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+              <!-- Dataset Link. -->
+              <span class="link-block">
+                <a href="https://drive.google.com/file/d/1kXR-Z-sJlTnWy3HRGWAcV6_IIJgRHbD6/view?usp=drive_link"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="far fa-images"></i>
+                  </span>
+                  <span>Data (RoboTools)</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://github.com/Jaraxxus-Me/voxdet_ros"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-robot"></i>
+                  </span>
+                  <span>ROS</span>
+                </a>
+              </span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <div style="text-align:center;">
+        <img src="static\images\teaser.png" style="width:100%; height:auto;">
+      </div>
+      <!-- <img class="rounded" src="./media/nice-slam/teaser.png" > -->
+      <br>
+      <h2 class="subtitle has-text-centered">
+        <strong>VoxDet</strong> is a pioneer 3D voxel inspired detection framework, it detects <b>Any Novel Instance</b> by encoding both the multi-view appearances and rotation-inviriant geometry.
+      </h2>
+    </div>
+    <div class="hero-body">
+      <div style="text-align:center;">
+        <video id="teaser1" autoplay muted loop style="flex: 50%; max-width: 100%;">
+          <source src="./static/images/RoboTools.mp4" type="video/mp4">
+      </video>
+      </div>
+      <!-- <img class="rounded" src="./media/nice-slam/teaser.png" > -->
+      <br>
+      <h2 class="subtitle has-text-centered">
+        <strong>RoboTools</strong> is a new benchmark for <b>Novel Instance Detection</b>.
+      </h2>
+    </div>
+    <!--         <iframe width="800" height="400" src="https://www.youtube.com/embed/ycivCw1LmdE?si=zstMsf33Lgjytup5" title="Intro to PVT++" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+ -->
+    <div class="hero-body">
+      <div style="text-align:center;">
+        <iframe width="700" height="400" src="https://www.youtube.com/embed/tiXpOV1ROOI?si=X7Yds0PwF6LISdNp" title="Intro to VoxDet" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+        <!-- Paper video. -->
+        <!-- <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <h2 class="title is-3">Video</h2>
+            <div class="publication-video">
+              <iframe src="https://www.youtube.com/embed/V5hYTz5os0M?rel=0&amp;showinfo=0"
+                      frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            </div>
+          </div>
+        </div> -->
+        <!--/ Paper video. -->
+      
+    <!-- <br> -->
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Detecting unseen instances based on multi-view templates is a challenging problem due to its open-world nature. 
+            Traditional methodologies, which primarily rely on 2D representations and matching techniques, are often inadequate in handling <b>pose variations and occlusions</b>.
+          </p>
+          <p>
+            To solve this, we introduce VoxDet, a pioneer 3D geometry-aware framework that fully utilizes the strong <b>3D voxel representation</b> and reliable <b>voxel matching</b> mechanism. 
+            VoxDet first ingeniously proposes template voxel aggregation (TVA) module, effectively transforming multi-view 2D images into 3D voxel features. By leveraging associated camera poses, these features are aggregated into a compact 3D template voxel. 
+            In novel instance detection, this voxel representation demonstrates heightened resilience to occlusion and pose variations. 
+            We also discover that a 3D reconstruction objective helps to pre-train the 2D-3D mapping in TVA. 
+          </p>
+          <p>
+            Second, to quickly align with the template voxel, VoxDet incorporates a Query Voxel Matching (QVM) module. The 2D queries are first converted into their voxel representation with the learned 2D-3D mapping. We find that since the 3D voxel representations encode the geometry, we can first estimate the relative rotation and then compare the aligned voxels, leading to improved accuracy and efficiency.
+          </p>
+          <p>
+            In addition to method, we also introduce <b>first instance detection benchmark, RoboTools</b>, where 20 unique instances are video-recorded with camera extrinsic.
+            RoboTools also provides 24 challenging cluttered scenarios with more than 9k box annotations.
+          </p>
+          <p>
+            Exhaustive experiments are conducted on the demanding LineMod-Occlusion, YCB-video, and RoboTools benchmarks, where VoxDet outperforms various 2D baselines remarkably with faster speed. 
+            To the best of our knowledge, VoxDet is the first to incorporate implicit 3D knowledge for 2D novel instance detection tasks.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- <br> -->
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Contribution</h2>
+        <div class="content has-text-justified">
+          <li>
+            We propose the first 3D-geometry aware instance detector, VoxDet, which identifies any (novel) specifc instance in the wild.
+          <li>
+            We develop <b>Template Voxel Aggregation</b> and <b>Query Voxel Matching</b> mechanisms to represent and match instances, respectively.
+          </li>
+          <li>
+            We discover that via <b>reconstruction pre-training</b>, the Voxel representation is much stronger and more generalizable.
+          </li>
+          <li>
+            We compile the first novel instance detection benchmark <b>RoboTools</b> for evaluation and synthetic training set <b>OWID</b>, which are all publicly awailable.
+          </li>
+          <li>
+            We conduct exhaustive experiments to validate the generalization capability and robustness of VoxDet against vairous traditional 2D models.
+          </li>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Method. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-full_width">
+        <hr>
+        <h2 class="title is-3">Method</h2>
+        <br>
+        <h3 class="title is-4">Model Structure</h3>
+        <div class="content has-text-justified">
+          <img src="static\images\Structure.png" class="center"/>
+          <p>VoxDet consists of 3 main modules:
+            <li><b>Open-World Detection Module</b>: Takes in an arbitary image and outputs open-world proposals that cover all potential objects. We obtain the 2D proposal feature (ROI) to be matched.</li>
+            <li><b>Template Voxel Aggregation Module</b>: Consumes the multi-view reference images (and cooresponding camera extrinsic) as input, then construct a compact template voxel via the geometric relationship between each frame.</li>
+            <li><b>Query Voxel Matching Module</b>: Matches the template voxel with each proposal by 2D-3D mapping and voxel repation. We find such matching is tailored for instances and robust to pose variations.</li>
+          </p>
+        </div>
+
+        <h3 class="title is-4">Two Stage Training</h3>
+        <div class="content has-text-justified">
+          <p>
+            <video id="teaser1" autoplay muted loop style="flex: 50%; max-width: 100%;">
+              <source src="./static/images/two_stage.mp4" type="video/mp4">
+          </video>
+          <p>
+          <p>We discover that two-stage training mechanism helps VoxDet learn the geometry of an instance and generalize better:
+            <li><b>Stage 1 Reconstruction</b>: The 2D-3D mapping needs to construct 3D voxel from 2D image features, we discover that this module needs to be pre-trained via reconstruction objective.</li>
+            <li><b>Stage 2 Detection</b>: We first initialize the 2D-3D mapping blocks in TVA and QVM, then we used a smaller learning rate to learn the voxel representation tailored for detection task.</li>
+            <li><b>(Optional) Stage 3 Rotation estimation</b>: The rotation measurement in QVM can have additional supervision, which slightly improves performance and is optional.</li>
+          </p>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    
+    <h3 class="title is-4">Comparison with Gen6D</h3>
+    <video id="teaser1" autoplay muted loop style="flex: 50%; max-width: 100%;">
+        <source src="./static/images/Comp_Gen6d.mp4" type="video/mp4">
+    </video>
+    <h2 class="subtitle has-text-centered">
+      Gen6D falls short when the instance is in unseen poses or occluded.
+    </h2>
+
+    <p>
+      &nbsp
+    </p>
+    <h3 class="title is-4">Comparison with DTOID</h3>
+    <video id="teaser1" autoplay muted loop style="flex: 50%; max-width: 100%;">
+        <source src="./static/images/Comp_DTOID.mp4" type="video/mp4">
+    </video>
+    <h2 class="subtitle has-text-centered">
+      DTOID can't handel complex backgrounds very well.
+    </h2>
+
+    <p>
+      &nbsp
+    </p>
+    <h3 class="title is-4">Comparison with OLN_DINO</h3>
+    <video id="teaser1" autoplay muted loop style="flex: 50%; max-width: 100%;">
+        <source src="./static/images/Comp_OLN.mp4" type="video/mp4">
+    </video>
+    </div>
+    <h2 class="subtitle has-text-centered">
+      OLN_DINO has trouble distinguishing instances that have similar semantics.
+    </h2>
+  </div>
+</section>
+
+
+
+<section class="section" >
+  <div class="container is-max-desktop content">
+    <h1 class="title">BibTeX</h1>
+    <pre><code>@INPROCEEDINGS{Li2023vox,       
+      author={Li, Bowen and Wang, Jiashun and Hu, Yaoyu and Wang, Chen and Scherer, Sebastian},   
+      booktitle={Proceedings of the Advances in Neural Information Processing Systems (NeurIPS)}, 
+      title={{VoxDet: Voxel Learning for Novel Instance Detection}},
+      year={2023},
+      volume={},
+      number={}
+    }</code></pre>
+  </div>
+</section>
+
+
+<section class="section" id="Acknowledgements">
+  <div class="container is-max-desktop content">
+    <h1 class="title">Acknowledgements</h1>
+    This work was sponsored by SONY Corporation of America #1012409. 
+    This work used Bridges-2 at PSC through allocation cis220039p from the Advanced Cyberinfrastructure Coordination Ecosystem: Services & Support (ACCESS) program which is supported by NSF grants #2138259, #2138286, #2138307, #2137603, and #213296.
+    The authors would also like to express the sincere gratitute on the developers of BlenderProc2
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is licensed under a <a rel="license"
+                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+            This webpage template is from <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a>. 
+            We sincerely thank <a href="https://keunhong.com/">Keunhong Park</a> for developing and open-sourcing this template.
+          </p>
+        </div>
+      </div>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
