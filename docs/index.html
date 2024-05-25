@@ -175,7 +175,7 @@
       <!-- <img class="rounded" src="./media/nice-slam/teaser.png" > -->
       <br>
       <h2 class="subtitle has-text-centered">
-        <strong>LogiCity</strong> is a new simulator and benchmark for NeSy AI. It simulates dynamic urban environments with lifted rules and various abstractions.
+        <strong>LogiCity</strong> is a new simulator and benchmark for NeSy AI. It simulates dynamic urban environments with flexible lifted rules and various abstractions.
       </h2>
     </div>
 
@@ -218,25 +218,23 @@
         <h2 class="title is-3">Abstract</h2>
         <div class="content has-text-justified">
           <p>
-            Detecting unseen instances based on multi-view templates is a challenging problem due to its open-world nature. 
-            Traditional methodologies, which primarily rely on 2D representations and matching techniques, are often inadequate in handling <b>pose variations and occlusions</b>.
+            Recent years have witnessed the rapid development of Neuro-Symbolic (NeSy) AI systems, which integrate symbolic reasoning into deep neural networks.
+            However, most existing benchmarks for NeSy AI fail to provide <b>long-horizon reasoning</b> task with <b>real multi-agent interaction</b> and current simulators are constrained by <b>fixed and simplistic logical rules in limited domains</b>, making them inadequate for capturing real-world complexities.
           </p>
           <p>
-            To solve this, we introduce VoxDet, a pioneer 3D geometry-aware framework that fully utilizes the strong <b>3D voxel representation</b> and reliable <b>voxel matching</b> mechanism. 
-            VoxDet first ingeniously proposes template voxel aggregation (TVA) module, effectively transforming multi-view 2D images into 3D voxel features. By leveraging associated camera poses, these features are aggregated into a compact 3D template voxel. 
-            In novel instance detection, this voxel representation demonstrates heightened resilience to occlusion and pose variations. 
-            We also discover that a 3D reconstruction objective helps to pre-train the 2D-3D mapping in TVA. 
+            To address these crucial gaps, we introduce LogiCity, a new simulator featuring a dynamic and conceptual urban environment.
+            LogiCity models various urban elements, such as streets, buildings, cars, and pedestrians, enriched with multiple concepts.
+            The behaviors of the agents are governed by <b>first-order logic rules</b> based on their <b>spatial and semantic concepts</b>. 
+            These rules are <b>lifted</b> so that cities with any agent compositions can be instantiated under the same set of rules. 
+            By enabling <b>flexible configuration</b> of concepts and rules within the simulation, LogiCity allows user-controllable adjustments in reasoning complexity.
           </p>
           <p>
-            Second, to quickly align with the template voxel, VoxDet incorporates a Query Voxel Matching (QVM) module. The 2D queries are first converted into their voxel representation with the learned 2D-3D mapping. We find that since the 3D voxel representations encode the geometry, we can first estimate the relative rotation and then compare the aligned voxels, leading to improved accuracy and efficiency.
+            To explore various aspects of NeSy AI, we design long-horizon sequential decision-making and one-step visual reasoning tasks 
+            with various difficulty.
           </p>
           <p>
-            In addition to method, we also introduce <b>first instance detection benchmark, RoboTools</b>, where 20 unique instances are video-recorded with camera extrinsic.
-            RoboTools also provides 24 challenging cluttered scenarios with more than 9k box annotations.
-          </p>
-          <p>
-            Exhaustive experiments are conducted on the demanding LineMod-Occlusion, YCB-video, and RoboTools benchmarks, where VoxDet outperforms various 2D baselines remarkably with faster speed. 
-            To the best of our knowledge, VoxDet is the first to incorporate implicit 3D knowledge for 2D novel instance detection tasks.
+            Our extensive evaluation of various baseline methods reveals that NeSy frameworks can handle compositional generalization better than pure deep neural networks, especially when the reasoning gets more complex. 
+            Additionally, LogiCity underscores the difficulties of abstract reasoning with high-dimensional and noisy data.
           </p>
         </div>
       </div>
