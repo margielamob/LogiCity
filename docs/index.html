@@ -276,43 +276,45 @@
         <br>
         <div class="content has-text-justified">
           <style>
-            .courier-new {
+            .courier-pre {
               font-family: "Courier New", Courier, monospace;
+              font-weight: bold;
+              background-color: rgba(255, 170, 0, 0.429);
+              padding: 2px 4px;
+              border-radius: 4px;
             }
           </style>
-          <p>[1] If an entity is <span class="courier-new">CollingClose</span> with another entity, it will stop.</p>
-          <video id="teaser1" autoplay muted loop style="flex: 50%; max-width: 100%;">
+          <style>
+            .courier-op {
+              font-family: "Courier New", Courier, monospace;
+              font-weight: bold;
+              padding: 2px 4px;
+              border-radius: 4px;
+            }
+          </style>
+          <p>[1] An entity will <span class="courier-pre">Stop</span> if it is <span class="courier-pre">CollingClose</span> with another entity, <span class="courier-op">OR</span>,
+            if it is <span class="courier-pre">AtIntersection</span> with another entity <span class="courier-pre">InIntersection</span>, <span class="courier-op">OR</span>,
+            if it is <span class="courier-pre">AtIntersection</span> with another <span class="courier-pre">HigherPriority</span> entity <span class="courier-pre">AtIntersection</span>.
+          </p>
+          <video id="teaser1" controls style="flex: 50%; max-width: 100%;">
             <source src="./static/images/1_2.mp4" type="video/mp4">
           </video>
         </div>
 
-        <br>
+        <!-- <br>
         <div class="content has-text-justified">
           <style>
             .courier-new {
               font-family: "Courier New", Courier, monospace;
             }
           </style>
-          <p>[2] If an entity is <span class="courier-new">AtIntersection</span> with another entity <span class="courier-new">InIntersection</span> OR another <span class="courier-new">HigherPriority</span> entity <span class="courier-new">AtIntersection</span>, it will stop.</p>
+          <p>[2] If an entity is NOT an <span class="courier-new">Ambulance</span> and <span class="courier-new">AtIntersection</span> with another <span class="courier-new">HigherPriority</span> entity <span class="courier-new">AtIntersection</span>, it will stop.</p>
           <video id="teaser1" autoplay muted loop style="flex: 50%; max-width: 100%;">
             <source src="./static/images/1_2.mp4" type="video/mp4">
           </video>
-        </div>
+        </div> -->
 
-        <br>
-        <div class="content has-text-justified">
-          <style>
-            .courier-new {
-              font-family: "Courier New", Courier, monospace;
-            }
-          </style>
-          <p>[3] If an entity is NOT an <span class="courier-new">Ambulance</span> and <span class="courier-new">AtIntersection</span> with another <span class="courier-new">HigherPriority</span> entity <span class="courier-new">AtIntersection</span>, it will stop.</p>
-          <video id="teaser1" autoplay muted loop style="flex: 50%; max-width: 100%;">
-            <source src="./static/images/1_2.mp4" type="video/mp4">
-          </video>
-        </div>
-
-        <br>
+        <!-- <br>
         <div class="content has-text-justified">
           <style>
             .courier-new {
@@ -349,7 +351,7 @@
           <video id="teaser1" autoplay muted loop style="flex: 50%; max-width: 100%;">
             <source src="./static/images/1_2.mp4" type="video/mp4">
           </video>
-        </div>
+        </div> -->
 
       </div>
     </div>
