@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Advancing NeSy AI with Dynamic Urban Simulation">
+  <meta name="keywords" content="NeSy AI, Compositional Generalizaion, Abstract Reasoning">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LogiCity</title>
+
+  <link rel="icon" type="image/png" href="./static/images/airlab.png"> 
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/airlab.png">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+  <div class="navbar-menu">
+    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+      <a class="navbar-item" href="https://jaraxxus-me.github.io/">
+      <span class="icon">
+          <i class="fas fa-home"></i>
+      </span>
+      </a>
+
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link">
+          More Research
+        </a>
+        <div class="navbar-dropdown">
+          <a class="navbar-item" href="https://jaraxxus-me.github.io/NeurIPS2023_VoxDet/">
+            VoxDet - NeurIPS 2023
+          </a>
+          <a class="navbar-item" href="https://jaraxxus-me.github.io/ECCV2022_AirDet">
+            AirDet - ECCV 2022
+          </a>
+          <a class="navbar-item" href="https://jaraxxus-me.github.io/ICCV2023_PVTpp">
+            PVT++ - ICCV 2023
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <img src="./static/images/title.png" width="300">
+          <h1 class="title is-2 publication-title">Advancing NeSy AI with Dynamic Urban Simulation</h1>
+          <!-- <div class="column is-full_width">
+            <h2 class="title is-3">NeurIPS'23 <span style="color: gold;">&#9733;</span> SpotLight <span style="color: gold;">&#9733;</span> </h2>
+          </div> -->
+          <!-- <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://jaraxxus-me.github.io/">Bowen Li</a><sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="https://jiashunwang.github.io/">Jiashun Wang</a><sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="http://www.huyaoyu.com/">Yaoyu Hu</a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://sairlab.org/team/chenw/">Chen Wang</a><sup>2</sup>,
+            </span>
+            <span class="author-block">
+              <a href="http://theairlab.org/team/sebastian/">Sebastian Scherer</a><sup>1</sup>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1</sup>Carnegie Mellon University</span>,<span class="author-block"><sup>2</sup>State University of New York at Buffalo</span>
+          </div> -->
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <!-- <span class="link-block">
+                <a href="https://arxiv.org/pdf/2305.17220.pdf"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span> -->
+              <!-- <span class="link-block">
+                <a href="https://arxiv.org/pdf/2305.17220.pdf"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span> -->
+              <!-- Video Link. -->
+              <!-- <span class="link-block">
+                <a href="https://youtu.be/tiXpOV1ROOI"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                  </span>
+                  <span>Video</span>
+                </a>
+              </span> -->
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="https://github.com/Jaraxxus-Me/LogiCity"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+              <!-- Dataset Link. -->
+              <span class="link-block">
+                <a href="https://drive.google.com/drive/folders/1mdm0Ri8PnyAaoD6tQNIMNZlpH9pgoCsK?usp=sharing"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="far fa-images"></i>
+                  </span>
+                  <span>Data</span>
+                </a>
+              </span>
+              <!-- <span class="link-block">
+                <a href="https://github.com/Jaraxxus-Me/voxdet_ros"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-robot"></i>
+                  </span>
+                  <span>ROS</span>
+                </a>
+              </span> -->
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <div style="text-align:center;">
+        <img src="static\images\teaser.png" style="width:100%; height:auto;">
+      </div>
+      <!-- <img class="rounded" src="./media/nice-slam/teaser.png" > -->
+      <br>
+      <h2 class="subtitle has-text-centered">
+        <strong>LogiCity</strong> is a new simulator and benchmark for NeSy AI. It simulates dynamic urban environments with flexible lifted rules and various abstractions.
+      </h2>
+    </div>
+
+    <!-- <div class="hero-body">
+      <div style="text-align:center;">
+        <video id="teaser1" autoplay muted loop style="flex: 50%; max-width: 100%;">
+          <source src="./static/images/RoboTools.mp4" type="video/mp4">
+      </video>
+      </div>
+      <br>
+      <h2 class="subtitle has-text-centered">
+        <strong>RoboTools</strong> is a new benchmark for <b>Novel Instance Detection</b>.
+      </h2>
+    </div>
+    <div class="hero-body">
+      <div style="text-align:center;">
+        <iframe width="700" height="400" src="https://www.youtube.com/embed/tiXpOV1ROOI?si=X7Yds0PwF6LISdNp" title="Intro to VoxDet" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </div> -->
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+        <!-- Paper video. -->
+        <!-- <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <h2 class="title is-3">Video</h2>
+            <div class="publication-video">
+              <iframe src="https://www.youtube.com/embed/V5hYTz5os0M?rel=0&amp;showinfo=0"
+                      frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            </div>
+          </div>
+        </div> -->
+        <!--/ Paper video. -->
+      
+    <!-- <br> -->
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Recent years have witnessed the rapid development of Neuro-Symbolic (NeSy) AI systems, which integrate symbolic reasoning into deep neural networks.
+            However, most existing benchmarks for NeSy AI fail to provide <b>long-horizon reasoning</b> task with <b>real multi-agent interaction</b> and current simulators are constrained by <b>fixed and simplistic logical rules in limited domains</b>, making them inadequate for capturing real-world complexities.
+          </p>
+          <p>
+            To address these crucial gaps, we introduce LogiCity, a new simulator featuring a dynamic and conceptual urban environment.
+            LogiCity models various urban elements, such as streets, buildings, cars, and pedestrians, enriched with multiple concepts.
+            The behaviors of the agents are governed by <b>first-order logic rules</b> based on their <b>spatial and semantic concepts</b>. 
+            These rules are <b>lifted</b> so that cities with any agent compositions can be instantiated under the same set of rules. 
+            By enabling <b>flexible configuration</b> of concepts and rules within the simulation, LogiCity allows user-controllable adjustments in reasoning complexity.
+          </p>
+          <p>
+            To explore various aspects of NeSy AI, we design long-horizon sequential decision-making and one-step visual reasoning tasks 
+            with various difficulty.
+          </p>
+          <p>
+            Our extensive evaluation of various baseline methods reveals that NeSy frameworks can handle compositional generalization better than pure deep neural networks, especially when the reasoning gets more complex. 
+            Additionally, LogiCity underscores the difficulties of abstract reasoning with high-dimensional and noisy data.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- <br> -->
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Contribution</h2>
+        <div class="content has-text-justified">
+          <li>
+            We propose a pioneer abstraction-based dynamic city simulator <b>LogiCity</b> for NeSy AI, which is flexible and scalable for various reasoning tasks.
+          <li>
+            We develop Sequential Decision Making and Visual Reasoning tasks in LogiCity to evaluate the generalization capability of various models.
+          </li>
+          <li>
+            We conduct exhaustive experiments and demonstrate the advantages of NeSy AI in compositional generalization, while also revealing the new reasoning challenges introduced by LogiCity.
+          </li>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Method. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-full_width">
+        <hr>
+        <h2 class="title is-3">Simulation Examples</h2>
+        <br>
+        <div class="content has-text-justified">
+          <style>
+            .courier-pre {
+              font-family: "Courier New", Courier, monospace;
+              font-weight: bold;
+              background-color: rgba(255, 170, 0, 0.429);
+              padding: 2px 4px;
+              border-radius: 4px;
+            }
+          </style>
+          <style>
+            .courier-op {
+              font-family: "Courier New", Courier, monospace;
+              font-weight: bold;
+              padding: 2px 4px;
+              border-radius: 4px;
+            }
+          </style>
+          <p>[1] An entity will <span class="courier-pre">Stop</span> if it is <span class="courier-pre">CollingClose</span> with another entity, <span class="courier-op">OR</span>,
+            if it is <span class="courier-pre">AtIntersection</span> with another entity <span class="courier-pre">InIntersection</span>, <span class="courier-op">OR</span>,
+            if it is <span class="courier-pre">AtIntersection</span> with another <span class="courier-pre">HigherPriority</span> entity <span class="courier-pre">AtIntersection</span>.
+          </p>
+          <video id="teaser1" controls style="flex: 50%; max-width: 100%;">
+            <source src="./static/images/1.mp4" type="video/mp4">
+          </video>
+        </div>
+
+        <br>
+        <div class="content has-text-justified">
+          <style>
+            .courier-pre {
+              font-family: "Courier New", Courier, monospace;
+              font-weight: bold;
+              background-color: rgba(255, 170, 0, 0.429);
+              padding: 2px 4px;
+              border-radius: 4px;
+            }
+          </style>
+          <style>
+            .courier-op {
+              font-family: "Courier New", Courier, monospace;
+              font-weight: bold;
+              padding: 2px 4px;
+              border-radius: 4px;
+            }
+          </style>
+          <p>[2] An entity will <span class="courier-pre">Slow</span> if it is <span class="courier-pre">Tiro</span> with another <span class="courier-pre">Pedestrian</span> entity <span class="courier-pre">NextTo</span> it.
+          </p>
+          <video id="teaser1" controls style="flex: 50%; max-width: 100%;">
+            <source src="./static/images/2.mp4" type="video/mp4">
+          </video>
+        </div>
+
+        <br>
+        <div class="content has-text-justified">
+          <style>
+            .courier-pre {
+              font-family: "Courier New", Courier, monospace;
+              font-weight: bold;
+              background-color: rgba(255, 170, 0, 0.429);
+              padding: 2px 4px;
+              border-radius: 4px;
+            }
+          </style>
+          <style>
+            .courier-op {
+              font-family: "Courier New", Courier, monospace;
+              font-weight: bold;
+              padding: 2px 4px;
+              border-radius: 4px;
+            }
+          </style>
+          <p>[3] An entity will move <span class="courier-pre">Fast</span> if it is a <span class="courier-pre">HigherPriority</span> <span class="courier-pre">Reckless</span> entity with another <span class="courier-pre">Car</span> entity <span class="courier-pre">AtIntersection</span>.
+          </p>
+          <video id="teaser1" controls style="flex: 50%; max-width: 100%;">
+            <source src="./static/images/3.mp4" type="video/mp4">
+          </video>
+        </div>
+
+        <br>
+        <div class="content has-text-justified">
+          <style>
+            .courier-pre {
+              font-family: "Courier New", Courier, monospace;
+              font-weight: bold;
+              background-color: rgba(255, 170, 0, 0.429);
+              padding: 2px 4px;
+              border-radius: 4px;
+            }
+          </style>
+          <style>
+            .courier-op {
+              font-family: "Courier New", Courier, monospace;
+              font-weight: bold;
+              padding: 2px 4px;
+              border-radius: 4px;
+            }
+          </style>
+          <p>[4] An entity will <span class="courier-pre">Slow</span> if it is a <span class="courier-pre">Police</span> entity with at least two other <span class="courier-pre">Young</span> entities <span class="courier-pre">NextTo</span> each other, <span class="courier-op">AND</span> one of them is <span class="courier-pre">NextTo</span> to it.
+          </p>
+          <video id="teaser1" controls style="flex: 50%; max-width: 100%;">
+            <source src="./static/images/4.mp4" type="video/mp4">
+          </video>
+        </div>
+
+      </div>
+    </div>
+    <hr>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Method. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-full_width">
+        <hr>
+        <h2 class="title is-3">Simulation Rendering</h2>
+        <br>
+      <div class="hero-body">
+      <div style="text-align:center;">
+        <video id="teaser1" autoplay muted loop style="flex: 50%; max-width: 100%;">
+          <source src="./static/images/RoboTools.mp4" type="video/mp4">
+      </video>
+      </div>
+      <br>
+      <h2 class="subtitle has-text-centered">
+        <strong>RoboTools</strong> is a new benchmark for <b>Novel Instance Detection</b>.
+      </h2>
+    </div>
+    <div class="hero-body">
+      <div style="text-align:center;">
+        <iframe width="700" height="400" src="https://www.youtube.com/embed/tiXpOV1ROOI?si=X7Yds0PwF6LISdNp" title="Intro to VoxDet" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </div>
+
+      </div>
+    </div>
+    <hr>
+  </div>
+</section>
+
+
+
+<!-- <section class="section" >
+  <div class="container is-max-desktop content">
+    <h1 class="title">BibTeX</h1>
+    <pre><code>@INPROCEEDINGS{Li2023LogiCity,       
+      author={Li, Bowen and Wang, Jiashun and Hu, Yaoyu and Wang, Chen and Scherer, Sebastian},   
+      booktitle={Proceedings of the Advances in Neural Information Processing Systems (NeurIPS)}, 
+      title={{VoxDet: Voxel Learning for Novel Instance Detection}},
+      year={2023},
+      volume={},
+      number={}
+    }</code></pre>
+  </div>
+</section> -->
+
+
+<!-- <section class="section" id="Acknowledgements">
+  <div class="container is-max-desktop content">
+    <h1 class="title">Acknowledgements</h1>
+    This work was sponsored by SONY Corporation of America #1012409. 
+    This work used Bridges-2 at PSC through allocation cis220039p from the Advanced Cyberinfrastructure Coordination Ecosystem: Services & Support (ACCESS) program which is supported by NSF grants #2138259, #2138286, #2138307, #2137603, and #213296.
+    The authors would also like to express the sincere gratitute on the developers of BlenderProc2
+  </div>
+</section> -->
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is licensed under a <a rel="license"
+                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+            This webpage template is from <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a>. 
+            We sincerely thank <a href="https://keunhong.com/">Keunhong Park</a> for developing and open-sourcing this template.
+          </p>
+        </div>
+      </div>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

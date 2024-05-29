@@ -74,11 +74,29 @@ MODE=easy
 #     --checkpoint_path checkpoints/transfer_dqn_medium_transfer_${iter}_steps.zip
 # done
 
-# for iter in 4 5
-# do
-# python3 main.py --config config/tasks/Nav/transfer/easy/algo/nlmtest.yaml --exp scratch_easy_nlm_test_${iter} \
-#     --checkpoint_path checkpoints/tl_nlm_easy/checkpoints/checkpoint_${iter}.pth --use_gym
-# done
+for iter in 2800 3600
+do
+python3 main.py --config config/tasks/Nav/easy/algo/gnnbctest.yaml --exp gnn_easy_test_${iter} \
+    --checkpoint_path checkpoints/easy_gnnbc_100_${iter}_steps.zip --use_gym
+done
+
+for iter in 2400 3600 
+do
+python3 main.py --config config/tasks/Nav/medium/algo/gnnbctest.yaml --exp gnn_medium_test_${iter} \
+    --checkpoint_path checkpoints/medium_gnn100_${iter}_steps.zip --use_gym
+done
+
+for iter in 800 1600 
+do
+python3 main.py --config config/tasks/Nav/hard/algo/gnnbctest.yaml --exp gnn_hard_test_${iter} \
+    --checkpoint_path checkpoints/hard_gnn100_${iter}_steps.zip --use_gym
+done
+
+for iter in 3200 4000
+do
+python3 main.py --config config/tasks/Nav/expert/algo/gnnbctest.yaml --exp gnn_expert_test_${iter} \
+    --checkpoint_path checkpoints/expert_gnn100_${iter}_steps.zip --use_gym
+done
 
 # for run in 0 1 2
 # do
@@ -91,10 +109,6 @@ MODE=easy
 #         done
 #     done
 # done
-
-python3 main.py --config config/tasks/Nav/medium/algo/dqntest_train.yaml --exp med_dqn_test_train --use_gym
-python3 main.py --config config/tasks/Nav/medium/algo/mbrltest_train.yaml --exp med_mbrl_test_train --use_gym
-python3 main.py --config config/tasks/Nav/medium/algo/nlmdqntest_train.yaml --exp med_nlmdqn_test_train --use_gym
 
 # python3 main.py --config config/tasks/Nav/medium/algo/dreamertest.yaml --exp dreamer_medium_test --use_gym
 

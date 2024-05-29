@@ -1,4 +1,6 @@
 from .neural import CNNFeatureExtractor, MLPFeatureExtractor, MlpPolicy
+from .gnn import GNNPolicy
+from .transformer import TransformerPolicy
 from .hri import HriPolicy
 from .nlm import NLMPolicy
 from .hri_helper import *
@@ -13,6 +15,8 @@ from .mpces import MPCPolicyES
 # Supervised learning
 build_policy = {
     "MlpPolicy": MlpPolicy,
+    "GNNPolicy": GNNPolicy,
+    "TransformerPolicy": TransformerPolicy,
     "HriPolicy": HriPolicy,
     "NLMPolicy": NLMPolicy,
     "ActorCriticNLMPolicy": ActorCriticNLMPolicy,
