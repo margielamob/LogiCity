@@ -92,9 +92,9 @@ MODE=easy
 #     done
 # done
 
-python3 main.py --config config/tasks/Nav/medium/algo/dqntest_train.yaml --exp med_dqn_test_train --use_gym
-python3 main.py --config config/tasks/Nav/medium/algo/mbrltest_train.yaml --exp med_mbrl_test_train --use_gym
-python3 main.py --config config/tasks/Nav/medium/algo/nlmdqntest_train.yaml --exp med_nlmdqn_test_train --use_gym
+python3 main.py --config config/tasks/Nav/hard/algo/dqn_test_train.yaml --exp hard_dqn_test_train --use_gym
+python3 main.py --config config/tasks/Nav/hard/algo/mbrltest_train.yaml --exp hard_mbrl_test_train --use_gym
+python3 main.py --config config/tasks/Nav/hard/algo/nlmdqn_test_train.yaml --exp hard_nlmdqn_test_train --use_gym
 
 # python3 main.py --config config/tasks/Nav/medium/algo/dreamertest.yaml --exp dreamer_medium_test --use_gym
 
