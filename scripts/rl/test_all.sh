@@ -74,29 +74,35 @@ MODE=easy
 #     --checkpoint_path checkpoints/transfer_dqn_medium_transfer_${iter}_steps.zip
 # done
 
-for iter in 2800 3600
-do
-python3 main.py --config config/tasks/Nav/easy/algo/gnnbctest.yaml --exp gnn_easy_test_${iter} \
-    --checkpoint_path checkpoints/easy_gnnbc_100_${iter}_steps.zip --use_gym
-done
+# for iter in 2800 3600
+# do
+# python3 main.py --config config/tasks/Nav/easy/algo/gnnbctest.yaml --exp gnn_easy_test_${iter} \
+#     --checkpoint_path checkpoints/easy_gnnbc_100_${iter}_steps.zip --use_gym
+# done
 
-for iter in 2400 3600 
-do
-python3 main.py --config config/tasks/Nav/medium/algo/gnnbctest.yaml --exp gnn_medium_test_${iter} \
-    --checkpoint_path checkpoints/medium_gnn100_${iter}_steps.zip --use_gym
-done
+# for iter in 2400 3600 
+# do
+# python3 main.py --config config/tasks/Nav/medium/algo/gnnbctest.yaml --exp gnn_medium_test_${iter} \
+#     --checkpoint_path checkpoints/medium_gnn100_${iter}_steps.zip --use_gym
+# done
 
-for iter in 800 1600 
-do
-python3 main.py --config config/tasks/Nav/hard/algo/gnnbctest.yaml --exp gnn_hard_test_${iter} \
-    --checkpoint_path checkpoints/hard_gnn100_${iter}_steps.zip --use_gym
-done
+# for iter in 800 1600 
+# do
+# python3 main.py --config config/tasks/Nav/hard/algo/gnnbctest.yaml --exp gnn_hard_test_${iter} \
+#     --checkpoint_path checkpoints/hard_gnn100_${iter}_steps.zip --use_gym
+# done
 
-for iter in 3200 4000
-do
-python3 main.py --config config/tasks/Nav/expert/algo/gnnbctest.yaml --exp gnn_expert_test_${iter} \
-    --checkpoint_path checkpoints/expert_gnn100_${iter}_steps.zip --use_gym
-done
+# for iter in 3200 4000
+# do
+# python3 main.py --config config/tasks/Nav/expert/algo/gnnbctest.yaml --exp gnn_expert_test_${iter} \
+#     --checkpoint_path checkpoints/expert_gnn100_${iter}_steps.zip --use_gym
+# done
+
+# python3 main.py --config config/tasks/Nav/hard/algo/dqn_test.yaml --exp dqn_hard_test \
+#     --checkpoint_path checkpoints/final_models/spf_emp/hard/dqn.zip --use_gym
+
+python3 main.py --config config/tasks/Nav/expert/algo/nlmdqn_test.yaml --exp nlmdqn_expert_test \
+    --checkpoint_path checkpoints/final_models/spf_emp/expert/nlmdqn.zip --use_gym
 
 # for run in 0 1 2
 # do
