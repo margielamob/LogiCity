@@ -161,63 +161,74 @@ The folder structure should be like:
 
 ```plaintext
 LogiCity/
-├── dataset/
-│   ├── easy/
-│   │   ├── test_100_episodes.pkl
-│   │   ├── val_40_episodes.pkl
-│   │   └── train_1ktraj.pkl
-│   ├── expert/
-│   │   ├── test_100_episodes.pkl
-│   │   ├── val_40_episodes.pkl
-│   │   └── train_1ktraj.pkl
-│   └── ...
+├── vis_dataset/
+│   ├── hard_fixed_final/
+│   │   ├── train
+│   │   │   ├── world0_agent14_imgs
+│   │   │   │   ├── step_0001.png
+│   │   │   │   ├── step_0002.png
+│   │   │   │   └── ...
+│   │   │   ├── world1_agent14_imgs
+│   │   │   ├── ...
+│   │   │   └── test_hard_fixed_final.pkl
+│   │   ├── val
+│   │   └── test
+│   ├── hard_random_final/
+│   │   ├── train
+│   │   ├── val
+│   │   └── test
+│   ├── very_easy_random_final/
+│   └── very_easy_fixed_final/
 ├── logicity/
 ├── config/
 └── ...
 ```
 
 ### Pre-trained Models & Test
-All of the models displayed in Tab. 2 can be downloaded [here](https://drive.google.com/file/d/1gDMu4AlljMR1FeUh5ty1y7sO0KW5CV4d/view?usp=sharing).
+All of the models displayed in Tab. 3 can be downloaded [here](https://drive.google.com/file/d/1gDMu4AlljMR1FeUh5ty1y7sO0KW5CV4d/view?usp=sharing).
 Structure them into:
 ```plaintext
 LogiCity/
-├── checkpoints/
-│   ├── final_models/
+├── vis_input_weights/
+│   ├── easy/
 │   │   ├── spf_emp/
 │   │   │   ├── easy/
-│   │   │   │   ├── dqn.zip
-│   │   │   │   ├── nlmdqn.zip
+│   │   │   │   ├── veryeasy_200_fixed_e2e_gnn_epoch19_valacc0.7727.pth
+│   │   │   │   ├── veryeasy_200_fixed_e2e_gnn_epoch24_valacc0.7755.pth
 │   │   │   │   └── ...
-│   │   │   ├── expert/
-│   │   │   ├── hard/
-│   │   │   └── medium/
+│   │   │   └── hard/
 ├── logicity/
 ├── config/
 └── ...
 ```
 
-To test them, an example command could be:
+To test them, several example commands could be:
 ```
-# this test NLM-DQN in expert mode
-python3 main.py --config config/tasks/Nav/expert/algo/nlmdqn_test.yaml --exp nlmdqn_expert_test \
-    --checkpoint_path checkpoints/final_models/spf_emp/expert/nlmdqn.zip --use_gym
+# this test e2e GNN in easy mode
+python3 tools/test_vis_input_e2e.py --config config/tasks/Vis/ResNetGNN/easy_200_fixed_e2e.yaml --ckpt vis_input_weights/easy/veryeasy_200_fixed_e2e_gnn_epoch19_valacc0.7727.pth --exp easy_gnn_test_veryeasy_200_fixed_e2e_gnn_epoch19_valacc0.7727
+# this test modular GNN in easy mode
+python3 tools/test_vis_input_mod.py --config config/tasks/Vis/ResNetGNN/easy_200_fixed_modular2.yaml --ckpt vis_input_weights/easy/veryeasy_200_fixed_modular_gnn2_epoch29_valacc0.7989.pth --exp easy_gnn_test_veryeasy_200_fixed_modular_gnn2_epoch29_valacc0.7989
 ```
+Note that all the models are tested using `fixed` configuration.
 
-The metrics for this taks are:
-- Traj Succ: If the agent gets to goal within 2x oracle steps without violating any rules
-- Decision Succ: Count only the traj w/ rule constraints
-- Reward: Action Cost * weight + Rule Violation
-
-The output will be at `log_rl/nlmdqn_expert_test.log`.
+The output will be like:
+```
+Action 2 is unseen.
+Slow: Correct_num: 2183, Total_num: 3042, Acc: 0.7176
+Normal: Correct_num: 2867, Total_num: 3978, Acc: 0.7207
+Fast: Correct_num: 0, Total_num: 0, Acc: nan
+Stop: Correct_num: 7125, Total_num: 7220, Acc: 0.9868
+Testing Sample Avg Acc: 0.8550
+Action Weighted Acc: 0.7706
+```
 
 ### Train a New Model
-All the configurations for all the models are at `config/tasks/Nav`.
-We provide two examples to train models:
+All the configurations for all the models are at `config/tasks/Vis`.
 ```
-# Training GNN-Behaviro Cloning Agent in easy mode
-python3 main.py --config config/tasks/Nav/easy/algo/gnnbc.yaml --exp gnnbc_easy_train --use_gym
-# Training DQN Agent in easy mode
-python3 main.py --config config/tasks/Nav/easy/algo/dqn.yaml --exp gnnbc_easy_train --use_gym
+# Training NLM models
+scripts/vis/easy/train_nlm.sh
+# Training GNN models
+scripts/vis/easy/train_gnn.sh
 ```
 The checkpoints will be saved in `checkpoints`.
 
