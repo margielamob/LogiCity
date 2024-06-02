@@ -69,6 +69,7 @@ class Z3Planner(LocalPlanner):
     def _create_rules(self):
         self.rules = {}
         self.rule_tem = {}
+        self.z3_vars = []
         for rule_dict in self.data["Rules"]:
             (rule_name, rule_info), = rule_dict.items()
             # Check if the rule is valid
@@ -77,7 +78,6 @@ class Z3Planner(LocalPlanner):
 
             # Create Z3 variables based on the formula
             var_names = self._extract_variables(formula)
-            self.z3_vars = var_names
 
             # Substitute predicate names in the formula with Z3 function instances
             for method_name, pred_info in self.predicates.items():
@@ -86,6 +86,8 @@ class Z3Planner(LocalPlanner):
             # Now replace the variable names in the formula with their Z3 counterparts
             for var_name in var_names:
                 formula = formula.replace(var_name, f'z3_vars["{var_name}"]')
+                if var_name not in self.z3_vars:
+                    self.z3_vars.append(var_name)
 
             # Evaluate the modified formula string to create the Z3 expression
             self.rule_tem[rule_name] = formula

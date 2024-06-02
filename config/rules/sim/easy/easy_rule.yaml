@@ -17,3 +17,11 @@ Rules:
           )
         )
       description: Or version of the 3 stop rule.
+  - Slow:
+      formula: |
+        Not(Slow(entity))
+      description: Hard constrain, no slow allowed.
+  - Fast:
+      formula: |
+        Not(Fast(entity))
+      description: Hard constrain, no Fast allowed.

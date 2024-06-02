@@ -1,0 +1,71 @@
+# General simulation settings
+simulation:
+  map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
+  agent_yaml_file: "config/agents/medium/test.yaml" # Agents in the simulation
+  ontology_yaml_file: "config/rules/ontology_medium.yaml" # Ontology of the simulation
+  rule_type: "Z3_Expert"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
+  rule_yaml_file: "config/rules/Nav/medium/expert.yaml"                    # Whether to render the environment
+  rl: true
+  debug: false
+  use_multi: false
+  agent_region: 120
+  rl_agent: 
+    max_priority: 11
+    use_expert: true
+    agent_name: "Car_1"               # ID of the RL agent, this is the agent id in the agent yaml file
+    max_horizon: 10000                          # Maximum steps in each episode 
+    action_space: 4                       # Number of discrete actions, 4 means slow/normal/fast/stop
+    action_mapping:                       # Mapping from policy action index to actual action space, see /agent folder
+      0: [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      1: [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0]
+      2: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0]
+      3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    fov_entities:
+      Entity: 5                        # Maximum number of agents in the FOV, include the RL agent
+    action_cost:
+      0: -2
+      1: 0
+      2: -2
+      3: -5 
+
+# Stable Baselines specific settings
+stable_baselines:
+  algorithm: "BehavioralCloning"
+  policy_network: "GNNPolicy"
+  policy_kwargs:
+    features_extractor_module: "logicity.rl_agent.policy.gnn" # Module path
+    features_extractor_class: "GNNFeatureExtractor"
+    features_extractor_kwargs:
+      num_ents: 5
+      pred_grounding_index:
+        IsPedestrian: [0, 5]
+        IsCar: [5, 10]
+        IsAmbulance: [10, 15]
+        IsOld: [15, 20]
+        IsTiro: [20, 25]
+        IsBus: [25, 30]
+        IsAtInter: [30, 35]
+        IsInInter: [35, 40]
+        HigherPri': [40, 65]
+        CollidingClose: [65, 90]
+        NextTo: [90, 115]
+        RightOf: [115, 140]
+      gnn_args:
+        gnn_hidden: 128
+        node_dim: 8
+        edge_dim: 4
+  hyperparameters:
+    num_traj: 100
+    expert_demonstrations: "dataset/medium/train_1ktraj.pkl"
+    optimizer: 
+      type: "Adam"             # Optimizer to use
+      args:
+        lr: 0.0005          # Learning rate
+    batch_size: 256                # Batch size for training
+    tensorboard_log: "./tb_logs"  # Tensorboard log directory
+    log_interval: 20
+  train: false                   # Whether to train the model
+  checkpoint_path: "checkpoints/final_models/medium/bc100.zip"           # Path to a checkpoint to restore the model from
+  num_envs: 1                   # Number of environments to run in parallel
+  episode_data: "dataset/medium/test_100_episodes.pkl"
+  eval_actions: {"Stop": 3}
