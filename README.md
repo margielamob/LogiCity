@@ -185,7 +185,7 @@ LogiCity/
 ```
 
 ### Pre-trained Models & Test
-All of the models displayed in Tab. 3 can be downloaded [here](https://drive.google.com/file/d/1gDMu4AlljMR1FeUh5ty1y7sO0KW5CV4d/view?usp=sharing).
+All of the models displayed in Table 3 can be downloaded [here](https://drive.google.com/file/d/1gDMu4AlljMR1FeUh5ty1y7sO0KW5CV4d/view?usp=sharing).
 Structure them into:
 ```plaintext
 LogiCity/
@@ -209,7 +209,7 @@ python3 tools/test_vis_input_e2e.py --config config/tasks/Vis/ResNetGNN/easy_200
 # this test modular GNN in easy mode
 python3 tools/test_vis_input_mod.py --config config/tasks/Vis/ResNetGNN/easy_200_fixed_modular2.yaml --ckpt vis_input_weights/easy/veryeasy_200_fixed_modular_gnn2_epoch29_valacc0.7989.pth --exp easy_gnn_test_veryeasy_200_fixed_modular_gnn2_epoch29_valacc0.7989
 ```
-Note that all the models are tested using `fixed` configuration.
+Note that all the models are tested using `fixed` configuration in Table 3.
 
 The output will be like:
 ```
@@ -230,12 +230,4 @@ scripts/vis/easy/train_nlm.sh
 # Training GNN models
 scripts/vis/easy/train_gnn.sh
 ```
-The checkpoints will be saved in `checkpoints`.
-
-
-## Branches
-
-Let Bowen know if you opened a new branch.
-
-- `master`
-  is the main and protected branch, it now supports two kind of rule-based simulation. please make sure you pull a request before modifying anything on this branch.
+The checkpoints will be saved in `vis_input_weights`.
