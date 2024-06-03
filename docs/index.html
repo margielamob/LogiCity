@@ -487,17 +487,58 @@
             </figure>
           </div>
         </div>
-        <div class="hero-body">
-          <!-- <div style="text-align:center;">
-            <video id="teaser1" autoplay muted loop style="flex: 50%; max-width: 100%;">
-              <source src="./static/images/RoboTools.mp4" type="video/mp4">
-            </video>
-          </div> -->
+        
+        <div class="columns is-centered">
+          <div class="column">
+            <br>
+            <h4 class="title is-4">Hard mode visualizaton</h4>
+            <p>
+              The FOL rule in the hard mode for the SPF task is shown below. 
+            </p>
+            <br>
+            <pre id="short-rule" style="font-family: 'Monaco', monospace; overflow-x: auto; text-align: left;">
+              <code>
+                Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsInInter(Y).
+                Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsAtInter(Y), HigherPri(Y, X).
+                ...
+              </code>
+            </pre>
+            <pre id="full-rule" style="display: none; font-family: 'Monaco', monospace; overflow-x: auto; text-align: left;">
+              <code>
+                Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsInInter(Y).
+                Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsAtInter(Y), HigherPri(Y, X).
+                Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsInInter(X), IsInInter(Y), IsAmbulance(Y).
+                Stop(X):- Not(IsAmbulance(X)), Not(IsPolice(X)), IsCar(X), Not(IsInInter(X)), Not(IsAtInter(X)), LeftOf(Y, X), IsClose(Y, X), IsPolice(Y).
+                Stop(X):- IsBus(X), Not(IsInInter(X)), Not(IsAtInter(X)), RightOf(Y, X), NextTo(Y, X), IsPedestrian(Y).
+                Stop(X):- IsAmbulance(X), RightOf(Y, X), IsOld(Y).
+                Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), CollidingClose(X, Y).
+              </code>
+            </pre>
+            <button id="toggle-button" onclick="toggleRule()">Extend Rule</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </section>
+
+<script>
+  function toggleRule() {
+    var shortRule = document.getElementById('short-rule');
+    var fullRule = document.getElementById('full-rule');
+    var button = document.getElementById('toggle-button');
+    
+    if (fullRule.style.display === 'none') {
+      fullRule.style.display = 'block';
+      shortRule.style.display = 'none';
+      button.textContent = 'Collapse';
+    } else {
+      fullRule.style.display = 'none';
+      shortRule.style.display = 'block';
+      button.textContent = 'Extend';
+    }
+  }
+</script>
 
 <section class="section">
   <div class="container is-max-desktop">
@@ -508,13 +549,13 @@
         <h2 class="title is-3">Visual Action Prediction (VAP)</h2>
         <br>
         <div class="columns">
-          <div class="column custom-column-40 has-text-centered">
+          <div class="column custom-column-80 has-text-centered">
             <p>
               Visual Action Prediction (VAP) focuses on reasoning with high-dimensional data, requiring models to predict the actions of all agents from an RGB image.
               The challenge here lies in sophisticated <strong>abstract reasoning with high-level perceptual noise</strong>.
             </p>
           </div>
-          <div class="column custom-column-60">
+          <div class="column custom-column-20">
             <figure class="image">
               <img src="./static/images/vap.png" alt="Description of the image" style="width: 100%; height: auto;">
             </figure>
