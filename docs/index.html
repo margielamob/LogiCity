@@ -491,28 +491,24 @@
         <div class="columns is-centered">
           <div class="column">
             <br>
-            <h4 class="title is-4">Hard mode visualizaton</h4>
+            <h4 class="title is-4">Hard mode visualization</h4>
             <p>
               The FOL rule in the hard mode for the SPF task is shown below. 
             </p>
             <br>
-            <pre id="short-rule" style="font-family: 'Monaco', monospace; overflow-x: auto; text-align: left;">
-              <code>
-                Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsInInter(Y).
-                Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsAtInter(Y), HigherPri(Y, X).
-                ...
-              </code>
+            <pre id="short-rule" style="font-family: 'Monaco', monospace; overflow-x: auto; text-align: left; max-width: 100%; white-space: pre-wrap;">
+<code>Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsInInter(Y).
+Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsAtInter(Y), HigherPri(Y, X).
+...</code>
             </pre>
-            <pre id="full-rule" style="display: none; font-family: 'Monaco', monospace; overflow-x: auto; text-align: left;">
-              <code>
-                Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsInInter(Y).
-                Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsAtInter(Y), HigherPri(Y, X).
-                Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsInInter(X), IsInInter(Y), IsAmbulance(Y).
-                Stop(X):- Not(IsAmbulance(X)), Not(IsPolice(X)), IsCar(X), Not(IsInInter(X)), Not(IsAtInter(X)), LeftOf(Y, X), IsClose(Y, X), IsPolice(Y).
-                Stop(X):- IsBus(X), Not(IsInInter(X)), Not(IsAtInter(X)), RightOf(Y, X), NextTo(Y, X), IsPedestrian(Y).
-                Stop(X):- IsAmbulance(X), RightOf(Y, X), IsOld(Y).
-                Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), CollidingClose(X, Y).
-              </code>
+            <pre id="full-rule" style="display: none; font-family: 'Monaco', monospace; overflow-x: auto; text-align: left; max-width: 100%; white-space: pre-wrap;">
+<code>Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsInInter(Y).
+Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsAtInter(Y), HigherPri(Y, X).
+Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsInInter(X), IsInInter(Y), IsAmbulance(Y).
+Stop(X):- Not(IsAmbulance(X)), Not(IsPolice(X)), IsCar(X), Not(IsInInter(X)), Not(IsAtInter(X)), LeftOf(Y, X), IsClose(Y, X), IsPolice(Y).
+Stop(X):- IsBus(X), Not(IsInInter(X)), Not(IsAtInter(X)), RightOf(Y, X), NextTo(Y, X), IsPedestrian(Y).
+Stop(X):- IsAmbulance(X), RightOf(Y, X), IsOld(Y).
+Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), CollidingClose(X, Y).</code>
             </pre>
             <button id="toggle-button" onclick="toggleRule()">Extend Rule</button>
           </div>
@@ -531,11 +527,11 @@
     if (fullRule.style.display === 'none') {
       fullRule.style.display = 'block';
       shortRule.style.display = 'none';
-      button.textContent = 'Collapse';
+      button.textContent = 'Collapse Rule';
     } else {
       fullRule.style.display = 'none';
       shortRule.style.display = 'block';
-      button.textContent = 'Extend';
+      button.textContent = 'Extend Rule';
     }
   }
 </script>
