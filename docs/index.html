@@ -480,6 +480,10 @@
               Safe Path Following (SPF) requires an algorithm to control an agent in LogiCity, navigating it to the goal while maximizing the trajectory reward.
               Since the ego agent could meet with complex situations along the way and needs to smartly plan to maximize trajectory return, this task features <strong>long-horizon</strong> reasoning with <strong>multiple dynamic agents</strong>.
             </p>
+            <br>
+            <p>
+              Note that SPF also features <strong>Different Train/Test Agent Sets</strong>.
+            </p>
           </div>
           <div class="column custom-column-20">
             <figure class="image">
@@ -489,13 +493,18 @@
         </div>
         
         <div class="columns is-centered">
-          <div class="column">
+          <div class="column is-full-width">
             <br>
             <h4 class="title is-4">Hard mode visualization</h4>
             <p>
               The FOL rule in the hard mode for the SPF task is shown below. 
             </p>
             <br>
+          </div>
+        </div>
+
+        <div class="columns">
+          <div class="column is-half">
             <pre id="short-rule" style="font-family: 'Monaco', monospace; overflow-x: auto; text-align: left; max-width: 100%; white-space: pre-wrap;">
 <code>Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsInInter(Y).
 Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsAtInter(Y), HigherPri(Y, X).
@@ -512,6 +521,12 @@ Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), CollidingClose(X, Y).</code>
             </pre>
             <button id="toggle-button" onclick="toggleRule()">Extend Rule</button>
           </div>
+          <div class="column is-half">
+            <video controls autoplay muted loop style="width: 100%; height: auto;">
+              <source src="static/images/spf_train.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+          </div>
         </div>
       </div>
     </div>
@@ -520,21 +535,22 @@ Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), CollidingClose(X, Y).</code>
 
 <script>
   function toggleRule() {
-    var shortRule = document.getElementById('short-rule');
-    var fullRule = document.getElementById('full-rule');
-    var button = document.getElementById('toggle-button');
+    var shortRule = document.getElementById("short-rule");
+    var fullRule = document.getElementById("full-rule");
+    var toggleButton = document.getElementById("toggle-button");
     
-    if (fullRule.style.display === 'none') {
-      fullRule.style.display = 'block';
-      shortRule.style.display = 'none';
-      button.textContent = 'Collapse Rule';
+    if (fullRule.style.display === "none") {
+      fullRule.style.display = "block";
+      shortRule.style.display = "none";
+      toggleButton.textContent = "Collapse Rule";
     } else {
-      fullRule.style.display = 'none';
-      shortRule.style.display = 'block';
-      button.textContent = 'Extend Rule';
+      fullRule.style.display = "none";
+      shortRule.style.display = "block";
+      toggleButton.textContent = "Extend Rule";
     }
   }
 </script>
+
 
 <section class="section">
   <div class="container is-max-desktop">
