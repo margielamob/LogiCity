@@ -344,8 +344,6 @@
               padding: 2px 4px;
               border-radius: 4px;
             }
-          </style>
-          <style>
             .courier-op {
               font-family: "Courier New", Courier, monospace;
               font-weight: bold;
@@ -362,88 +360,51 @@
           </video>
         </div>
 
-        <br>
-        <div class="content has-text-justified">
-          <style>
-            .courier-pre {
-              font-family: "Courier New", Courier, monospace;
-              font-weight: bold;
-              background-color: rgba(255, 170, 0, 0.429);
-              padding: 2px 4px;
-              border-radius: 4px;
-            }
-          </style>
-          <style>
-            .courier-op {
-              font-family: "Courier New", Courier, monospace;
-              font-weight: bold;
-              padding: 2px 4px;
-              border-radius: 4px;
-            }
-          </style>
-          <p>[2] An entity will <span class="courier-pre">Slow</span> if it is <span class="courier-pre">Tiro</span> with another <span class="courier-pre">Pedestrian</span> entity <span class="courier-pre">NextTo</span> it.
-          </p>
-          <video id="teaser1" controls style="flex: 50%; max-width: 100%;">
-            <source src="./static/images/2.mp4" type="video/mp4">
-          </video>
+        <div id="more-examples" style="display: none;">
+          <br>
+          <div class="content has-text-justified">
+            <p>[2] An entity will <span class="courier-pre">Slow</span> if it is <span class="courier-pre">Tiro</span> with another <span class="courier-pre">Pedestrian</span> entity <span class="courier-pre">NextTo</span> it.
+            </p>
+            <video id="teaser2" controls style="flex: 50%; max-width: 100%;">
+              <source src="./static/images/2.mp4" type="video/mp4">
+            </video>
+          </div>
+
+          <br>
+          <div class="content has-text-justified">
+            <p>[3] An entity will move <span class="courier-pre">Fast</span> if it is a <span class="courier-pre">HigherPriority</span> <span class="courier-pre">Reckless</span> entity with another <span class="courier-pre">Car</span> entity <span class="courier-pre">AtIntersection</span>.
+            </p>
+            <video id="teaser3" controls style="flex: 50%; max-width: 100%;">
+              <source src="./static/images/3.mp4" type="video/mp4">
+            </video>
+          </div>
+
+          <br>
+          <div class="content has-text-justified">
+            <p>[4] An entity will <span class="courier-pre">Slow</span> if it is a <span class="courier-pre">Police</span> entity with at least two other <span class="courier-pre">Young</span> entities <span class="courier-pre">NextTo</span> each other, <span class="courier-op">AND</span> one of them is <span class="courier-pre">NextTo</span> to it.
+            </p>
+            <video id="teaser4" controls style="flex: 50%; max-width: 100%;">
+              <source src="./static/images/4.mp4" type="video/mp4">
+            </video>
+          </div>
         </div>
 
         <br>
-        <div class="content has-text-justified">
-          <style>
-            .courier-pre {
-              font-family: "Courier New", Courier, monospace;
-              font-weight: bold;
-              background-color: rgba(255, 170, 0, 0.429);
-              padding: 2px 4px;
-              border-radius: 4px;
-            }
-          </style>
-          <style>
-            .courier-op {
-              font-family: "Courier New", Courier, monospace;
-              font-weight: bold;
-              padding: 2px 4px;
-              border-radius: 4px;
-            }
-          </style>
-          <p>[3] An entity will move <span class="courier-pre">Fast</span> if it is a <span class="courier-pre">HigherPriority</span> <span class="courier-pre">Reckless</span> entity with another <span class="courier-pre">Car</span> entity <span class="courier-pre">AtIntersection</span>.
-          </p>
-          <video id="teaser1" controls style="flex: 50%; max-width: 100%;">
-            <source src="./static/images/3.mp4" type="video/mp4">
-          </video>
-        </div>
-
-        <br>
-        <div class="content has-text-justified">
-          <style>
-            .courier-pre {
-              font-family: "Courier New", Courier, monospace;
-              font-weight: bold;
-              background-color: rgba(255, 170, 0, 0.429);
-              padding: 2px 4px;
-              border-radius: 4px;
-            }
-          </style>
-          <style>
-            .courier-op {
-              font-family: "Courier New", Courier, monospace;
-              font-weight: bold;
-              padding: 2px 4px;
-              border-radius: 4px;
-            }
-          </style>
-          <p>[4] An entity will <span class="courier-pre">Slow</span> if it is a <span class="courier-pre">Police</span> entity with at least two other <span class="courier-pre">Young</span> entities <span class="courier-pre">NextTo</span> each other, <span class="courier-op">AND</span> one of them is <span class="courier-pre">NextTo</span> to it.
-          </p>
-          <video id="teaser1" controls style="flex: 50%; max-width: 100%;">
-            <source src="./static/images/4.mp4" type="video/mp4">
-          </video>
+        <div class="content has-text-centered">
+          <button class="button is-primary" onclick="showMore()">More</button>
         </div>
 
       </div>
     </div>
   </div>
 </section>
+
+<script>
+  function showMore() {
+    var moreExamples = document.getElementById('more-examples');
+    moreExamples.style.display = moreExamples.style.display === 'none' ? 'block' : 'none';
+  }
+</script>
 
 <section class="section">
   <div class="container is-max-desktop">
@@ -497,7 +458,7 @@
             <br>
             <h4 class="title is-4">Hard mode visualization</h4>
             <p>
-              The FOL rule in the hard mode for the SPF task is shown below. 
+              The FOL rule and a training example in the hard mode for the SPF task is shown below. 
             </p>
             <br>
           </div>
@@ -505,6 +466,7 @@
 
         <div class="columns">
           <div class="column is-half">
+            <h5 class="title is-5">Clause Set</h5>
             <pre id="short-rule" style="font-family: 'Monaco', monospace; overflow-x: auto; text-align: left; max-width: 100%; white-space: pre-wrap;">
 <code>Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsInInter(Y).
 Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), IsAtInter(X), IsAtInter(Y), HigherPri(Y, X).
@@ -522,15 +484,54 @@ Stop(X):- Not(IsAmbulance(X)), Not(IsOld(X)), CollidingClose(X, Y).</code>
             <button id="toggle-button" onclick="toggleRule()">Extend Rule</button>
           </div>
           <div class="column is-half">
+            <h5 class="title is-5">Example training episode</h5>
             <video controls autoplay muted loop style="width: 100%; height: auto;">
               <source src="static/images/spf_train.mp4" type="video/mp4">
               Your browser does not support the video tag.
             </video>
           </div>
         </div>
+
+        <div class="columns is-centered">
+          <div class="column is-full-width">
+            <h5 class="title is-5">Testing episode 1</h5>
+            <video controls autoplay muted loop style="width: 100%; height: auto;">
+              <source src="static/images/spf_test1.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+        
+            <div id="more-testing-episodes" style="display: none;">
+              <h5 class="title is-5">Testing episode 2</h5>
+              <video controls autoplay muted loop style="width: 100%; height: auto;">
+                <source src="static/images/spf_test2.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+        
+              <h5 class="title is-5">Testing episode 3</h5>
+              <video controls autoplay muted loop style="width: 100%; height: auto;">
+                <source src="static/images/spf_test3.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+        
+            <br>
+            <div class="content has-text-centered">
+              <button class="button is-primary" onclick="showMoreTesting()">More</button>
+            </div>
+          </div>
+        </div>
+        
+        <script>
+          function showMoreTesting() {
+            var moreTestingEpisodes = document.getElementById('more-testing-episodes');
+            moreTestingEpisodes.style.display = moreTestingEpisodes.style.display === 'none' ? 'block' : 'none';
+          }
+        </script>
+
       </div>
     </div>
   </div>
+
 </section>
 
 <script>
