@@ -209,15 +209,14 @@ def main_gym(args, logger):
             decision_step[id] = 0
             succ_decision[id] = 0
         vis_id = [] if "vis_id" not in rl_config else rl_config["vis_id"]
-        worlds = {ts: None for ts in vis_id}
         # over write the checkpoint path if not none
         if args.checkpoint_path is not None:
             rl_config["checkpoint_path"] = args.checkpoint_path
             logger.info("Overwrite the checkpoint path to {}".format(args.checkpoint_path))
 
         for ts in list(episode_data.keys()): 
-            if (ts not in vis_id) and len(vis_id) > 0:
-                continue
+            # if (ts not in vis_id) and len(vis_id) > 0:
+            #     continue
             logger.info("Evaluating episode {}...".format(ts))
             episode_cache = episode_data[ts]
             max_steps = 10000
@@ -292,7 +291,7 @@ def main_gym(args, logger):
                         if int(action) != oracle_action:
                             local_succ_decision[oracle_action] = 0
                     o, r, d, i = eval_env.step(int(action))
-                    if ts in vis_id:
+                    if (ts in vis_id) or (-1 in vis_id):
                         cached_observation["Time_Obs"][step] = i
                     if i["Fail"][0]:
                         rew += r
@@ -317,8 +316,10 @@ def main_gym(args, logger):
             logger.info("Episode {} Success: {}".format(ts, success[-1]))
             logger.info("Episode {} Decision Step: {}".format(ts, local_decision_step))
             logger.info("Episode {} Success Decision: {}".format(ts, local_succ_decision))
-            if ts in worlds.keys():
-                worlds[ts] = cached_observation
+            if (ts in vis_id) or (-1 in vis_id):
+                # worlds[ts] = cached_observation
+                with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
+                    pkl.dump(cached_observation, f)
         mean_reward = np.mean(rew_list)
         np.save(os.path.join(args.log_dir, "{}_rewards.npy".format(args.exp)), rew_list)
         sr = np.mean(success)
@@ -331,10 +332,10 @@ def main_gym(args, logger):
         if args.save_steps:
             with open(os.path.join(args.log_dir, "{}_steps.pkl".format(args.exp)), "wb") as f:
                 pkl.dump(episode_data, f)
-        for ts in worlds.keys():
-            if worlds[ts] is not None:
-                with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
-                    pkl.dump(worlds[ts], f)
+        # for ts in worlds.keys():
+        #     if worlds[ts] is not None:
+        #         with open(os.path.join(args.log_dir, "{}_{}.pkl".format(args.exp, ts)), "wb") as f:
+        #             pkl.dump(worlds[ts], f)
 
 
 def cal_step_metric(decision_step, succ_decision):

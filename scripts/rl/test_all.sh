@@ -98,11 +98,17 @@ MODE=easy
 #     --checkpoint_path checkpoints/expert_gnn100_${iter}_steps.zip --use_gym
 # done
 
-# python3 main.py --config config/tasks/Nav/hard/algo/dqn_test.yaml --exp dqn_hard_test \
-#     --checkpoint_path checkpoints/final_models/spf_emp/hard/dqn.zip --use_gym
+python3 main.py --config config/tasks/Nav/hard/algo/dqn_test.yaml --exp dqn_hard_test_3 \
+    --checkpoint_path checkpoints/final_models/spf_emp/hard/dqn.zip --use_gym
 
-python3 main.py --config config/tasks/Nav/expert/algo/nlmdqn_test.yaml --exp nlmdqn_expert_test \
-    --checkpoint_path checkpoints/final_models/spf_emp/expert/nlmdqn.zip --use_gym
+python3 main.py --config config/tasks/Nav/hard/algo/nlmdqn_test.yaml --exp nlmdqn_hard_test_3 \
+    --checkpoint_path checkpoints/final_models/spf_emp/hard/nlmdqn.zip --use_gym
+
+python3 main.py --config config/tasks/Nav/hard/experts/expert_test.yaml --exp oracle_hard_test_3 \
+    --use_gym
+
+# python3 main.py --config config/tasks/Nav/expert/algo/nlmdqn_test.yaml --exp nlmdqn_expert_test \
+#     --checkpoint_path checkpoints/final_models/spf_emp/expert/nlmdqn.zip --use_gym
 
 # for run in 0 1 2
 # do

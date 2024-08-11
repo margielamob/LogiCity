@@ -40,7 +40,6 @@ class Z3PlannerRL(Z3Planner):
             # Create Z3 variables based on the formula
             var_names = self._extract_variables(formula)
             # Note: Sim rule should contain all the Z3 variables
-            self.z3_vars = var_names
 
             # Substitute predicate names in the formula with Z3 function instances
             for method_name, pred_info in self.predicates.items():
@@ -49,6 +48,8 @@ class Z3PlannerRL(Z3Planner):
             # Now replace the variable names in the formula with their Z3 counterparts
             for var_name in var_names:
                 formula = formula.replace(var_name, f'z3_vars["{var_name}"]')
+                if var_name not in self.z3_vars:
+                    self.z3_vars.append(var_name)
 
             # Evaluate the modified formula string to create the Z3 expression
             self.rules["Sim"][rule_name] = formula

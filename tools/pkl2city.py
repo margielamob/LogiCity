@@ -10,7 +10,7 @@ from logicity.core.config import *
 import argparse
 
 IMAGE_BASE_PATH = "./imgs"
-SCALE = 4
+SCALE = 8
 
 PATH_DICT = {
     "Car": [os.path.join(IMAGE_BASE_PATH, "car{}.png").format(i) for i in range(1, 2)],
@@ -153,8 +153,8 @@ def gridmap2img_static(gridmap, icon_dict, ego_id):
         filtered_mask = int_mask * (ego_map != 0)
         start_pos = np.where(filtered_mask)
         start_x, start_y = start_pos[0][0]*SCALE, start_pos[1][0]*SCALE
-        cv2.drawMarker(img, (goal_y, goal_x), (0, 0, 255), markerType=cv2.MARKER_STAR, markerSize=15, thickness=2)
-        cv2.drawMarker(img, (start_y, start_x), (255, 0, 0), markerType=cv2.MARKER_SQUARE, markerSize=15, thickness=2)
+        cv2.drawMarker(img, (goal_y, goal_x), (255, 0, 0), markerType=cv2.MARKER_STAR, markerSize=30, thickness=5)
+        cv2.drawMarker(img, (start_y, start_x), (0, 0, 255), markerType=cv2.MARKER_STAR, markerSize=30, thickness=5)
 
     return img
 
@@ -407,6 +407,7 @@ def gridmap2img_agents(gridmap, gridmap_, icon_dict, static_map, last_icons=None
 
 def main(pkl_path, ego_id, output_folder):
     icon_dict = {}
+    os.path.exists(output_folder) or os.makedirs(output_folder)
     for key in PATH_DICT.keys():
         if isinstance(PATH_DICT[key], list):
             raw_img = [cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB) for path in PATH_DICT[key]]
@@ -427,7 +428,7 @@ def main(pkl_path, ego_id, output_folder):
     time_steps.sort()
     static_map = gridmap2img_static(obs[time_steps[0]]["World"].numpy(), icon_dict, ego_id)
     static_map_img = Image.fromarray(static_map)
-    static_map_img.save("{}/static_layout.png".format(output_folder))
+    # static_map_img.save("{}/static_layout.png".format(output_folder))
     last_icons = None
     for key in trange(time_steps[0], time_steps[-2]):
         grid = obs[key]["World"].numpy()
@@ -456,7 +457,7 @@ def main(pkl_path, ego_id, output_folder):
 
         # Save the image
         output_path = "{}/step_{}.png".format(output_folder, key)
-        img.save(output_path)
+        img.crop((0, 0, 1190, 1190)).save(output_path)
     cv2.destroyAllWindows()
 
     return
@@ -464,8 +465,8 @@ def main(pkl_path, ego_id, output_folder):
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Create an animated GIF from a sequence of images.")
-    parser.add_argument("--pkl", default='log_sim/easy_100_0.pkl', help="Path to the folder containing image files.")
-    parser.add_argument("--ego_id", type=int, default=-1, help="which agent is ego agent. Visualize the ego agent's start and goal. This is layer_id")
+    parser.add_argument("--pkl", default='log_rl/oracle_test_train_hard_1.pkl', help="Path to the folder containing image files.")
+    parser.add_argument("--ego_id", type=int, default=3, help="which agent is ego agent. Visualize the ego agent's start and goal. This is layer_id")
     parser.add_argument("--output_folder", default="vis", help="Output folder.")
     
     args = parser.parse_args()

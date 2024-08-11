@@ -56,6 +56,18 @@ Rules:
           )
         )
       description: Medium stop rule.
+    - name: Slow
+      description: Never take slow action.
+      formula: |
+        Not(Slow(entity))
+    - name: Fast
+      description: Never take fast action.
+      formula: |
+        Not(Fast(entity))
+    - name: Normal
+      description: If not stop, then normal.
+      formula: |
+        Normal(entity) == Not(Stop(entity))
   Task: # how the reward/score is calculated
     - name: Medium Stop
       description: should not collide.

@@ -1,0 +1,47 @@
+Rules:
+  - Stop:
+      formula: |
+        Stop(entity) == Exists(
+          [dummyEntityA], 
+          Or(
+            And(
+              IsBus(entity),
+              NextTo(dummyEntityA, entity),
+            ),
+            And(
+              RightOf(dummyEntityA, entity), 
+              IsOld(dummyEntityA)
+            ),
+            And(
+              IsAtInter(entity), 
+              LeftOf(entity, dummyEntityA),
+            ),
+            And(
+              Not(IsAmbulance(entity)), 
+              CollidingClose(entity, dummyEntityA)
+            ),
+            And(
+              IsAtInter(entity), 
+              HigherPri(entity, dummyEntityA),
+            )
+          )
+        )
+      description: Or version of the 3 stop rule.
+  - Fast:
+      formula: |
+        Fast(entity) == And(
+            IsBus(entity),
+            IsInInter(entity)
+          )
+      description: Or version of the 3 stop rule.
+  - Slow:
+      formula: |
+        Slow(entity) == Exists(
+          [dummyEntityA, dummyEntityB], 
+          And(
+            IsTiro(entity),
+            LeftOf(entity, dummyEntityA),
+            CollidingClose(dummyEntityB, dummyEntityA)
+          )
+        )
+      description: Or version of the 3 stop rule.

@@ -54,3 +54,4 @@ stable_baselines:
   num_envs: 1                  # Number of environments to run in parallel
   episode_data: "dataset/hard/test_100_episodes.pkl"
   eval_actions: {"Stop": 3}
+  vis_id: [-1]

@@ -70,6 +70,8 @@ class Z3PlannerExpert(Z3PlannerRL):
             # Now replace the variable names in the formula with their Z3 counterparts
             for var_name in var_names:
                 formula = formula.replace(var_name, f'z3_vars["{var_name}"]')
+                if var_name not in self.z3_vars:
+                    self.z3_vars.append(var_name)
 
             # Evaluate the modified formula string to create the Z3 expression
             self.rules["Task"][rule_name]["content"] = formula
