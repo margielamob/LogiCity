@@ -24,7 +24,7 @@
   ```shell
   # requirements for logicity
   # using conda env
-  conda env create -f environment.yml
+  conda create -n logicity python=3.11.5
   conda activate logicity
   # pyastar, in the LogiCity folder
   mkdir src
@@ -76,12 +76,32 @@ bash scripts/sim/run_sim_expert.sh
   python3 tools/img2video.py vis demo.gif # change some file name if necessary
   ```
 
-## Safe Path Following (SPF)
+### Customize a City
+The configurations (abstractions) of a City is defined (for example, the easy demo) here: `config/tasks/sim/*.yaml`.
+```yaml
+simulation:
+  map_yaml_file: "config/maps/square_5x5.yaml"       # OpenAI Gym environment name
+  agent_yaml_file: "config/agents/easy/train.yaml" # Agents in the simulation
+  ontology_yaml_file: "config/rules/ontology_easy.yaml" # Ontology of the simulation
+  rule_type: "Z3"               # z3 rl will set the rl_agent with fixed number of other entities, return the groundings as obs, and return the rule reward
+  rule_yaml_file: "config/rules/sim/easy/easy_rule.yaml"                 # Whether to render the environment
+  rl: false
+  debug: false
+  use_multi: false
+  agent_region: 100
+```
+Things you might want to play with:
+- `agent_yaml_file` defines the agent configuration, you can arbitarily define your own configurations.
+- `rule_yaml_file` defines the FOL rules of the city. You can customize your own rule, but the naming should follow [z3](https://ericpony.github.io/z3py-tutorial/guide-examples.htm#:~:text=Satisfiability%20and%20Validity).
+- `ontology_yaml_file` defines the possible concepts in the city (used by the rules). You can also customize the *grounding* functions specified in the function fields.
+
+## Safe Path Following (SPF, master branch, Tab. 2 in paper)
 
 In the Safe Path Following (SPF) task: the controlled agent is a car, it has 4 action spaces, "Slow" "Fast" "Normal" and "Stop". We require a policy to navigate the ego agent to its goal with minimum trajectory cost.
+This is an RL wrapper using the simulation above. We have used [stable-baselines3](https://stable-baselines3.readthedocs.io/en/master/) coding format.
 
 ### Dataset
-Download the train/val/test episodes [here](https://drive.google.com/file/d/1ePLVlNH77VV25171yOSgku21tji9ISdG/view?usp=sharing)
+Download the train/val/test episodes [here](https://drive.google.com/file/d/1ePLVlNH77VV25171yOSgku21tji9ISdG/view?usp=sharing) and unzip it.
 The folder structure should be like:
 
 ```plaintext
@@ -141,15 +161,36 @@ We provide two examples to train models:
 ```
 # Training GNN-Behaviro Cloning Agent in easy mode
 python3 main.py --config config/tasks/Nav/easy/algo/gnnbc.yaml --exp gnnbc_easy_train --use_gym
-# Training DQN Agent in easy mode
+# Training DQN Agent in easy mode, with 2 parallel envs
 python3 main.py --config config/tasks/Nav/easy/algo/dqn.yaml --exp gnnbc_easy_train --use_gym
+```
+Outputs from RL training is like the following:
+```shell
+----------------------------------
+| rollout/            |          |
+|    ep_len_mean      | 41.5     |
+|    ep_rew_mean      | -10.2    |
+|    exploration_rate | 0.998    |
+|    success_rate     | 0        |
+| time/               |          |
+|    episodes         | 4        |
+|    fps              | 9        |
+|    time_elapsed     | 18       |
+|    total_timesteps  | 184      |
+----------------------------------
 ```
 The checkpoints will be saved in `checkpoints`. By default, the validation episodes are used and the results are saved also in `checkpoints`.
 
-## Visual Action Prediction (VAP)
+### Customize you own City and study RL
+Configurations for RL training and testing are in this folder: `config/tasks/Nav`.
+Similar to the simulation process, you can customize agent compositions, rules, and concepts by changing the fields in `config/tasks/Nav/easy/algo`
+using different `.yaml` files.
+We also probided a bunch of tools (collecting demonstrations, for example) in `scripts/rl`. You might find them useful.
 
-In the Visual Action Prediction (VAP) task: the algorithm is required to predict actions for all the agents in an RGB Image.
-The code for VAP is in `vis` branch:
+## Visual Action Prediction (VAP), Tab.4, LLM experiments.
+
+In the Visual Action Prediction (VAP) task: the algorithm is required to predict actions for all the agents in an RGB Image (Or language discription).
+The code and instuctions for VAP is in `vis` branch:
 ```
 git checkout vis
 pip install -v -e .
