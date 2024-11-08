@@ -187,7 +187,7 @@ Similar to the simulation process, you can customize agent compositions, rules, 
 using different `.yaml` files.
 We also probided a bunch of tools (collecting demonstrations, for example) in `scripts/rl`. You might find them useful.
 
-## Visual Action Prediction (VAP), Tab.4, LLM experiments.
+## Visual Action Prediction (VAP), Tab.3, 4, LLM experiments.
 
 In the Visual Action Prediction (VAP) task: the algorithm is required to predict actions for all the agents in an RGB Image (Or language discription).
 The code and instuctions for VAP is in `vis` branch:
@@ -195,80 +195,3 @@ The code and instuctions for VAP is in `vis` branch:
 git checkout vis
 pip install -v -e .
 ```
-
-### Dataset
-Download the train/val/test datasets [here](https://drive.google.com/file/d/1rgBnPLUQOT6d4WQi888Zhn8VAL3ifbqq/view?usp=sharing)
-The folder structure should be like:
-
-```plaintext
-LogiCity/
-├── vis_dataset/
-│   ├── hard_fixed_final/
-│   │   ├── train
-│   │   │   ├── world0_agent14_imgs
-│   │   │   │   ├── step_0001.png
-│   │   │   │   ├── step_0002.png
-│   │   │   │   └── ...
-│   │   │   ├── world1_agent14_imgs
-│   │   │   ├── ...
-│   │   │   └── test_hard_fixed_final.pkl
-│   │   ├── val
-│   │   └── test
-│   ├── hard_random_final/
-│   │   ├── train
-│   │   ├── val
-│   │   └── test
-│   ├── very_easy_random_final/
-│   └── very_easy_fixed_final/
-├── logicity/
-├── config/
-└── ...
-```
-
-### Pre-trained Models & Test
-All of the models displayed in Table 3 can be downloaded [here](https://drive.google.com/file/d/1IeB0DnglkjCMH1n3q_10D1Q94eR7jLG7/view?usp=sharing).
-Structure them into:
-```plaintext
-LogiCity/
-├── vis_input_weights/
-│   ├── easy/
-│   │   ├── spf_emp/
-│   │   │   ├── easy/
-│   │   │   │   ├── veryeasy_200_fixed_e2e_gnn_epoch19_valacc0.7727.pth
-│   │   │   │   ├── veryeasy_200_fixed_e2e_gnn_epoch24_valacc0.7755.pth
-│   │   │   │   └── ...
-│   │   │   └── hard/
-├── logicity/
-├── config/
-└── ...
-```
-
-To test them, several example commands could be:
-```
-# this test e2e GNN in easy mode
-python3 tools/test_vis_input_e2e.py --config config/tasks/Vis/ResNetGNN/easy_200_fixed_e2e.yaml --ckpt vis_input_weights/easy/veryeasy_200_fixed_e2e_gnn_epoch19_valacc0.7727.pth --exp easy_gnn_test_veryeasy_200_fixed_e2e_gnn_epoch19_valacc0.7727
-# this test modular GNN in easy mode
-python3 tools/test_vis_input_mod.py --config config/tasks/Vis/ResNetGNN/easy_200_fixed_modular2.yaml --ckpt vis_input_weights/easy/veryeasy_200_fixed_modular_gnn2_epoch29_valacc0.7989.pth --exp easy_gnn_test_veryeasy_200_fixed_modular_gnn2_epoch29_valacc0.7989
-```
-Note that all the models are tested using `fixed` configuration in Table 3.
-
-The output will be like:
-```
-Action 2 is unseen.
-Slow: Correct_num: 2183, Total_num: 3042, Acc: 0.7176
-Normal: Correct_num: 2867, Total_num: 3978, Acc: 0.7207
-Fast: Correct_num: 0, Total_num: 0, Acc: nan
-Stop: Correct_num: 7125, Total_num: 7220, Acc: 0.9868
-Testing Sample Avg Acc: 0.8550
-Action Weighted Acc: 0.7706
-```
-
-### Train a New Model
-All the configurations for all the models are at `config/tasks/Vis`.
-```
-# Training NLM models
-scripts/vis/easy/train_nlm.sh
-# Training GNN models
-scripts/vis/easy/train_gnn.sh
-```
-The checkpoints will be saved in `vis_input_weights`.
