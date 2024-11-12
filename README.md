@@ -1,21 +1,6 @@
 # LogiCity
 Officially published in NeurIPS'24 D&B Track.
 
-## Reference
-
-If our work inspires your research, please cite us as:
-
-```
-@INPROCEEDINGS{Li2023vox,     
-	author={Li, Bowen and Wang, Jiashun and Hu, Yaoyu and Wang, Chen and Scherer, Sebastian},   
-	booktitle={Proceedings of the Advances in Neural Information Processing Systems (NeurIPS)}, 
-	title={{VoxDet: Voxel Learning for Novel Instance Detection}},
-	year={2023},
-	volume={},
-	number={}
-}
-```
-
 <img src="imgs/81.png" alt="81" style="zoom:30%;" />
 
 ## Abstract
@@ -210,4 +195,19 @@ The code and instuctions for VAP is in `vis` branch:
 ```
 git checkout vis
 pip install -v -e .
+```
+
+## Reference
+
+If our work inspires your research, please cite us as:
+
+```
+@INPROCEEDINGS{Li2023vox,     
+	author={Li, Bowen and Wang, Jiashun and Hu, Yaoyu and Wang, Chen and Scherer, Sebastian},   
+	booktitle={Proceedings of the Advances in Neural Information Processing Systems (NeurIPS)}, 
+	title={{VoxDet: Voxel Learning for Novel Instance Detection}},
+	year={2023},
+	volume={},
+	number={}
+}
 ```
