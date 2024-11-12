@@ -197,17 +197,11 @@ git checkout vis
 pip install -v -e .
 ```
 
-## Reference
-
-If our work inspires your research, please cite us as:
-
-```
-@INPROCEEDINGS{Li2023vox,     
-	author={Li, Bowen and Wang, Jiashun and Hu, Yaoyu and Wang, Chen and Scherer, Sebastian},   
-	booktitle={Proceedings of the Advances in Neural Information Processing Systems (NeurIPS)}, 
-	title={{VoxDet: Voxel Learning for Novel Instance Detection}},
-	year={2023},
-	volume={},
-	number={}
+@INPROCEEDINGS{Li2023logicity,     
+  title={{LogiCity: Advancing Neuro-Symbolic AI with Abstract Urban Simulation}},
+  author={Li, Bowen and Li, Zhaoyu and Du, Qiwei and Luo, Jinqi and Wang, Wenshan and Xie, Yaqi and Stepputtis, Simon and Wang, Chen and Sycara, Katia P and Ravikumar, Pradeep Kumar and Gray, Alex and Si, Xujie and Scherer, Sebastian}, 
+  booktitle={Proceedings of the Advances in Neural Information Processing Systems (NeurIPS)}, 
+  year={2024},
+  volume={},
+  number={}
 }
-```
