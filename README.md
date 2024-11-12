@@ -196,7 +196,9 @@ The code and instuctions for VAP is in `vis` branch:
 git checkout vis
 pip install -v -e .
 ```
-
+## Reference
+If you used our work in your research, or you find our work useful, please cite us as:
+```
 @INPROCEEDINGS{Li2023logicity,     
   title={{LogiCity: Advancing Neuro-Symbolic AI with Abstract Urban Simulation}},
   author={Li, Bowen and Li, Zhaoyu and Du, Qiwei and Luo, Jinqi and Wang, Wenshan and Xie, Yaqi and Stepputtis, Simon and Wang, Chen and Sycara, Katia P and Ravikumar, Pradeep Kumar and Gray, Alex and Si, Xujie and Scherer, Sebastian}, 
@@ -205,3 +207,4 @@ pip install -v -e .
   volume={},
   number={}
 }
+```
